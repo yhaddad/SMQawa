@@ -1,6 +1,6 @@
 from coffea import processor
 from coffea import nanoevents
-from qawa.process.zz2l2nu_inc import 
+from qawa.process.zz2l2nu_inc import
 from ristretto.coffea_vbs import coffea_vbs
 from dask_jobqueue.htcondor import HTCondorCluster
 from dask.distributed import Client
