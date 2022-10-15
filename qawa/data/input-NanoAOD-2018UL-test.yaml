@@ -1,0 +1,9 @@
+EWK_ZZ2l2nu:
+    files:
+        - root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL18NanoAODv2/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v15_L1v1-v1/50000/ED04D8AC-1917-CD4E-A589-E69D63DBD831.root
+        - root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL18NanoAODv2/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v15_L1v1-v1/40000/C202E3C6-05C1-724C-8CBF-321C626F75A7.root
+        - root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL18NanoAODv2/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v15_L1v1-v1/40000/524BC2B2-8B2A-AF44-9B51-B5DF2ED6B7CD.root
+        - root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL18NanoAODv2/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v15_L1v1-v1/40000/9C88D6E1-C197-4045-A5D4-CF9C5C786DBB.root
+    metadata:
+        era: '2018'
+        is_data: False
