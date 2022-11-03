@@ -42,8 +42,8 @@ class rochester_correction:
             corrections = ak.unflatten(corrections, ak.num(muons.pt, axis=1))
             errors = ak.unflatten(errors, ak.num(muons.pt, axis=1))
         else:
-            corrections = rochester.kScaleDT(muons.charge, muons.pt, muons.eta, muons.phi)
-            errors = rochester.kScaleDTerror(muons.charge, muons.pt, muons.eta, muons.phi)
+            corrections = self.rochester.kScaleDT(muons.charge, muons.pt, muons.eta, muons.phi)
+            errors = self.rochester.kScaleDTerror(muons.charge, muons.pt, muons.eta, muons.phi)
     
         pt_nom = muons.pt * corrections
         pt_err = muons.pt * errors

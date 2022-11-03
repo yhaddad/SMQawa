@@ -7,3 +7,13 @@ EWK_ZZ2l2nu:
     metadata:
         era: '2018'
         is_data: False
+EGamma_Run2018A-UL2018_MiniAODv2_NanoAODv9-v1:
+    files:
+        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/F8F84CA2-7E90-2D45-98B0-2773BCDCEF1D.root
+        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/EB703433-936F-F942-9341-635CB46ADD71.root
+        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/95A159AA-5B87-DA42-B1C9-DCC030E5A0FE.root
+        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/8FB5FED6-0D24-8F44-B7E3-25CE15D5E7E8.root
+        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/965CAD39-753A-5D45-B477-CED9B3A7F41E.root
+    metadata:
+        era: '2018'
+        is_data: True

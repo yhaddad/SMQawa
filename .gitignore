@@ -6,8 +6,7 @@ __pycache__/
 # C extensions
 *.so
 *~
-*.pyc
-*.root 
+*.pyc 
 *.d 
 *.pcm
 
@@ -36,6 +35,6 @@ MANIFEST
 
 *.html
 *.log
-*.root
 *.pkl
 *.pyc
+.ipynb_checkpoints
