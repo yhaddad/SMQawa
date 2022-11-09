@@ -1,3 +1,4 @@
+
 import awkward as ak
 import numpy as np
 import uproot
@@ -16,7 +17,7 @@ from qawa.roccor import rochester_correction
 from qawa.applyGNN import applyGNN
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
-from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
+from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules,getPhotonTrigPrescale
 
 def build_leptons(muons, electrons):
     # select tight/loose muons
@@ -68,18 +69,30 @@ def build_htaus(tau, lepton):
     )
     return tau[base & ~overlap_leptons]
 
-def build_photons(photons):
+def build_photons(photons): 
     base = (
-        (photon.pt          > 20. ) & 
-        (np.abs(photon.eta) < 2.5 )
+        (photons.pt          > 20. ) & 
+        (np.abs(photons.eta) < 2.5 )
     )
+
+    dd_photons_base = (
+        (photons.pt          > 55. ) &
+        (np.abs(photons.eta) <= 2.5 ) &
+        (~(photons.pixelSeed)) &
+        (photons.electronVeto) &
+        (photons.sieie >= 0.001) &
+        (photons.cutBased ==3)
+    )
+    
     # MVA ID
-    tight_photons = photons[base & photon.mvaID_WP90]
-    loose_photons = photons[base & photon.mvaID_WP80 & ~photon.mvaID_WP90]
+    tight_photons = photons[base & photons.mvaID_WP90]
+    loose_photons = photons[base & photons.mvaID_WP80 & ~photons.mvaID_WP90]
+    dd_photons_loose = photons[base & photons.cutBased ==3]
+    dd_photons = photons[dd_photons_base]
     
     # cut based ID
-    return tight_photons, loose_photons
-
+    #return tight_photons, loose_photons, dd_photons_loose, dd_photons
+    return tight_photons, loose_photons, dd_photons_loose, dd_photons
 
 class zzinc_processor(processor.ProcessorABC):
     def __init__(self,
@@ -122,6 +135,11 @@ class zzinc_processor(processor.ProcessorABC):
             
         with open(f'{_data_path}/eft-names.dat') as eft_file:
             self._eftnames = [n.strip() for n in eft_file.readlines()]
+            
+        #adding prescale value to triggers
+        with open(f'{_data_path}/Photon/{era}-photon.yaml') as ftrigpre:
+            self._triggers_prescale = yaml.load(ftrigpre, Loader=yaml.FullLoader)
+
             
         self.build_histos = lambda: {
             'dilep_mt': hist.Hist(
@@ -173,6 +191,7 @@ class zzinc_processor(processor.ProcessorABC):
         if is_data:
             selection.add('lumimask', self._json[self._era](event.run, event.luminosityBlock))
             selection.add('triggers', trigger_rules(event, self._triggers, self._era))
+
         else:
             selection.add('lumimask', np.ones(len(event), dtype='bool'))
             selection.add('triggers', np.ones(len(event), dtype='bool'))
@@ -190,7 +209,25 @@ class zzinc_processor(processor.ProcessorABC):
             event.Flag.BadChargedCandidateFilter & 
             event.Flag.BadPFMuonFilter
         )
-        
+
+
+        #photon CR
+        tight_photons, loose_photons, dd_photons_loose, dd_photons = build_photons(event.Photon)
+        #tight_photons,loose_photons = build_photons(event.Photon)
+        lead_photon=ak.firsts(dd_photons)
+        print("lead photon",len(lead_photon), len(event.run), len(event.luminosityBlock))
+        print("lead pt",lead_photon.pt[:10].tolist())
+
+        print(lead_photon[:50].tolist())
+        #lead_photon=ak.firsts(dd_photons)
+        if(len(lead_photon)>0):
+            #event.prescaleweight=getPhotonTrigPrescale(event.run, event.luminosityBlock, self._triggers_prescale, lead_photon.pt)
+            event.prescaleweight=getPhotonTrigPrescale(event.run, event.luminosityBlock)
+
+
+        #IDscale factor
+        #need to get SF from https://github.com/jdulemba/NanoAOD_Analyses/blob/new_kfactor_files/Analysis/python/LeptonSF.py
+
         # Apply rochester_correction
         muon=event.Muon
         muon_pt,muon_pt_roccorUp,muon_pt_roccorDown=rochester_correction(is_data).apply_rochester_correction (muon)
@@ -337,7 +374,7 @@ class zzinc_processor(processor.ProcessorABC):
         selection.add('dijet_mass_bin1', ak.fill_none((dijet_mass >= 800) & (dijet_mass < 1200), False))
         selection.add('dijet_mass_bin2', ak.fill_none((dijet_mass >= 1200), False))
         selection.add('dijet_deta'     , ak.fill_none(dijet_deta > 2.5, False))
-        
+
         event['lead_jet_pt'] = lead_jet.pt
         event['lead_jet_eta'] = lead_jet.eta
         event['lead_jet_phi'] = lead_jet.phi
@@ -354,6 +391,8 @@ class zzinc_processor(processor.ProcessorABC):
         event['gnn_score'] = applyGNN(event, model_2j, model_3j).get_nnscore()
         
         # Now adding weights
+        if is_data:
+            weights.add('prescaleweight', event.prescaleweight)
         if not is_data:
             weights.add('genweight', event.genWeight)
             self._btag.append_btag_sf(jets, weights)

@@ -90,9 +90,9 @@ def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
 
 def trigger_rules(event, rules:dict, era:str='2018'):
     ds_name = {
-        '2016' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'SingleElectron', 'MuonEG'],
-        '2017' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'SingleElectron', 'MuonEG'],
-        '2018' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'MuonEG']
+        '2016' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'SingleElectron', 'MuonEG', 'Photon'],
+        '2017' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'SingleElectron', 'MuonEG','Photon'],
+        '2018' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'MuonEG','Photon']
     }
     
     _pass = np.zeros(len(event), dtype='bool')
@@ -438,7 +438,70 @@ class ewk_corrector:
             weights.add('kEW', weight, weight*ewk_uncert, weight/ewk_uncert)
             weights.add('kNNLO', knnlo)
             
+
+
+def getPhotonTrigger(photonpt):
+    trigname="NULL"
+    selectedtrig=-1
+    for i in range(ntrigs):
+        if photonpt >= photrignames[i]["threshold"] :
+            selectedtrig=i
+    if selectedtrig ==-1: trigname = "NULL"
+    if selectedtrig >=0: trigname=photrignames[selectedtrig]["name"]
+
+    return trigname
+
+#def getPhotonTrigPrescale(run=277069, lumi= -96, photrigdict:dict,pt):
+def getPhotonTrigPrescale(run=277069, lumi= -96, pt):
+    pt[run==277069]
+    #photrignames = photrigdict['photon_triggers']['triggers']
+    #prescales=photrigdict['photon_triggers']['prescale']
+    prescale =1
+    #trigname=  (getPhotonTrigger(pt))
+    #if(trigname == "NULL"):
+    #    prescale = 1
+    #else:
+    #    LSList= (prescales[trigname][run].keys())
+    #    LSList.sort()
+    #    newlumi=lumi
+    #    if lumi>LSList[-1]: newlumi=LSList[-1]
+    #    for i in range(len(LSList)-1):
+    #        if lumi <= LSList[i+1]:
+    #            newlumi=LSList[i]
+    #            break
+    #    if lumi <LSList[0]:
+    #        prescale = 1
+    #        return(prescale)
+    #    prescale =prescales[trigname][run][newlumi]
+    return(prescale)        
         
         
         
-        
+#phhoton SF
+#harcoded for now
+era='2018'
+
+from coffea.lookup_tools import extractor
+ext = extractor()
+if '2016' in era:
+    if('APV' in era):
+        sff="egammaEffi_EGM2D_Pho_Tight_UL16.root"
+    else :
+        sff ="egammaEffi_EGM2D_Pho_Tight_UL16_postVFP.root"
+
+if '2017' in era :
+     sff ="egammaEffi_EGM2D_Pho_Tight_UL17.root"
+     
+if '2018' in era :
+    sff ="egammaEffi_EGM2D_Pho_Tight_UL18.root"
+
+
+
+ext.add_weight_sets(["EGamma_SF2D_T EGamma_SF2D qawa/data/Photon/"+sff,
+                     "EGamma_SF2D_T_err EGamma_SF2D_error qawa/data/Photon/"+sff])
+
+ext.finalize()
+evaluator = ext.make_evaluator()
+for key in evaluator.keys():
+    print("\t", key)
+print("testSF2d:", evaluator['EGamma_SF2D_T'])

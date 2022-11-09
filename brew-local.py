@@ -64,7 +64,7 @@ def main():
             #"sumw": sumw_out[key]
     }
 
-    with open("histogram-zz2l2nu-ristretto-test.pkl", "wb") as f:
+    with open("histogram-zz2l2nu-ristretto-test_photon.pkl", "wb") as f:
         pickle.dump(bh_output, f)
 
 
