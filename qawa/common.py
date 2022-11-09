@@ -98,7 +98,7 @@ def trigger_rules(event, rules:dict, era:str='2018'):
     _pass = np.zeros(len(event), dtype='bool')
     _veto = np.zeros(len(event), dtype='bool')
     
-    _ds = event.metadata['dataset']
+    _ds = event.metadata['dataset'].split('_')[0]
     
     for t in rules[f'Run{era}.{_ds}']['pass']:
         if t in event.HLT.fields:

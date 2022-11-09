@@ -492,6 +492,7 @@ class zzinc_processor(processor.ProcessorABC):
         
     def process(self, event: processor.LazyDataFrame):
         dataset_name = event.metadata['dataset']
+        print (event.metadta[filename])
         is_data = event.metadata.get("is_data")
         
         if is_data:
@@ -502,7 +503,9 @@ class zzinc_processor(processor.ProcessorABC):
                 j_mask = ak.where((jets.phi > -1.57) & (jets.phi < -0.87) &
                                   (jets.eta > -2.50) & (jets.eta <  1.30) & 
                                   _runid, 0.8, 1)
-            
+                met = event.MET
+                event['met_pt'] = met.pt
+                event['met_phi'] = met.phi            
                 jets['pt']   = j_mask * jets.pt
                 jets['mass'] = j_mask * jets.mass
                 event = ak.with_field(event, jets, 'Jet')

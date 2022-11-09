@@ -1,5 +1,6 @@
 from coffea import processor
 from coffea import nanoevents
+from qawa.coffea_sumw import coffea_sumw
 from qawa.process.zz2l2nu_vbs import *
 import yaml
 import argparse
@@ -15,9 +16,10 @@ def main():
     options  = parser.parse_args()
 
     samples = {}
-    with open('./qawa/data/input-NanoAOD-2018UL-test.yaml') as s_file:
+    with open('./qawa/data/datasetUL2018.yaml') as s_file:
         samples = yaml.full_load(s_file)
 
+#    print(samples)
     #trigger_sf_map = np.load('./data/trigger-sf-table-2018.npy')
 
 
@@ -43,17 +45,18 @@ def main():
                 "workers": 5,
             },
     )
-    #
-    # sumw_out = processor.run_uproot_job(
-    #         samples,
-    #         treename="Runs",
-    #         processor_instance=coffea_sumw(),
-    #         executor=processor.futures_executor,
-    #         executor_args={
-    #             "schema": nanoevents.BaseSchema,
-    #             "workers": options.jobs
-    #         },
-    # )
+    
+    sumw_out = processor.run_uproot_job(
+            samples,
+            treename="Runs",
+            processor_instance=coffea_sumw(),
+            executor=processor.futures_executor,
+            executor_args={
+                "schema": nanoevents.BaseSchema,
+                "workers": options.jobs,
+                "skipbadfiles":True,
+            },
+    )
     
     # append the sumw on the boost histograms
     bh_output = {}
@@ -61,7 +64,7 @@ def main():
     for key, content in vbs_out.items():
         bh_output[key] = {
             "hist": content,
-            #"sumw": sumw_out[key]
+            "sumw": sumw_out[key]
     }
 
     with open("histogram-zz2l2nu-ristretto-test_photon.pkl", "wb") as f:

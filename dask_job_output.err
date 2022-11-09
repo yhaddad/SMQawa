@@ -1,0 +1,23 @@
+2022-11-03 14:02:16,906 - distributed.worker - INFO -       Start worker at: tcp://188.185.105.23:10000
+2022-11-03 14:02:16,906 - distributed.worker - INFO -          Listening to: tcp://188.185.105.23:10000
+2022-11-03 14:02:16,906 - distributed.worker - INFO -          dashboard at:       188.185.105.23:40506
+2022-11-03 14:02:16,906 - distributed.worker - INFO - Waiting to connect to:  tcp://137.138.33.219:8786
+2022-11-03 14:02:16,907 - distributed.worker - INFO - -------------------------------------------------
+2022-11-03 14:02:16,907 - distributed.worker - INFO -               Threads:                          1
+2022-11-03 14:02:16,907 - distributed.worker - INFO -                Memory:                   9.31 GiB
+2022-11-03 14:02:16,907 - distributed.worker - INFO -       Local Directory: /pool/condor/dir_18568/dask-worker-space/worker-7mxvzsdl
+2022-11-03 14:02:16,907 - distributed.worker - INFO - -------------------------------------------------
+2022-11-03 14:02:19,949 - distributed.worker - INFO -         Registered to:  tcp://137.138.33.219:8786
+2022-11-03 14:02:19,949 - distributed.worker - INFO - -------------------------------------------------
+2022-11-03 14:02:19,950 - distributed.core - INFO - Starting established connection
+/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/uproot/reading.py:171: FutureWarning: XRootD 5.1.1 is not fully supported; either upgrade to 5.2.0+ or set
+
+    open.defaults["xrootd_handler"] = uproot.MultithreadedXRootDSource
+
+  warnings.warn(message, FutureWarning)
+2022-11-03 14:03:42,484 - distributed.core - INFO - Event loop was unresponsive in Worker for 71.45s.  This is often caused by long-running GIL-holding functions or moving large chunks of data. This can cause timeouts and instability.
+2022-11-03 14:07:33,059 - distributed.utils_perf - INFO - full garbage collection released 96.95 MiB from 1044621 reference cycles (threshold: 9.54 MiB)
+2022-11-03 14:08:11,620 - distributed.utils_perf - INFO - full garbage collection released 44.58 MiB from 1742396 reference cycles (threshold: 9.54 MiB)
+2022-11-03 14:08:40,015 - distributed.utils_perf - INFO - full garbage collection released 36.94 MiB from 1756392 reference cycles (threshold: 9.54 MiB)
+2022-11-03 14:09:32,515 - distributed.utils_perf - INFO - full garbage collection released 59.36 MiB from 1744974 reference cycles (threshold: 9.54 MiB)
+2022-11-03 14:09:57,506 - distributed.utils_perf - INFO - full garbage collection released 43.07 MiB from 1739934 reference cycles (threshold: 9.54 MiB)

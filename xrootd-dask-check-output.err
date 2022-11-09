@@ -1,0 +1,69 @@
+2022-10-31 12:47:28,078 - distributed.worker - INFO -       Start worker at: tcp://128.142.248.27:10000
+2022-10-31 12:47:28,079 - distributed.worker - INFO -          Listening to: tcp://128.142.248.27:10000
+2022-10-31 12:47:28,079 - distributed.worker - INFO -          dashboard at:       128.142.248.27:37392
+2022-10-31 12:47:28,079 - distributed.worker - INFO - Waiting to connect to:  tcp://137.138.31.168:8786
+2022-10-31 12:47:28,079 - distributed.worker - INFO - -------------------------------------------------
+2022-10-31 12:47:28,079 - distributed.worker - INFO -               Threads:                          1
+2022-10-31 12:47:28,079 - distributed.worker - INFO -                Memory:                   1.86 GiB
+2022-10-31 12:47:28,079 - distributed.worker - INFO -       Local Directory: /pool/condor/dir_173507/dask-worker-space/worker-38ainh4m
+2022-10-31 12:47:28,080 - distributed.worker - INFO - -------------------------------------------------
+2022-10-31 12:47:28,083 - distributed.worker - INFO - Stopping worker at tcp://128.142.248.27:10000
+2022-10-31 12:47:28,083 - distributed.worker - INFO - Closed worker has not yet started: Status.undefined
+2022-10-31 12:47:28,152 - distributed.dask_worker - INFO - End worker
+Traceback (most recent call last):
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/worker.py", line 1376, in start
+    await self._register_with_scheduler()
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/worker.py", line 1034, in _register_with_scheduler
+    comm = await connect(self.scheduler.address, **self.connection_args)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/comm/core.py", line 289, in connect
+    comm = await asyncio.wait_for(
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/asyncio/tasks.py", line 466, in wait_for
+    await waiter
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/asyncio/tasks.py", line 490, in wait_for
+    return fut.result()
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/core.py", line 289, in _
+    await asyncio.wait_for(self.start(), timeout=timeout)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/asyncio/tasks.py", line 492, in wait_for
+    raise exceptions.TimeoutError() from exc
+asyncio.exceptions.TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/cli/dask_worker.py", line 495, in <module>
+    go()  # pragma: no cover
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/cli/dask_worker.py", line 491, in go
+    main()
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/click/core.py", line 1128, in __call__
+    return self.main(*args, **kwargs)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/click/core.py", line 1053, in main
+    rv = self.invoke(ctx)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/click/core.py", line 1395, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/click/core.py", line 754, in invoke
+    return __callback(*args, **kwargs)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/cli/dask_worker.py", line 477, in main
+    loop.run_sync(run)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/tornado/ioloop.py", line 530, in run_sync
+    return future_cell[0].result()
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/cli/dask_worker.py", line 471, in run
+    await asyncio.gather(*nannies)
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/asyncio/tasks.py", line 688, in _wrap_awaitable
+    return (yield from awaitable.__await__())
+  File "/afs/cern.ch/user/y/yixiao/.conda/envs/latte/lib/python3.9/site-packages/distributed/core.py", line 293, in _
+    raise TimeoutError(
+asyncio.exceptions.TimeoutError: Worker failed to start in 10 seconds
