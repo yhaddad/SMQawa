@@ -1,0 +1,12 @@
+prune *
+graft src
+
+include LICENSE README.md setup.py setup.cfg
+global-exclude __pycache__ *.py[cod] .*
+
+include runner.py
+include *.ipynb
+include *.json
+include *.yaml
+include *.txt
+include *.md
