@@ -7,7 +7,6 @@ from termcolor import colored
 
 logging.basicConfig(level=logging.INFO)
 
-
 def main():
     parser = argparse.ArgumentParser(description='Famous Submitter')
     parser.add_argument("-i"   , "--input" , type=str, default="input"  , required=True)
@@ -70,12 +69,12 @@ def main():
             logging.info(
                 "-- {:62s}".format((sample_name[:60] + '..') if len(sample_name)>60 else sample_name) +
                 (
-                    colored(f" --> {n_jobs} : completed", "green") if n_jobs==len(job_finished) else colored(
-                        f" --> {n_jobs} : ({len(job_running)}) running", 'yellow'
+                    colored(f" --> {n_jobs:5d} : completed", "green") if n_jobs==len(job_finished) else colored(
+                        f" --> {n_jobs:5d} : {len(job_running):5d}", 'yellow'
                     )+colored(
-                        f" ({n_jobs-len(job_failed)-len(job_running)})", "green"
+                        f"{n_jobs-len(job_failed)-len(job_running):5d}", "green"
                     )+colored(
-                        f" ({len(job_failed)}) failed", 'red'
+                        f"{len(job_failed):5d}", 'red'
                     )
                 )
             )
@@ -89,8 +88,20 @@ def main():
             
             if options.runlocal and len(job_failed)>0: 
                 shutil.copyfile('brewer-remote.py', jobs_dir+'/brewer-remote.py')
-                for jid,file in resubmit_list.items():
-                    logging.info(f'python brewer-remote.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={file}')
+                for jid,infile in resubmit_list.items():
+                    condor_sub = open(jobs_dir + "/condor.sub").readlines()
+                    for il, line in enumerate(condor_sub):
+                        if 'arguments' in line.lower():
+                            condor_sub[il] = f"arguments             = {jid} {infile}\n"
+                        if 'queue' in line.lower():
+                            condor_sub[il] = "queue"
+                    with open(jobs_dir + f'/condor_resub_{jid}.sub', 'w') as new_condor:
+                        new_condor.writelines(condor_sub)
+                        new_condor.close()
+
+                    htc = os.popen("condor_submit " + os.path.join(jobs_dir, f"condor_resub_{jid}.sub")).read()
+                    logging.info(htc)
+                    
 
             if options.resubmit and len(job_failed)>0:
                 attempt = 1
@@ -112,7 +123,7 @@ def main():
                         if os.WEXITSTATUS(status) == 0:
                             redone_proxy = True
                 
-                    shutil.copyfile('/tmp/'+proxy_base,  proxy_copy)
+                    shutil.copyfile('/tmp/'+proxy_base,  iroxy_copy)
 
 
                 htc = os.popen("condor_submit " + os.path.join(jobs_dir, f"condor_attempt_{attempt}.sub")).read()
