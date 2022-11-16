@@ -13,6 +13,8 @@ def main():
     parser.add_argument("-i"   , "--input" , type=str, default="input"  , required=True)
     parser.add_argument("-t"   , "--tag"   , type=str, default="algiers", required=True)
     parser.add_argument("-isMC", "--isMC"  , type=int, default=1        , help="")
+    parser.add_argument("--era", type=str, default='2018')
+    parser.add_argument("--runlocal", action='store_true')
     parser.add_argument("--resubmit", action="store_true", help="resubmit failed jobs")
     options = parser.parse_args()
 
@@ -56,6 +58,7 @@ def main():
             job_running = []
             job_failed = []
             job_finished = []
+            resubmit_list = {}
             for idf, rfn in enumerate(input_root_files):
                 if rfn in condor_status:
                     job_running.append(rfn)
@@ -63,17 +66,20 @@ def main():
                     job_finished.append(rfn)
                 else:
                     job_failed.append(rfn)
-            
+                    resubmit_list[idf] = rfn
             logging.info(
                 "-- {:62s}".format((sample_name[:60] + '..') if len(sample_name)>60 else sample_name) +
                 (
                     colored(f" --> {n_jobs} : completed", "green") if n_jobs==len(job_finished) else colored(
                         f" --> {n_jobs} : ({len(job_running)}) running", 'yellow'
                     )+colored(
+                        f" ({n_jobs-len(job_failed)-len(job_running)})", "green"
+                    )+colored(
                         f" ({len(job_failed)}) failed", 'red'
                     )
                 )
             )
+
             if len(job_running)>0:
                 for rfn in job_running:
                     logging.debug(colored(f'running : {rfn}', 'yellow'))
@@ -81,13 +87,13 @@ def main():
                 for rfn in job_failed:
                     logging.debug(colored(f'failed  : {rfn}', 'red'))
             
+            if options.runlocal and len(job_failed)>0: 
+                shutil.copyfile('brewer-remote.py', jobs_dir+'/brewer-remote.py')
+                for jid,file in resubmit_list.items():
+                    logging.info(f'python brewer-remote.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={file}')
 
             if options.resubmit and len(job_failed)>0:
                 attempt = 1
-                #while os.path.exists(f'inputfiles-attempt-{attempt}.dat'):
-                #    logging.info(f'attempt {attempt} exist !')
-                #    attempt += 1
-                
                 with open(os.path.join(jobs_dir, f"inputfiles-attempt-{attempt}.dat"), 'w') as infiles:
                     infiles.write('\n'.join(job_failed))
                     infiles.close()

@@ -90,7 +90,7 @@ def main():
 
     vbs_out = processor.run_uproot_job(
         samples,
-        processor_instance=zzinc_processor(),
+        processor_instance=zzinc_processor(era=options.era),
         treename='Events',
         executor=processor.futures_executor,
         executor_args={
