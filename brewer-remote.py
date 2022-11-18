@@ -11,12 +11,17 @@ import numpy as np
 
 np.seterr(all='ignore')
 
+uproot.open.defaults["xrootd_handler"] = uproot.source.xrootd.MultithreadedXRootDSource
+uproot.open.defaults["timeout"] = 60 * 5 # wait more
+
+
 def validate_input_file(nanofile):
     pfn = nanofile
     pfn=re.sub("\n","",pfn)
     aliases = [
         "root://eoscms.cern.ch/",
         "root://xrootd-cms.infn.it/",
+        "root://cmsxrootd.fnal.gov/"
         "root://cms-xrd-global.cern.ch/",
     ]
 
@@ -65,7 +70,6 @@ def main():
     ---------------------------
     """)
 
-    uproot.open.defaults["xrootd_handler"] = uproot.source.xrootd.MultithreadedXRootDSource
     
     samples ={
         dataset:{
