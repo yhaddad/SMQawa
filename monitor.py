@@ -112,6 +112,8 @@ def main():
                         for il, line in enumerate(condor_sub):
                             if 'arguments' in line.lower():
                                 condor_sub[il] = f"arguments             = {jid} {infile}\n"
+                            if 'jobflavour' in line.lower():
+                                condor_sub [il] = '+JobFlavour           = "workday"'
                             if 'queue' in line.lower():
                                 condor_sub[il] = "queue"
                         with open(jobs_dir + f'/condor_resub_{jid}.sub', 'w') as new_condor:

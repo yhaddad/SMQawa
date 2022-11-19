@@ -54,23 +54,11 @@ def main():
     
     options = parser.parse_args()
     dataset = options.infile.split('/')[4]
-    options.infile = validate_input_file(options.infile)
+    #options.infile = validate_input_file(options.infile)
     
     era=options.era
     is_data = not options.isMC
-
-    print(f"""
-    ---------------------------
-    -- options  = {options}
-    -- is MC    = {options.isMC}
-    -- jobNum   = {options.jobNum}
-    -- era      = {options.era}
-    -- in file  = {options.infile}
-    -- dataset  = {dataset}
-    ---------------------------
-    """)
-
-    
+    """
     samples ={
         dataset:{
             'files': [options.infile], 
@@ -111,6 +99,75 @@ def main():
     }
     with gzip.open("histogram_%s.pkl.gz" % str(options.jobNum), "wb") as f:
         pickle.dump(bh_output, f)
+    """
+
+    failed = True
+    ixrd = 0
+    aliases = [
+        "root://xrootd-cms.infn.it/",
+        "root://cmsxrootd.fnal.gov/",
+        "root://cms-xrd-global.cern.ch/",
+    ]
+    while failed:
+        try:
+            samples ={
+                dataset:{
+                    'files': [aliases[ixrd] + options.infile],
+                    'metadata':{
+                        'era': era,
+                        'is_data': is_data
+                    }
+                }
+            }
+            
+
+            print(
+                "---------------------------"
+                f"-- options  = {options}"
+                f"-- is MC    = {options.isMC}"
+                f"-- jobNum   = {options.jobNum}"
+                f"-- era      = {options.era}"
+                f"-- in file  = {aliases[ixrd] + options.infile}"
+                f"-- dataset  = {dataset}"
+                "---------------------------"
+            )
+
+            sumw_out = processor.run_uproot_job(
+                samples,
+                treename="Runs",
+                processor_instance=coffea_sumw(),
+                executor=processor.futures_executor,
+                executor_args={
+                    "schema" : nanoevents.BaseSchema,
+                    "workers": 8,
+                },
+            )
+
+            vbs_out = processor.run_uproot_job(
+                samples,
+                processor_instance=zzinc_processor(era=options.era),
+                treename='Events',
+                executor=processor.futures_executor,
+                executor_args={
+                    "schema" : nanoevents.NanoAODSchema,
+                    "workers": 8,
+                },
+                #chunksize=50000,
+            )
+            bh_output = {}
+            for key, content in vbs_out.items():
+                bh_output[key] = {
+                    "hist": content,
+                    "sumw": sumw_out[key],
+            }
+            with gzip.open("histogram_%s.pkl.gz" % str(options.jobNum), "wb") as f:
+                pickle.dump(bh_output, f)
+            failed=False
+        except:
+            failed=True
+            ixrd += 1
+            if ixrd > (len(aliases) - 1):
+                break
 
 if __name__ == "__main__":
     main()
