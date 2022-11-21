@@ -70,7 +70,7 @@ def main():
     parser.add_argument("-t"   , "--tag"   , type=str, default="algiers"  , help="production tag", required=True)
     parser.add_argument("-isMC", "--isMC"  , type=int, default=1          , help="")
     parser.add_argument("-q"   , "--queue" , type=str, default="longlunch", help="")
-    parser.add_argument("-e"   , "--era"   , type=str, default="2017"     , help="")
+    parser.add_argument("-e"   , "--era"   , type=str, default="2018"     , help="")
     parser.add_argument("-f"   , "--force" , action="store_true"          , help="recreate files and jobs")
     parser.add_argument("-s"   , "--submit", action="store_true"          , help="submit only")
     parser.add_argument("-dry" , "--dryrun", action="store_true"          , help="running without submission")
@@ -81,7 +81,7 @@ def main():
     proxy_base = 'x509up_u{}'.format(os.getuid())
     home_base  = os.environ['HOME']
     proxy_copy = os.path.join(home_base,proxy_base)
-    eosbase = "/eos/cms/store/user/yhaddad/ZZTo2L2Nu/{tag}/{sample}/"
+    eosbase = "/eos/user/y/yixiao/ZZTo2L2Nu/{tag}/{sample}/"
 
     regenerate_proxy = False
     if not os.path.isfile(proxy_copy):
