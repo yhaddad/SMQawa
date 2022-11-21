@@ -184,18 +184,10 @@ class zzinc_processor(processor.ProcessorABC):
             event.Flag.globalTightHalo2016Filter &
             event.Flag.BadChargedCandidateFilter & 
             event.Flag.BadPFMuonFilter
-        )
-        
-        # Apply rochester_correction
-        muon=event.Muon
-        muon_pt,muon_pt_roccorUp,muon_pt_roccorDown=rochester_correction(is_data).apply_rochester_correction (muon)
-        muon['pt'] = muon_pt
-        muon['pt_roccorUp'] = muon_pt_roccorUp
-        muon['pt_roccorDown'] = muon_pt_roccorDown
-        
+        ) 
         
         tight_lep, loose_lep = build_leptons(
-            muon,
+            event.Muon,
             event.Electron
         )
         
@@ -457,8 +449,8 @@ class zzinc_processor(processor.ProcessorABC):
                                   (jets.eta > -2.50) & (jets.eta <  1.30) & 
                                   _runid, 0.8, 1)
                 met = event.MET
-                event['met_pt'] = met.pt
-                event['met_phi'] = met.phi            
+                #event['met_pt'] = met.pt
+                #event['met_phi'] = met.phi            
                 jets['pt']   = j_mask * jets.pt
                 jets['mass'] = j_mask * jets.mass
                 event = ak.with_field(event, jets, 'Jet')
@@ -484,25 +476,50 @@ class zzinc_processor(processor.ProcessorABC):
         # JES/JER corrections
         jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
         met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
+         
+        # Apply rochester_correction
+        muon=event.Muon
+        muonEnUp=event.Muon
+        muonEnDown=event.Muon
+        muon_pt,muon_pt_roccorUp,muon_pt_roccorDown=rochester_correction(is_data).apply_rochester_correction (muon)
         
-        event['met_pt'] = met.pt
-        event['met_phi'] = met.phi
+        muon['pt'] = muon_pt
+        muonEnUp['pt'] = muon_pt_roccorUp
+        muonEnDown['pt'] = muon_pt_roccorDown 
+        event = ak.with_field(event, muon, 'Muon')
         
+        # Electron corrections
+        electronEnUp=event.Electron
+        electronEnDown=event.Electron
+
+        electronEnUp  ['pt'] = event.Electron['pt'] + event.Electron.energyErr/np.cosh(event.Electron.eta)
+        electronEnDown['pt'] = event.Electron['pt'] - event.Electron.energyErr/np.cosh(event.Electron.eta)
         
-        
-        
+        print("muons  : ", ak.firsts(muon.pt    )[ak.num(muon)>0])
+        print("mu   up: ", ak.firsts(muonEnUp.pt)[ak.num(muon)>0])
+        print("mu down: ", ak.firsts(muonEnDown.pt)[ak.num(muon)>0])
+        print(" -------------- ")
+        print("electron : ", ak.firsts(event.Electron.pt)[ak.num(event.Electron)>0])
+        print("      up : ", ak.firsts(electronEnUp.pt)  [ak.num(event.Electron)>0])
+        print("    down : ", ak.firsts(electronEnDown.pt)[ak.num(event.Electron)>0])
+        print(" -------------- ")
+            
         # define all the shifts
         shifts = [
-            ({"Jet": jets               , "MET": met                }, None     ),
-            ({"Jet": jets.JES_Total.up  , "MET": met.JES_Total.up   }, "JESUp"  ),
-            ({"Jet": jets.JES_Total.down, "MET": met.JES_Total.down }, "JESDown"),
-            ({"Jet": jets.JER.up        , "MET": met.JER.up         }, "JERUp"  ),
-            ({"Jet": jets.JER.down      , "MET": met.JER.down       }, "JERDown"),
-            ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.up      }, "UESUp"  ),
-            ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.down    }, "UESDown"),
+            # Jets
+            ({"Jet": jets               , "MET": met               }, None     ),
+            ({"Jet": jets.JES_Total.up  , "MET": met.JES_Total.up  }, "JESUp"  ),
+            ({"Jet": jets.JES_Total.down, "MET": met.JES_Total.down}, "JESDown"),
+            ({"Jet": jets.JER.up        , "MET": met.JER.up        }, "JERUp"  ),
+            ({"Jet": jets.JER.down      , "MET": met.JER.down      }, "JERDown"),
+            ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.up     }, "UESUp"  ),
+            ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.down   }, "UESDown"), 
+            # Leptons + MET shift (FIXME: shift to be added)
+            ({"Electron": electronEnUp  }, "ElectronEnUp"  ),
+            ({"Electron": electronEnDown}, "ElectronEnDown"),
+            ({"Muon": muonEnUp  }, "MuonRocUp"),
+            ({"Muon": muonEnDown}, "MuonRocDown"),
         ]
-            
-        
         
         shifts = [
             self.process_shift(
