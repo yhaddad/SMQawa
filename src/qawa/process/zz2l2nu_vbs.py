@@ -80,7 +80,7 @@ def build_photons(photons):
 
 
 class zzinc_processor(processor.ProcessorABC):
-    def __init__(self,era: str = '2018'):
+    def __init__(self, era: str ='2018'):
         self._era = era
         
         jec_tag = ''
@@ -221,10 +221,13 @@ class zzinc_processor(processor.ProcessorABC):
         event['ngood_jets']  = ngood_jets
         
         selection.add('0bjets', ngood_bjets ==0 )
-        selection.add('1bjets', ngood_bjets >=0 ) # at least
+        selection.add('0bjets_inc', ngood_bjets >=0 ) # at least
+        selection.add('1bjets_inc', ngood_bjets >=1 ) # at least
         selection.add('0njets', ngood_jets  ==0 )
         selection.add('1njets', ngood_jets  ==1 )
-        selection.add('2njets', ngood_jets  >=2 ) # at least
+        selection.add('01njets', ngood_jets  <=1 )
+        selection.add('012njets', ngood_jets  <=2 )
+        selection.add('2njets_inc', ngood_jets  >=2 ) # at least
         selection.add('0htaus', nhtaus_lep  ==0 ) # veto hadronic taus
         
         # lepton quantities
@@ -247,7 +250,6 @@ class zzinc_processor(processor.ProcessorABC):
         dilep_p4 = (lead_lep + subl_lep)
         dilep_m  = dilep_p4.mass
         dilep_pt = dilep_p4.pt
-        delta_phi_ll_met = dilep_p4.delta_phi(event.MET)
         
         # high level observables
         p4_met = ak.zip(
@@ -299,13 +301,20 @@ class zzinc_processor(processor.ProcessorABC):
         
         
         # kinematic selections
-        selection.add('dilep_pt'   , ak.fill_none(dilep_pt > 55, False))
+        selection.add('dilep_pt_30'   , ak.fill_none(dilep_pt > 30, False))
+        selection.add('dilep_pt_45'   , ak.fill_none(dilep_pt > 45, False))
+        selection.add('dilep_pt_50'   , ak.fill_none(dilep_pt > 50, False))
+        selection.add('dilep_pt_60'   , ak.fill_none(dilep_pt > 60, False))
         selection.add('dilep_m'    , ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
-        selection.add('met'        , ak.fill_none(p4_met.pt > 100, False))
-        selection.add('low_met'    , ak.fill_none((p4_met.pt> 50) & (p4_met.pt<100), False))
+        selection.add('met_50'        , ak.fill_none(p4_met.pt > 50, False))
+        selection.add('met_70'        , ak.fill_none(p4_met.pt > 70, False))
+        selection.add('met_100'        , ak.fill_none(p4_met.pt > 100, False))
+        selection.add('met_50_100'    , ak.fill_none((p4_met.pt> 50) & (p4_met.pt<100), False))
         selection.add('dphi_met_ll', ak.fill_none(np.abs(dphi_met_ll) > 0.5, False) )
-        selection.add('emu_met'    , ak.fill_none(emu_met.pt > 70, False))
-        selection.add('balance'    , ak.fill_none((scalar_balance>0.4) & (scalar_balance<1.8), False))
+        selection.add('emu_met_70'    , ak.fill_none(emu_met.pt > 70, False))
+        selection.add('scalar_balance'    , ak.fill_none((scalar_balance>0.4) & (scalar_balance<1.8), False))
+        selection.add('vector_balance'    , ak.fill_none((np.abs(vector_balance<0.4)), False)
+        selection.add('dR_ll'    , ak.fill_none(dR_ll < 1.8, False))
         
         # 2jet and vbs related variables
         lead_jet = ak.firsts(jets)
@@ -318,12 +327,18 @@ class zzinc_processor(processor.ProcessorABC):
         dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
 
+        jmet_dphi  = lead_jet.delta_phi(event.MET)
+
+        selection.add('dijet_mass_lower_200' , ak.fill_none(dijet_mass < 200, False))
         selection.add('dijet_mass_low' , ak.fill_none(dijet_mass > 300, False))
         selection.add('dijet_mass'     , ak.fill_none(dijet_mass > 400, False))
         selection.add('dijet_mass_bin0', ak.fill_none((dijet_mass >= 400) & (dijet_mass < 800 ), False))
         selection.add('dijet_mass_bin1', ak.fill_none((dijet_mass >= 800) & (dijet_mass < 1200), False))
         selection.add('dijet_mass_bin2', ak.fill_none((dijet_mass >= 1200), False))
         selection.add('dijet_deta'     , ak.fill_none(dijet_deta > 2.5, False))
+        selection.add('jmet_dphi'      , ak.fill_none(jmet_dphi > 0.5, False))
+        selection.add('delta_phi_ll_met', ak.fill_none(delta_phi_ll_met > 1.0, False))
+        selection.add('delta_phi_ll_met_lower_1', ak.fill_none(delta_phi_ll_met < 1.0, False))
         
         event['lead_jet_pt'] = lead_jet.pt
         event['lead_jet_eta'] = lead_jet.eta
@@ -366,26 +381,30 @@ class zzinc_processor(processor.ProcessorABC):
         common_sel = ['triggers', 'lumimask', 'metfilter']
         dilep_sel = ['2lep', 'OSSF', 'dilep_m', '0bjets', 'dphi_met_ll', '0bjets', '0htaus']
         channels = {
-            # signal regions
-            'catSR' : common_sel + ['2lep', 'OSSF', 'dilep_m', 'met', 'dphi_met_ll', '0bjets', '0htaus'],
-            'catSR0': common_sel + ['2lep', 'OSSF', 'dilep_m', 'met', 'dphi_met_ll', '0bjets', '0htaus', '0njets'],
-            'catSR1': common_sel + ['2lep', 'OSSF', 'dilep_m', 'met', 'dphi_met_ll', '0bjets', '0htaus', '1njets'],
-            'catSR2': common_sel + ['2lep', 'OSSF', 'dilep_m', 'met', 'dphi_met_ll', '0bjets', '0htaus', '2njets'],
+            # vbs signal regions
+            'catSR0_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus', '0njets'],
+            'catSR1_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus', '1njets'],
+            'catSR2_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus', '2njets_inc'],
+
+            # ZZinc signal regions
+            'catSR_ZZinc' : common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', '0bjets', '0htaus', '01njets'],
+            'catSR0_ZZinc': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', '0bjets', '0htaus', '0njets'],
+            'catSR1_ZZinc': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', '0bjets', '0htaus', '1njets'],
             
             # control regions
-            'catDY': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets'],
-            'cat3L': common_sel + ['3lep', 'OSSF', 'dilep_m', 'emu_met','dphi_met_ll', '0bjets'],
-            'catEM': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets'],
-            'catTT': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets'],
-            'catNR': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets'],
+            'catDY_ZZinc': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_50_100','delta_phi_ll_met_lower_1', '0bjets', '01njets', '0htaus','dR_ll'],
+            'cat3L_ZZinc': common_sel + ['3lep', 'OSSF', 'dilep_m', 'dilep_pt_30', 'emu_met_70', 'vector_balance', '0bjets', '01njets'],
+            'catEM_ZZinc': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', 'met_70', '0bjets','01njets'],
+            'catTT_ZZinc': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', 'met_70', '1bjets_inc', '012njets'],
+            'catNR_ZZinc': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', 'met_70',],
             
             # additional selections
-            'catSR_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'met'    ,'dphi_met_ll', '0bjets', 'dijet_deta', 'dijet_mass'],
-            'catDY_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets', 'dijet_deta', 'dijet_mass'],
-            'catEM_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets', 'dijet_deta', 'dijet_mass'],
-            'cat3L_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets', 'dijet_deta', 'dijet_mass'],
-            'catTT_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets', 'dijet_deta', 'dijet_mass'],
-            'catNR_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'low_met','dphi_met_ll', '0bjets', 'dijet_deta', 'dijet_mass'],
+            'catSR_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus'],
+            'catDY_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_50_100', '0bjets', '2njets_inc', '0htaus', 'dijet_mass_lower_200'],
+            'catEM_VBS': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', 'met_70', '0bjets', '2njets_inc'],
+            'cat3L_VBS': common_sel + ['3lep', 'OSSF', 'dilep_m', 'dilep_pt_30', 'emu_met_70', '0bjets','2njets_inc'],
+            'catTT_VBS': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', '1bjets_inc', '2njets_inc', 'met_70'],
+            'catNR_VBS': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', '2njets_inc', 'met_70'],
             
         }
         
@@ -472,6 +491,7 @@ class zzinc_processor(processor.ProcessorABC):
             era=self._era
         )
         event = ak.with_field(event, met, 'MET')
+		
         
         # JES/JER corrections
         jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])

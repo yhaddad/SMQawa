@@ -81,7 +81,7 @@ def main():
     proxy_base = 'x509up_u{}'.format(os.getuid())
     home_base  = os.environ['HOME']
     proxy_copy = os.path.join(home_base,proxy_base)
-    eosbase = "/eos/cms/store/user/yhaddad/ZZTo2L2Nu/{tag}/{sample}/"
+    eosbase = "/eos/user/y/yixiao/ZZTo2L2Nu/{tag}/{sample}/"
 
     regenerate_proxy = False
     if not os.path.isfile(proxy_copy):
