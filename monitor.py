@@ -7,12 +7,25 @@ from termcolor import colored
 
 logging.basicConfig(level=logging.INFO)
 
+rerun_script_header = """#!/bin/bash
+cd /srv/
+python -m venv --without-pip --system-site-packages jobenv
+source jobenv/bin/activate
+python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-0.0.3-py2.py3-none-any.whl
+
+echo "... start job at" `date "+%Y-%m-%d %H:%M:%S"`
+echo "----- directory before running:"
+ls -lthr
+
+"""
 
 def main():
     parser = argparse.ArgumentParser(description='Famous Submitter')
     parser.add_argument("-i"   , "--input" , type=str, default="input"  , required=True)
     parser.add_argument("-t"   , "--tag"   , type=str, default="algiers", required=True)
     parser.add_argument("-isMC", "--isMC"  , type=int, default=1        , help="")
+    parser.add_argument("--era", type=str, default="")
+    parser.add_argument("--runlocal", action='store_true')
     parser.add_argument("--resubmit", action="store_true", help="resubmit failed jobs")
     options = parser.parse_args()
 
@@ -56,6 +69,7 @@ def main():
             job_running = []
             job_failed = []
             job_finished = []
+            resubmit_list = {}
             for idf, rfn in enumerate(input_root_files):
                 if rfn in condor_status:
                     job_running.append(rfn)
@@ -63,17 +77,20 @@ def main():
                     job_finished.append(rfn)
                 else:
                     job_failed.append(rfn)
-            
+                    resubmit_list[idf] = rfn
             logging.info(
                 "-- {:62s}".format((sample_name[:60] + '..') if len(sample_name)>60 else sample_name) +
                 (
-                    colored(f" --> {n_jobs} : completed", "green") if n_jobs==len(job_finished) else colored(
-                        f" --> {n_jobs} : ({len(job_running)}) running", 'yellow'
+                    colored(f" --> {n_jobs:5d} : completed", "green") if n_jobs==len(job_finished) else colored(
+                        f" --> {n_jobs:5d} : {len(job_running):5d}", 'yellow'
                     )+colored(
-                        f" ({len(job_failed)}) failed", 'red'
+                        f"{n_jobs-len(job_failed)-len(job_running):5d}", "green"
+                    )+colored(
+                        f"{len(job_failed):5d}", 'red'
                     )
                 )
             )
+
             if len(job_running)>0:
                 for rfn in job_running:
                     logging.debug(colored(f'running : {rfn}', 'yellow'))
@@ -81,37 +98,41 @@ def main():
                 for rfn in job_failed:
                     logging.debug(colored(f'failed  : {rfn}', 'red'))
             
-
-            if options.resubmit and len(job_failed)>0:
-                attempt = 1
-                #while os.path.exists(f'inputfiles-attempt-{attempt}.dat'):
-                #    logging.info(f'attempt {attempt} exist !')
-                #    attempt += 1
+            if options.resubmit and len(job_failed)>0: 
+                shutil.copyfile('brewer-remote.py', jobs_dir+'/brewer-remote.py')
+                local_rerun_lines = [rerun_script_header]
+                for jid,infile in resubmit_list.items():
+                    if options.runlocal:
+                        assert options.era != "", f"please specify the era you are rerunning ... example: --era=2018"
+                        local_rerun_lines.append(
+                            f"python brewer-remote.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile} \n"
+                        )
+                    else:
+                        condor_sub = open(jobs_dir + "/condor.sub").readlines()
+                        for il, line in enumerate(condor_sub):
+                            if 'arguments' in line.lower():
+                                condor_sub[il] = f"arguments             = {jid} {infile}\n"
+                            if 'jobflavour' in line.lower():
+                                condor_sub [il] = '+JobFlavour           = "workday"'
+                            if 'queue' in line.lower():
+                                condor_sub[il] = "queue"
+                        with open(jobs_dir + f'/condor_resub_{jid}.sub', 'w') as new_condor:
+                            new_condor.writelines(condor_sub)
+                            new_condor.close()
+                    
+                        htc = os.popen("condor_submit " + os.path.join(jobs_dir, f"condor_resub_{jid}.sub")).read()
+                        logging.info(htc)
                 
-                with open(os.path.join(jobs_dir, f"inputfiles-attempt-{attempt}.dat"), 'w') as infiles:
-                    infiles.write('\n'.join(job_failed))
-                    infiles.close()
-                
-                with open(os.path.join(jobs_dir, 'condor.sub'), 'r') as condor_file:
-                    condor = condor_file.read()
-                    condor = condor.replace('inputfiles', f'inputfiles-attempt-{attempt}')
+                if options.runlocal:
+                    with open(os.path.join(jobs_dir, f"rerun-script.sh"), "w") as _stream:
+                        _stream.writelines(local_rerun_lines)
 
-                with open(os.path.join(jobs_dir, f'condor_attempt_{attempt}.sub'), 'w') as condor_file:
-                    condor_file.write(condor)
-
-                if regenerate_proxy:
-                    redone_proxy = False
-                    while not redone_proxy:
-                        status = os.system('voms-proxy-init -voms cms')
-                        if os.WEXITSTATUS(status) == 0:
-                            redone_proxy = True
-                
-                    shutil.copyfile('/tmp/'+proxy_base,  proxy_copy)
-
-
-                htc = os.popen("condor_submit " + os.path.join(jobs_dir, f"condor_attempt_{attempt}.sub")).read()
-                logging.info(htc)
-
+                    coffea_image = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest" 
+                    os.system(f"cp dist/Qawa-0.0.3-py2.py3-none-any.whl {jobs_dir}")   
+                    htc = os.popen(f"singularity exec -B {jobs_dir}:/srv/ {coffea_image} bash /srv/rerun-script.sh").read()
+                    print(htr)
+                    
+                    
 
 
 if __name__ == "__main__":
