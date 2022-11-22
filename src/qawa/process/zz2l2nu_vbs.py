@@ -515,14 +515,14 @@ class zzinc_processor(processor.ProcessorABC):
         electronEnUp  ['pt'] = event.Electron['pt'] + event.Electron.energyErr/np.cosh(event.Electron.eta)
         electronEnDown['pt'] = event.Electron['pt'] - event.Electron.energyErr/np.cosh(event.Electron.eta)
         
-        print("muons  : ", ak.firsts(muon.pt    )[ak.num(muon)>0])
-        print("mu   up: ", ak.firsts(muonEnUp.pt)[ak.num(muon)>0])
-        print("mu down: ", ak.firsts(muonEnDown.pt)[ak.num(muon)>0])
-        print(" -------------- ")
-        print("electron : ", ak.firsts(event.Electron.pt)[ak.num(event.Electron)>0])
-        print("      up : ", ak.firsts(electronEnUp.pt)  [ak.num(event.Electron)>0])
-        print("    down : ", ak.firsts(electronEnDown.pt)[ak.num(event.Electron)>0])
-        print(" -------------- ")
+        # print("muons  : ", ak.firsts(muon.pt    )[ak.num(muon)>0])
+        # print("mu   up: ", ak.firsts(muonEnUp.pt)[ak.num(muon)>0])
+        # print("mu down: ", ak.firsts(muonEnDown.pt)[ak.num(muon)>0])
+        # print(" -------------- ")
+        # print("electron : ", ak.firsts(event.Electron.pt)[ak.num(event.Electron)>0])
+        # print("      up : ", ak.firsts(electronEnUp.pt)  [ak.num(event.Electron)>0])
+        # print("    down : ", ak.firsts(electronEnDown.pt)[ak.num(event.Electron)>0])
+        # print(" -------------- ")
             
         # define all the shifts
         shifts = [
@@ -534,6 +534,7 @@ class zzinc_processor(processor.ProcessorABC):
             ({"Jet": jets.JER.down      , "MET": met.JER.down      }, "JERDown"),
             ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.up     }, "UESUp"  ),
             ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.down   }, "UESDown"), 
+            
             # Leptons + MET shift (FIXME: shift to be added)
             ({"Electron": electronEnUp  }, "ElectronEnUp"  ),
             ({"Electron": electronEnDown}, "ElectronEnDown"),
