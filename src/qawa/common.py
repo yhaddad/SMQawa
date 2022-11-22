@@ -118,7 +118,6 @@ def trigger_rules(event, rules:dict, era:str='2018'):
     # passing triggers and vetoing triggers from other datasets
     return _pass & ~_veto
 
-
 def theory_pdf_weight(weights, pdf_weight):
     _nm = np.ones(len(weights.weight()))
     _up = np.ones(len(weights.weight()))
