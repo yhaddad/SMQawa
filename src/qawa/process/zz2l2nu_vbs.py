@@ -276,17 +276,16 @@ class zzinc_processor(processor.ProcessorABC):
         ngood_bjets = ak.num(jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.4)])
         event['ngood_bjets'] = ngood_bjets
         event['ngood_jets']  = ngood_jets
-        
-        selection.add('0bjets', ngood_bjets ==0 )
-        selection.add('0bjets_inc', ngood_bjets >=0 ) # at least
-        selection.add('1bjets_inc', ngood_bjets >=1 ) # at least
-        selection.add('0njets', ngood_jets  ==0 )
-        selection.add('1njets', ngood_jets  ==1 )
-        selection.add('01njets', ngood_jets  <=1 )
-        selection.add('012njets', ngood_jets  <=2 )
-        selection.add('2njets_inc', ngood_jets  >=2 ) # at least
-        selection.add('0htaus', nhtaus_lep  ==0 ) # veto hadronic taus
-        
+       
+        # jet selections
+        selection.add('0bjet', ngood_bjets == 0)
+        selection.add('1bjet', ngood_bjets >= 1)
+        selection.add('0jets', ngood_jets == 0 )
+        selection.add('1jets', ngood_jets == 1 )
+        selection.add('2jets', ngood_jets >= 2 )
+        selection.add('01jet', ngood_jets <= 1 )
+        selection.add('0htau', nhtaus_lep == 0 )
+
         # lepton quantities
         def z_lepton_pair(leptons):
             pair = ak.combinations(leptons, 2, axis=1, fields=['l1', 'l2'])
@@ -356,6 +355,41 @@ class zzinc_processor(processor.ProcessorABC):
         dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         jmet_dphi  = lead_jet.delta_phi(event.MET)
 
+        # high level selections
+        selection.add(
+                "require-2lep",
+                (ntight_lep==2) & (nloose_lep==0) &
+                (ak.firsts(tight_lep).pt>25) &
+                ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
+                ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
+                ak.fill_none(dilep_pt  >   60, False) &
+                ak.fill_none(p4_met.pt >  100, False) &
+                ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
+                ak.fill_none(dR_ll     <  1.8, False) &
+                ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
+        )
+        selection.add(
+                "require-3lep",
+                (ntight_lep==3) & 
+                (nloose_lep==0) &
+                (ak.firsts(tight_lep).pt>25) & 
+                ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
+                ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
+                ak.fill_none(dilep_pt > 30, False) &
+                ak.fill_none(emu.pt   > 70, False) &
+                ak.fill_none(jmet_dphi  > 0.25, False) & # from HIG-21-013
+                ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
+        )
+        selection.add(
+                "require-vbs", 
+                ak.fill_none(dijet_mass > 400, False) & 
+                ak.fill_none(dijet_deta > 2.5, False) & 
+                ak.fill_none(p4_met.pt  > 120, False) &
+                ak.fill_none(jmet_dphi  > 0.5, False) &
+                ak.fill_none(np.abs(dphi_met_ll) > 1.0, False)
+        )
+
+
         # Define all variables for the GNN
         event['met_pt'  ] = p4_met.pt
         event['dilep_mt'] = dilep_mt
@@ -412,31 +446,17 @@ class zzinc_processor(processor.ProcessorABC):
         # selections
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
-            # vbs signal regions
-            'catSR0_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus', '0njets'],
-            'catSR1_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus', '1njets'],
-            'catSR2_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus', '2njets_inc'],
+                # inclusive categories
+                "catSR0j-inc": common_sel + ['require-2lep','0jets'], 
+                "catSR1j-inc": common_sel + ['require-2lep','1jets'], 
+                "catSR2j-inc": common_sel + ['require-2lep','2jets'], 
+                "cat3L-inc": common_sel + [], 
+                "catEM-inc": common_sel + [], 
+                "catDY-inc": common_sel + [], 
+                "catTT-inc": common_sel + [], 
+                # vbs categories
+                "catSR-vbs": common_sel + ['require-2lep', 'require-vbs']
 
-            # ZZinc signal regions
-            'catSR_ZZinc' : common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', '0bjets', '0htaus', '01njets'],
-            'catSR0_ZZinc': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', '0bjets', '0htaus', '0njets'],
-            'catSR1_ZZinc': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', '0bjets', '0htaus', '1njets'],
-            
-            # control regions
-            'catDY_ZZinc': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_50_100','delta_phi_ll_met_lower_1', '0bjets', '01njets', '0htaus','dR_ll'],
-            'cat3L_ZZinc': common_sel + ['3lep', 'OSSF', 'dilep_m', 'dilep_pt_30', 'emu_met_70', 'vector_balance', '0bjets', '01njets'],
-            'catEM_ZZinc': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', 'met_70', '0bjets','01njets'],
-            'catTT_ZZinc': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', 'met_70', '1bjets_inc', '012njets'],
-            'catNR_ZZinc': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', 'met_70',],
-            
-            # additional selections
-            'catSR_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus'],
-            'catDY_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_50_100', '0bjets', '2njets_inc', '0htaus', 'dijet_mass_lower_200'],
-            'catEM_VBS': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', 'met_70', '0bjets', '2njets_inc'],
-            'cat3L_VBS': common_sel + ['3lep', 'OSSF', 'dilep_m', 'dilep_pt_30', 'emu_met_70', '0bjets','2njets_inc'],
-            'catTT_VBS': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', '1bjets_inc', '2njets_inc', 'met_70'],
-            'catNR_VBS': common_sel + ['2lep', 'OF', 'dilep_m', 'dilep_pt_45', '2njets_inc', 'met_70'],
-            
         }
         
         if shift_name is None:
