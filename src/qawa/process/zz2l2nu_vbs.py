@@ -1,5 +1,6 @@
 import awkward as ak
 import numpy as np
+import uproot
 import hist
 import yaml
 import os 
@@ -118,7 +119,10 @@ class zzinc_processor(processor.ProcessorABC):
         with open(f'{_data_path}/eft-names.dat') as eft_file:
             self._eftnames = [n.strip() for n in eft_file.readlines()]
 
-        self.trig_sf_map = np.load(f"{_data_path}/trigger-sf-table.npy")
+        with uproot.open(f'{_data_path}/trigger_sf/histo_triggerEff_sel0_{era}.root') as _fn:
+            _hvalue = np.dstack([_fn[_hn].values() for _hn in _fn.keys()] + [np.ones((7,7))])
+            _herror = np.dstack([np.sqrt(_fn[_hn].variances()) for _hn in _fn.keys()] + [np.zeros((7,7))])
+            self.trig_sf_map = np.stack([_hvalue, _herror], axis=-1)
 
         self.build_histos = lambda: {
             'dilep_mt': hist.Hist(
@@ -159,11 +163,11 @@ class zzinc_processor(processor.ProcessorABC):
             ),
         }
     
-    def _add_trigger_sf(self, weights, event):
-        mask_BB = ak.fill_none((event.leading_lep_eta <= 1.5) & (event.trailing_lep_eta <= 1.5), False)
-        mask_EB = ak.fill_none((event.leading_lep_eta >= 1.5) & (event.trailing_lep_eta <= 1.5), False)
-        mask_BE = ak.fill_none((event.leading_lep_eta <= 1.5) & (event.trailing_lep_eta >= 1.5), False)
-        mask_EE = ak.fill_none((event.leading_lep_eta >= 1.5) & (event.trailing_lep_eta >= 1.5), False)
+    def _add_trigger_sf(self, weights, lead_lep, subl_lep):
+        mask_BB = ak.fill_none((lead_lep.eta <= 1.5) & (subl_lep.eta <= 1.5), False)
+        mask_EB = ak.fill_none((lead_lep.eta >= 1.5) & (subl_lep.eta <= 1.5), False)
+        mask_BE = ak.fill_none((lead_lep.eta <= 1.5) & (subl_lep.eta >= 1.5), False)
+        mask_EE = ak.fill_none((lead_lep.eta >= 1.5) & (subl_lep.eta >= 1.5), False)
 
         mask_mm = ak.fill_none((np.abs(lead_lep.pdgId)==13) & (np.abs(subl_lep.pdgId)==13), False)
         mask_mm = ak.fill_none((np.abs(lead_lep.pdgId)==11) & (np.abs(subl_lep.pdgId)==11), False)
@@ -172,8 +176,8 @@ class zzinc_processor(processor.ProcessorABC):
         mask_em = (~mask_mm & ~mask_ee) & (np.abs(lead_lep,pdgId) == 11)
 
         lept_pt_bins = [20, 25, 30, 35, 40, 50, 60, 100000]
-        lep_1_bin = np.digitize(event.leading_lep_pt.to_numpy() , lept_pt_bins) - 1
-        lep_2_bin = np.digitize(event.trailing_lep_pt.to_numpy(), lept_pt_bins) - 1
+        lep_1_bin = np.digitize(lead_lep.pt.to_numpy(), lept_pt_bins) - 1
+        lep_2_bin = np.digitize(subl_lep.pt.to_numpy(), lept_pt_bins) - 1
         trigg_bin = np.select([
             (mask_ee & mask_BB).to_numpy(),
             (mask_ee & mask_BE).to_numpy(),
@@ -195,8 +199,10 @@ class zzinc_processor(processor.ProcessorABC):
             (mask_mm & mask_EB).to_numpy(),
             (mask_mm & mask_EE).to_numpy()
         ], np.arange(0,16), 16)
-        
-        indices = np.column_stack([lep_1_bin, lep_2_bin,trigg_bin])
+        # this is to avoid cases were two 
+        # leptons are not in the event
+        lep_1_bin[lep_1_bin>6] = -1
+        lep_2_bin[lep_2_bin>6] = -1
         center_value = self.trig_sf_map[lep_1_bin,lep_2_bin,trigg_bin,0]
         errors_value = self.trig_sf_map[lep_1_bin,lep_2_bin,trigg_bin,1]
         
@@ -333,26 +339,10 @@ class zzinc_processor(processor.ProcessorABC):
         # build selections
         selection.add('2lep', (ntight_lep==2) & (nloose_lep==0) & (ak.firsts(tight_lep).pt>25))
         selection.add('3lep', (ntight_lep==3) & (nloose_lep==0) & (ak.firsts(tight_lep).pt>25))
-        selection.add('4lep', ((ntight_lep + nloose_lep) == 4 ) & (ak.firsts(tight_lep).pt>25))
         selection.add('OSSF', ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False))
         selection.add('OF', ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False))
-        
-        
-        # kinematic selections
-        selection.add('dilep_pt_30', ak.fill_none(dilep_pt > 30, False))
-        selection.add('dilep_pt_45', ak.fill_none(dilep_pt > 45, False))
-        selection.add('dilep_pt_50', ak.fill_none(dilep_pt > 50, False))
-        selection.add('dilep_pt_60', ak.fill_none(dilep_pt > 60, False))
-        selection.add('dilep_m', ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
-        selection.add('met_50', ak.fill_none(p4_met.pt > 50, False))
-        selection.add('met_70', ak.fill_none(p4_met.pt > 70, False))
-        selection.add('met_100', ak.fill_none(p4_met.pt > 100, False))
-        selection.add('met_50_100', ak.fill_none((p4_met.pt> 50) & (p4_met.pt<100), False))
-        selection.add('dphi_met_ll', ak.fill_none(np.abs(dphi_met_ll) > 0.5, False) )
-        selection.add('emu_met_70', ak.fill_none(emu_met.pt > 70, False))
-        selection.add('scalar_balance', ak.fill_none((scalar_balance>0.4) & (scalar_balance<1.8), False))
-        selection.add('vector_balance', ak.fill_none(np.abs(vector_balance<0.4), False))
-        selection.add('dR_ll'         , ak.fill_none(dR_ll < 1.8, False))
+        # for the moment there is no 4L region, might change in the future
+        #selection.add('4lep', ((ntight_lep + nloose_lep) == 4 ) & (ak.firsts(tight_lep).pt>25))
         
         # 2jet and vbs related variables
         lead_jet = ak.firsts(jets)
@@ -364,20 +354,7 @@ class zzinc_processor(processor.ProcessorABC):
         dijet_deta = np.abs(lead_jet.eta - subl_jet.eta)
         dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
-
         jmet_dphi  = lead_jet.delta_phi(event.MET)
-
-        selection.add('dijet_mass_lower_200' , ak.fill_none(dijet_mass < 200, False))
-        selection.add('dijet_mass_low', ak.fill_none(dijet_mass > 300, False))
-        selection.add('dijet_mass', ak.fill_none(dijet_mass > 400, False))
-        selection.add('dijet_mass_bin0', ak.fill_none((dijet_mass >= 400) & (dijet_mass < 800 ), False))
-        selection.add('dijet_mass_bin1', ak.fill_none((dijet_mass >= 800) & (dijet_mass < 1200), False))
-        selection.add('dijet_mass_bin2', ak.fill_none((dijet_mass >= 1200), False))
-        selection.add('dijet_deta', ak.fill_none(dijet_deta > 2.5, False))
-        selection.add('jmet_dphi', ak.fill_none(jmet_dphi > 0.5, False))
-        selection.add('delta_phi_ll_met', ak.fill_none(delta_phi_ll_met > 1.0, False))
-        selection.add('delta_phi_ll_met_lower_1', ak.fill_none(delta_phi_ll_met < 1.0, False))
-       
 
         # Define all variables for the GNN
         event['met_pt'  ] = p4_met.pt
@@ -411,7 +388,7 @@ class zzinc_processor(processor.ProcessorABC):
             weights.add('genweight', event.genWeight)
             self._btag.append_btag_sf(jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
-            self._add_trigger_sf(weights, event)
+            self._add_trigger_sf(weights, lead_lep, subl_lep)
 
             _ones = np.ones(len(weights.weight()))
             if "PSWeight" in event.fields:
@@ -434,7 +411,6 @@ class zzinc_processor(processor.ProcessorABC):
         
         # selections
         common_sel = ['triggers', 'lumimask', 'metfilter']
-        dilep_sel = ['2lep', 'OSSF', 'dilep_m', '0bjets', 'dphi_met_ll', '0bjets', '0htaus']
         channels = {
             # vbs signal regions
             'catSR0_VBS': common_sel + ['2lep', 'OSSF', 'dilep_m', 'dilep_pt_60', 'met_100', 'dphi_met_ll', 'dijet_mass', 'dijet_deta', 'jmet_dphi', '0bjets', '0htaus', '0njets'],
