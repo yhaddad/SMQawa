@@ -370,8 +370,7 @@ class zzinc_processor(processor.ProcessorABC):
         )
         selection.add(
                 "require-3lep",
-                (ntight_lep==3) & 
-                (nloose_lep==0) &
+                (ntight_lep==3) & (nloose_lep==0) &
                 (ak.firsts(tight_lep).pt>25) & 
                 ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
                 ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
@@ -381,6 +380,26 @@ class zzinc_processor(processor.ProcessorABC):
                 ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
         )
         selection.add(
+                "require-OF",
+                (ntight_lep==2) & (nloose_lep==0) &
+                (ak.firsts(tight_lep).pt>25) & 
+                ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
+                ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False) & 
+                ak.fill_none(dilep_pt > 45, False) &
+                ak.fill_none(emu.pt   > 70, False) &
+                ak.fill_none(np.abs(dphi_met_ll) > 0.5, False) &
+                ak.fill_none(jmet_dphi  > 0.25, False) # from HIG-21-013
+        )
+        selection.add(
+                "require-NR",
+                (ntight_lep==2) & (nloose_lep==0) &
+                (ak.firsts(tight_lep).pt>25) & 
+                ak.fill_none(np.abs(dilep_m - self.zmass) > 15, False) &
+                ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False)  & 
+                ak.fill_none(dilep_pt > 45, False) &
+                ak.fill_none(emu.pt   > 70, False)
+        ) 
+        selection.add(
                 "require-vbs", 
                 ak.fill_none(dijet_mass > 400, False) & 
                 ak.fill_none(dijet_deta > 2.5, False) & 
@@ -388,7 +407,6 @@ class zzinc_processor(processor.ProcessorABC):
                 ak.fill_none(jmet_dphi  > 0.5, False) &
                 ak.fill_none(np.abs(dphi_met_ll) > 1.0, False)
         )
-
 
         # Define all variables for the GNN
         event['met_pt'  ] = p4_met.pt
@@ -447,17 +465,15 @@ class zzinc_processor(processor.ProcessorABC):
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
                 # inclusive categories
-                "catSR0j-inc": common_sel + ['require-2lep','0jets'], 
-                "catSR1j-inc": common_sel + ['require-2lep','1jets'], 
-                "catSR2j-inc": common_sel + ['require-2lep','2jets'], 
-                "cat3L-inc": common_sel + [], 
-                "catEM-inc": common_sel + [], 
-                "catDY-inc": common_sel + [], 
-                "catTT-inc": common_sel + [], 
+                "catSR0j-inc": common_sel + ['require-2lep','0jets', '0bjet', '0htau'], 
+                "catSR1j-inc": common_sel + ['require-2lep','1jets', '0bjet', '0htau'], 
+                "catSR2j-inc": common_sel + ['require-2lep','2jets', '0bjet', '0htau'], 
+                "cat3L-inc": common_sel + ['require-3lep', '01jet', '0bjet'], 
+                "catEM-inc": common_sel + ['require-OF', '01jet'], 
+                "catDY-inc": common_sel + ['require-DY', '01jet'], 
+                "catTT-inc": common_sel + ['require-NR', '01jet'], 
                 # vbs categories
-                "catSR-vbs": common_sel + ['require-2lep', 'require-vbs']
-
-        }
+                "catSR-vbs": common_sel + ['require-2lep', 'require-vbs'
         
         if shift_name is None:
             systematics = [None] + list(weights.variations)
@@ -565,16 +581,7 @@ class zzinc_processor(processor.ProcessorABC):
 
         electronEnUp  ['pt'] = event.Electron['pt'] + event.Electron.energyErr/np.cosh(event.Electron.eta)
         electronEnDown['pt'] = event.Electron['pt'] - event.Electron.energyErr/np.cosh(event.Electron.eta)
-        
-        # print("muons  : ", ak.firsts(muon.pt    )[ak.num(muon)>0])
-        # print("mu   up: ", ak.firsts(muonEnUp.pt)[ak.num(muon)>0])
-        # print("mu down: ", ak.firsts(muonEnDown.pt)[ak.num(muon)>0])
-        # print(" -------------- ")
-        # print("electron : ", ak.firsts(event.Electron.pt)[ak.num(event.Electron)>0])
-        # print("      up : ", ak.firsts(electronEnUp.pt)  [ak.num(event.Electron)>0])
-        # print("    down : ", ak.firsts(electronEnDown.pt)[ak.num(event.Electron)>0])
-        # print(" -------------- ")
-            
+         
         # define all the shifts
         shifts = [
             # Jets
