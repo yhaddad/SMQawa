@@ -1,12 +1,12 @@
 # python setup.py check
-# python setup.py bdist_wheel --universal
+#python setup.py bdist_wheel --universal
 # python -m pip install \
-#   --no-deps \
-#   --ignore-installed \
-#   --no-cache-dir \
-#   dist/Qawa-0.0.3-py2.py3-none-any.whl
+#    --no-deps \
+#    --ignore-installed \
+#    --no-cache-dir \
+#    dist/Qawa-0.0.3-py2.py3-none-any.whl
 
-pip install . --upgrade
+pip install . --upgrade --no-deps  --ignore-installed --no-cache-dir
 
 python brewer-local.py --jobNum=0 \
   --isMC=1 --era=2018 \

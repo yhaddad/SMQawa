@@ -131,10 +131,10 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 0, 1000, name="dilep_mt", label="$M_{T}$ (GeV)"),
                 hist.storage.Weight()
             ), 
-            'met': hist.Hist(
+            'met_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1000, name="met", label="$p_{T}^{miss}$ (GeV)"),
+                hist.axis.Regular(50, 0, 1000, name="met_pt", label="$p_{T}^{miss}$ (GeV)"),
                 hist.storage.Weight()
             ),
             'njets': hist.Hist(
@@ -170,10 +170,10 @@ class zzinc_processor(processor.ProcessorABC):
         mask_EE = ak.fill_none((lead_lep.eta >= 1.5) & (subl_lep.eta >= 1.5), False)
 
         mask_mm = ak.fill_none((np.abs(lead_lep.pdgId)==13) & (np.abs(subl_lep.pdgId)==13), False)
-        mask_mm = ak.fill_none((np.abs(lead_lep.pdgId)==11) & (np.abs(subl_lep.pdgId)==11), False)
+        mask_ee = ak.fill_none((np.abs(lead_lep.pdgId)==11) & (np.abs(subl_lep.pdgId)==11), False)
        
         mask_me = (~mask_mm & ~mask_ee) & (np.abs(lead_lep.pdgId) == 13)
-        mask_em = (~mask_mm & ~mask_ee) & (np.abs(lead_lep,pdgId) == 11)
+        mask_em = (~mask_mm & ~mask_ee) & (np.abs(lead_lep.pdgId) == 11)
 
         lept_pt_bins = [20, 25, 30, 35, 40, 50, 60, 100000]
         lep_1_bin = np.digitize(lead_lep.pt.to_numpy(), lept_pt_bins) - 1
@@ -330,19 +330,11 @@ class zzinc_processor(processor.ProcessorABC):
         
         dphi_ll = lead_lep.delta_phi(subl_lep)
         deta_ll = np.abs(lead_lep.eta - subl_lep.eta)
-        dR_ll   = lead_lep.delta_r(subl_lep)
+        #dR_ll   = lead_lep.delta_r(subl_lep)
         dphi_met_ll    = ak.where(ntight_lep==3, dilep_p4.delta_phi(emu_met), dilep_p4.delta_phi(p4_met))
         vector_balance = ak.where(ntight_lep==3, (emu_met - dilep_p4).pt/dilep_p4.pt, (p4_met - dilep_p4).pt/dilep_p4.pt)
         scalar_balance = ak.where(ntight_lep==3, emu_met.pt/dilep_p4.pt, p4_met.pt/dilep_p4.pt)
-        
-        # build selections
-        selection.add('2lep', (ntight_lep==2) & (nloose_lep==0) & (ak.firsts(tight_lep).pt>25))
-        selection.add('3lep', (ntight_lep==3) & (nloose_lep==0) & (ak.firsts(tight_lep).pt>25))
-        selection.add('OSSF', ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False))
-        selection.add('OF', ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False))
-        # for the moment there is no 4L region, might change in the future
-        #selection.add('4lep', ((ntight_lep + nloose_lep) == 4 ) & (ak.firsts(tight_lep).pt>25))
-        
+
         # 2jet and vbs related variables
         lead_jet = ak.firsts(jets)
         subl_jet = ak.firsts(jets[lead_jet.delta_r(jets)>0.01])
@@ -353,8 +345,14 @@ class zzinc_processor(processor.ProcessorABC):
         dijet_deta = np.abs(lead_jet.eta - subl_jet.eta)
         dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
-        jmet_dphi  = lead_jet.delta_phi(event.MET)
-
+        jmet_dphi  = ak.min(np.abs(
+            ak.where(
+                ntight_lep==3, 
+                jets.delta_phi(emu_met), 
+                jets.delta_phi(p4_met)
+            )
+        ), axis=1) 
+        
         # high level selections
         selection.add(
                 "require-2lep",
@@ -365,7 +363,7 @@ class zzinc_processor(processor.ProcessorABC):
                 ak.fill_none(dilep_pt  >   60, False) &
                 ak.fill_none(p4_met.pt >  100, False) &
                 ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
-                ak.fill_none(dR_ll     <  1.8, False) &
+                # ak.fill_none(dR_ll     <  1.8, False) & # to me uncommneted when needed
                 ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
         )
         selection.add(
@@ -374,8 +372,8 @@ class zzinc_processor(processor.ProcessorABC):
                 (ak.firsts(tight_lep).pt>25) & 
                 ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
                 ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
-                ak.fill_none(dilep_pt > 30, False) &
-                ak.fill_none(emu.pt   > 70, False) &
+                ak.fill_none(dilep_pt   > 30, False) &
+                ak.fill_none(emu_met.pt > 70, False) &
                 ak.fill_none(jmet_dphi  > 0.25, False) & # from HIG-21-013
                 ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
         )
@@ -385,10 +383,10 @@ class zzinc_processor(processor.ProcessorABC):
                 (ak.firsts(tight_lep).pt>25) & 
                 ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
                 ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False) & 
-                ak.fill_none(dilep_pt > 45, False) &
-                ak.fill_none(emu.pt   > 70, False) &
+                ak.fill_none(dilep_pt  > 45, False) &
+                ak.fill_none(p4_met.pt > 70, False) &
                 ak.fill_none(np.abs(dphi_met_ll) > 0.5, False) &
-                ak.fill_none(jmet_dphi  > 0.25, False) # from HIG-21-013
+                ak.fill_none(jmet_dphi > 0.25, False) # from HIG-21-013
         )
         selection.add(
                 "require-NR",
@@ -396,20 +394,33 @@ class zzinc_processor(processor.ProcessorABC):
                 (ak.firsts(tight_lep).pt>25) & 
                 ak.fill_none(np.abs(dilep_m - self.zmass) > 15, False) &
                 ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False)  & 
-                ak.fill_none(dilep_pt > 45, False) &
-                ak.fill_none(emu.pt   > 70, False)
-        ) 
+                ak.fill_none(dilep_pt  > 45, False) &
+                ak.fill_none(p4_met.pt > 70, False)
+        )
+        selection.add(
+                "require-DY", 
+                (ntight_lep==2) & (nloose_lep==0) &
+                (ak.firsts(tight_lep).pt>25) & 
+                ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
+                ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
+                ak.fill_none(dilep_pt  >   60, False) &
+                ak.fill_none(p4_met.pt >   50, False) &
+                ak.fill_none(p4_met.pt <  100, False)
+                #ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
+                #ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
+        )
         selection.add(
                 "require-vbs", 
                 ak.fill_none(dijet_mass > 400, False) & 
                 ak.fill_none(dijet_deta > 2.5, False) & 
-                ak.fill_none(p4_met.pt  > 120, False) &
-                ak.fill_none(jmet_dphi  > 0.5, False) &
-                ak.fill_none(np.abs(dphi_met_ll) > 1.0, False)
+                ak.fill_none(p4_met.pt  > 120, False)
+                #ak.fill_none(jmet_dphi  > 0.5, False) &
+                #ak.fill_none(np.abs(dphi_met_ll) > 1.0, False)
         )
 
         # Define all variables for the GNN
         event['met_pt'  ] = p4_met.pt
+        event['met_phi' ] = p4_met.phi
         event['dilep_mt'] = dilep_mt
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
@@ -464,17 +475,22 @@ class zzinc_processor(processor.ProcessorABC):
         # selections
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
-                # inclusive categories
-                "catSR0j-inc": common_sel + ['require-2lep','0jets', '0bjet', '0htau'], 
-                "catSR1j-inc": common_sel + ['require-2lep','1jets', '0bjet', '0htau'], 
-                "catSR2j-inc": common_sel + ['require-2lep','2jets', '0bjet', '0htau'], 
-                "cat3L-inc": common_sel + ['require-3lep', '01jet', '0bjet'], 
-                "catEM-inc": common_sel + ['require-OF', '01jet'], 
-                "catDY-inc": common_sel + ['require-DY', '01jet'], 
-                "catTT-inc": common_sel + ['require-NR', '01jet'], 
-                # vbs categories
-                "catSR-vbs": common_sel + ['require-2lep', 'require-vbs'
-        
+            # inclusive categories
+            "catSR0j-inc": common_sel + ['require-2lep','0jets', '0bjet', '0htau'], 
+            "catSR1j-inc": common_sel + ['require-2lep','1jets', '0bjet', '0htau'], 
+            "catSR2j-inc": common_sel + ['require-2lep','2jets', '0bjet', '0htau'], 
+            
+            #
+            "cat3L-inc": common_sel + ['require-3lep', '01jet', '0bjet'], 
+            "catEM-inc": common_sel + ['require-OF', '01jet'], 
+            "catDY-inc": common_sel + ['require-DY', '01jet'], 
+            "catTT-inc": common_sel + ['require-NR', '01jet'], 
+                
+            # vbs categories
+            "catSR-vbs": common_sel + ['require-2lep', 'require-vbs'],
+            "cat3L-vbs": common_sel + ['require-3lep', 'require-vbs']
+        }
+
         if shift_name is None:
             systematics = [None] + list(weights.variations)
         else:
@@ -489,6 +505,7 @@ class zzinc_processor(processor.ProcessorABC):
         def _histogram_filler(ch, syst, var, _weight=None):
             sel_ = channels[ch]
             sel_ = [s for s in sel_ if var not in s]
+            # print('var:', var, "  sel_:", sel_)
             cut =  selection.all(*sel_)
             systname = 'nominal' if syst is None else syst
             
@@ -513,7 +530,7 @@ class zzinc_processor(processor.ProcessorABC):
         for ch in channels:
             cut = selection.all(*channels[ch])
             for sys in systematics:
-                _histogram_filler(ch, sys, 'met')
+                _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'dilep_mt')
                 _histogram_filler(ch, sys, 'njets')
                 _histogram_filler(ch, sys, 'bjets')

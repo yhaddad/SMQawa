@@ -143,7 +143,7 @@ def main():
                 },
             )
             
-            print(" --------------------------- ")
+            print(" --- zz2l2nu_vbs processor ... ")
             vbs_out = processor.run_uproot_job(
                 samples,
                 processor_instance=zzinc_processor(era=options.era),
