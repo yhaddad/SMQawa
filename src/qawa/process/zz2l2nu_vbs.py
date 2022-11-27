@@ -13,6 +13,7 @@ from coffea.lumi_tools import LumiMask
 
 from qawa.roccor import rochester_correction
 from qawa.applyGNN import applyGNN
+from qawa.leptonsSF import LeptonScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
@@ -161,6 +162,18 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 0, 1, name="gnn_score", label="gnn_score"),
                 hist.storage.Weight()
             ),
+            'dijet_mass': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 100, 2100, name="dijet_mass", label="$m_{jj}$ (GeV)"),
+                hist.storage.Weight() 
+            ),
+            'dijet_deta': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 0, 10, name="gnn_score", label="gnn_score"),
+                hist.storage.Weight()
+            )
         }
     
     def _add_trigger_sf(self, weights, lead_lep, subl_lep):
@@ -199,6 +212,7 @@ class zzinc_processor(processor.ProcessorABC):
             (mask_mm & mask_EB).to_numpy(),
             (mask_mm & mask_EE).to_numpy()
         ], np.arange(0,16), 16)
+
         # this is to avoid cases were two 
         # leptons are not in the event
         lep_1_bin[lep_1_bin>6] = -1
@@ -452,6 +466,9 @@ class zzinc_processor(processor.ProcessorABC):
             self._btag.append_btag_sf(jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
             self._add_trigger_sf(weights, lead_lep, subl_lep)
+            
+            weights.add ('MuonSF'    , muonSF_nom, muonSF_up, muonSF_down)
+            weights.add ('ElectronSF', elecSF_nom, elecSF_up, elecSF_down)
 
             _ones = np.ones(len(weights.weight()))
             if "PSWeight" in event.fields:
@@ -505,7 +522,6 @@ class zzinc_processor(processor.ProcessorABC):
         def _histogram_filler(ch, syst, var, _weight=None):
             sel_ = channels[ch]
             sel_ = [s for s in sel_ if var not in s]
-            # print('var:', var, "  sel_:", sel_)
             cut =  selection.all(*sel_)
             systname = 'nominal' if syst is None else syst
             
@@ -576,7 +592,18 @@ class zzinc_processor(processor.ProcessorABC):
         )
         event = ak.with_field(event, met, 'MET')
 		
+        # Adding scale factors to Muon and Electron fields
+        muonSF_nom, muonSF_up, muonSF_down = LeptonScaleFactors(era=self._era).AttachMuonSF(event.Muon)
+        elecSF_nom, elecSF_up, elecSF_down = LeptonScaleFactors(era=self._era).AttachElectronSF(event.Electron)
         
+        event.Muon['SF'] = muonSF_nom
+        event.Muon['SF_up'] = muonSF_up
+        event.Muon['SF_down'] = muonSF_down
+
+        event.Electron['SF'] = elecSF_nom
+        event.Electron['SF_up'] = elecSF_up
+        event.Electron['SF_down'] = elecSF_nom
+
         # JES/JER corrections
         jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
         met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
