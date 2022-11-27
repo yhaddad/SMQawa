@@ -593,16 +593,21 @@ class zzinc_processor(processor.ProcessorABC):
         event = ak.with_field(event, met, 'MET')
 		
         # Adding scale factors to Muon and Electron fields
+        muon = event.Muon 
+        electron = event.Electron
         muonSF_nom, muonSF_up, muonSF_down = LeptonScaleFactors(era=self._era).AttachMuonSF(event.Muon)
         elecSF_nom, elecSF_up, elecSF_down = LeptonScaleFactors(era=self._era).AttachElectronSF(event.Electron)
         
-        event.Muon['SF'] = muonSF_nom
-        event.Muon['SF_up'] = muonSF_up
-        event.Muon['SF_down'] = muonSF_down
+        muon['SF'] = muonSF_nom
+        muon['SF_up'] = muonSF_up
+        muon['SF_down'] = muonSF_down
 
-        event.Electron['SF'] = elecSF_nom
-        event.Electron['SF_up'] = elecSF_up
-        event.Electron['SF_down'] = elecSF_nom
+        electron['SF'] = elecSF_nom
+        electron['SF_up'] = elecSF_up
+        electron['SF_down'] = elecSF_down
+
+        event = ak.with_field(event, muon, 'Muon')
+        event = ak.with_field(event, electron, 'Electron')
 
         # JES/JER corrections
         jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
