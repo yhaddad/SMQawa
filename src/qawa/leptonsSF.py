@@ -2,6 +2,7 @@ import os.path
 from coffea.lookup_tools import extractor, dense_lookup
 import awkward as ak
 import numpy as np
+import uproot 
 
 
 class LeptonScaleFactors:
@@ -62,51 +63,70 @@ class LeptonScaleFactors:
         else:
             print (f'wrong era: {electronSelectionTag}')
             
-        extLepSF.add_weight_sets([f'MuonTrig_{self._era} {mu_h[0]} {_data_path}/{mu_f[0]}'])
-        extLepSF.add_weight_sets([f'MuonTrig_{self._era}_stat {mu_h[0]}_stat {_data_path}/{mu_f[0]}'])
-        extLepSF.add_weight_sets([f'MuonTrig_{self._era}_syst {mu_h[0]}_syst {_data_path}/{mu_f[0]}'])
-        extLepSF.add_weight_sets([f'MuonID_{self._era} {mu_h[1]} {_data_path}/{mu_f[1]}'])
-        extLepSF.add_weight_sets([f'MuonID_{self._era}_stat {mu_h[1]}_stat {_data_path}/{mu_f[1]}'])
-        extLepSF.add_weight_sets([f'MuonID_{self._era}_syst {mu_h[1]}_syst {_data_path}/{mu_f[1]}'])
-        extLepSF.add_weight_sets([f'MuonISO_{self._era} {mu_h[2]} {_data_path}/{mu_f[2]}'])
-        extLepSF.add_weight_sets([f'MuonISO_{self._era}_stat {mu_h[2]}_stat {_data_path}/{mu_f[2]}'])
-        extLepSF.add_weight_sets([f'MuonISO_{self._era}_syst {mu_h[2]}_syst {_data_path}/{mu_f[2]}'])
-        extLepSF.add_weight_sets([f'ElecSF_{self._era} {el_h[0]} {_data_path}/{el_f[0]}'])
-        extLepSF.add_weight_sets([f'ElecSF_{self._era}_er {el_h[0]}_error {_data_path}/{el_f[0]}'])
+        self.maps_nom = {}
+        self.maps_err = {}
+        for i, _fname in enumerate(mu_f):
+            with uproot.open(f"{_data_path}/{_fname}") as _fn:
+                _hist = _fn[mu_h[i]].to_hist()
+                _hnom = _hist.values()
+                _herr = np.sqrt(_hist.variances())
+                tag = f"MuonTri{era}" if "Trigger" in _fname else ""
+                tag = f"MuonIso{era}" if "ISO" in _fname else tag
+                tag = f"MuonId{era}"  if "ID" in _fname else tag
+                
+                self.maps_nom[tag] = dense_lookup.dense_lookup(_hnom,[ax.edges for ax in _hist.axes])
+                self.maps_err[tag] = dense_lookup.dense_lookup(_herr,[ax.edges for ax in _hist.axes])
+
+        for i, _fname in enumerate(el_f):
+            with uproot.open(f"{_data_path}/{_fname}") as _fn:
+                _hist = _fn[el_h[i]].to_hist()
+                _hnom = _hist.values()
+                _herr = np.sqrt(_hist.variances())
+                tag = f"ElectronSF{era}" if "Ele" in _fname else ""
+                
+                self.maps_nom[tag] = dense_lookup.dense_lookup(_hnom,[ax.edges for ax in _hist.axes])
+                self.maps_err[tag] = dense_lookup.dense_lookup(_herr,[ax.edges for ax in _hist.axes])
+
+
+    def muonSF(self, muons: ak.Array):
+        sf_nom  = 1.0 # ak.ones_like(muons.pt)
+        sf_up   = 1.0 # ak.ones_like(muons.pt)
+        sf_down = 1.0 # ak.ones_like(muons.pt)
         
-        extLepSF.finalize()
-        self.SFevaluator = extLepSF.make_evaluator()
+        for n in self.maps_nom.keys():
+            if 'Muon' not in n: continue
+            _nom = self.maps_nom[n](muons.pt, np.abs(muons.eta))
+            _err = self.maps_err[n](muons.pt, np.abs(muons.eta))
+            print(n, _nom)
+            sf_nom = sf_nom * _nom 
+            sf_up = sf_up * (_nom + _err)
+            sf_down = sf_down * (_nom - _err)
+            
+        return sf_nom, sf_up, sf_down
 
-    def AttachMuonSF(self, muons):
-
-        eta = np.abs(muons.eta)
-        pt = muons.pt
-
-        trig_sf = self.SFevaluator[f'MuonTrig_{self._era}'](eta,pt)
-        trig_sf_err = np.sqrt(self.SFevaluator[f'MuonTrig_{self._era}_stat'](eta,pt)*self.SFevaluator[f'MuonTrig_{self._era}_stat'](eta,pt) + self.SFevaluator[f'MuonTrig_{self._era}_syst'](eta,pt)*self.SFevaluator[f'MuonTrig_{self._era}_syst'](eta,pt))
-        looseid_sf = self.SFevaluator[f'MuonID_{self._era}'](eta,pt)
-        looseid_sf_err = np.sqrt(self.SFevaluator[f'MuonID_{self._era}_stat'](eta,pt)*self.SFevaluator[f'MuonID_{self._era}_stat'](eta,pt) + self.SFevaluator[f'MuonID_{self._era}_syst'](eta,pt)*self.SFevaluator[f'MuonID_{self._era}_syst'](eta,pt))
-        iso_sf = self.SFevaluator[f'MuonISO_{self._era}'](eta,pt)
-        iso_sf_err = np.sqrt(self.SFevaluator[f'MuonISO_{self._era}_stat'](eta,pt)*self.SFevaluator[f'MuonISO_{self._era}_stat'](eta,pt) + self.SFevaluator[f'MuonISO_{self._era}_syst'](eta,pt)*self.SFevaluator[f'MuonISO_{self._era}_syst'](eta,pt))
-
-        muon_sf_nom = trig_sf * looseid_sf * iso_sf
-        muon_sf_up = (trig_sf + trig_sf_err) * (looseid_sf + looseid_sf_err) * (iso_sf + iso_sf_err)
-        muon_sf_down = (trig_sf - trig_sf_err) * (looseid_sf - looseid_sf_err) * (iso_sf - iso_sf_err)
-
-        return muon_sf_nom, muon_sf_up, muon_sf_down
+    def electronSF(self, electrons: ak.Array):
+        sf_nom  = 1.0 # ak.ones_like(muons.pt)
+        sf_up   = 1.0 # ak.ones_like(muons.pt)
+        sf_down = 1.0 # ak.ones_like(muons.pt)
+        
+        for n in self.maps_nom.keys():
+            if 'Electron' not in n: continue
+            _nom = self.maps_nom[n](electrons.pt, np.abs(electrons.eta))
+            _err = self.maps_err[n](electrons.pt, np.abs(electrons.eta))
+            print(n, _nom)
+            sf_nom = sf_nom * _nom 
+            sf_up = sf_up * (_nom + _err)
+            sf_down = sf_down * (_nom - _err)
+            
+        return sf_nom, sf_up, sf_down
 
 
-    def AttachElectronSF (self, electrons):
 
-        eta = np.abs(electrons.eta)
-        pt = electrons.pt
 
-        elec_sf = self.SFevaluator[f'ElecSF_{self._era}']((eta),pt)
-        elec_sf_err = self.SFevaluator[f'ElecSF_{self._era}']((eta),pt)
 
-        elec_sf_nom = elec_sf
-        elec_sf_up = elec_sf + elec_sf_err
-        elec_sf_down = elec_sf - elec_sf_err
 
-        return elec_sf_nom, elec_sf_up, elec_sf_down
+
+
+
+
 

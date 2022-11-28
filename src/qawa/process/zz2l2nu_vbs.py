@@ -68,14 +68,14 @@ def build_htaus(tau, lepton):
     )
     return tau[base & ~overlap_leptons]
 
-def build_photons(photons):
+def build_photons(photon):
     base = (
         (photon.pt          > 20. ) & 
         (np.abs(photon.eta) < 2.5 )
     )
     # MVA ID
-    tight_photons = photons[base & photon.mvaID_WP90]
-    loose_photons = photons[base & photon.mvaID_WP80 & ~photon.mvaID_WP90]
+    tight_photons = photon[base & photon.mvaID_WP90]
+    loose_photons = photon[base & photon.mvaID_WP80 & ~photon.mvaID_WP90]
     
     # cut based ID
     return tight_photons, loose_photons
@@ -104,7 +104,7 @@ class zzinc_processor(processor.ProcessorABC):
         self._btag = BTVCorrector(era=era, wp=self.btag_wp)
         self._jmeu = JMEUncertainty(jec_tag, jer_tag)
         self._purw = pileup_weights(era=self._era)
-        
+        self._leSF = LeptonScaleFactors(era=self._era)
         
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
@@ -467,8 +467,12 @@ class zzinc_processor(processor.ProcessorABC):
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
             self._add_trigger_sf(weights, lead_lep, subl_lep)
             
-            weights.add ('MuonSF'    , muonSF_nom, muonSF_up, muonSF_down)
-            weights.add ('ElectronSF', elecSF_nom, elecSF_up, elecSF_down)
+            weights.add (
+                    'LeptonSF', 
+                    lead_lep.SF*subl_lep.SF, 
+                    lead_lep.SF_up*subl_lep.SF_up, 
+                    lead_lep.SF_down*subl_lep.SF_down
+            )
 
             _ones = np.ones(len(weights.weight()))
             if "PSWeight" in event.fields:
@@ -595,8 +599,8 @@ class zzinc_processor(processor.ProcessorABC):
         # Adding scale factors to Muon and Electron fields
         muon = event.Muon 
         electron = event.Electron
-        muonSF_nom, muonSF_up, muonSF_down = LeptonScaleFactors(era=self._era).AttachMuonSF(event.Muon)
-        elecSF_nom, elecSF_up, elecSF_down = LeptonScaleFactors(era=self._era).AttachElectronSF(event.Electron)
+        muonSF_nom, muonSF_up, muonSF_down = self._leSF.muonSF(muon)
+        elecSF_nom, elecSF_up, elecSF_down = self._leSF.electronSF(electron)
         
         muon['SF'] = muonSF_nom
         muon['SF_up'] = muonSF_up
