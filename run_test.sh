@@ -4,7 +4,7 @@
 #    --no-deps \
 #    --ignore-installed \
 #    --no-cache-dir \
-#    dist/Qawa-0.0.3-py2.py3-none-any.whl
+#    dist/Qawa-0.0.5-py2.py3-none-any.whl
 
 pip install . --upgrade --no-deps  --ignore-installed --no-cache-dir
 

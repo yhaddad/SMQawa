@@ -11,12 +11,11 @@ rerun_script_header = """#!/bin/bash
 cd /srv/
 python -m venv --without-pip --system-site-packages jobenv
 source jobenv/bin/activate
-python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-0.0.3-py2.py3-none-any.whl
+python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-0.0.5-py2.py3-none-any.whl
 
 echo "... start job at" `date "+%Y-%m-%d %H:%M:%S"`
 echo "----- directory before running:"
 ls -lthr
-
 """
 
 def main():
@@ -128,7 +127,7 @@ def main():
                         _stream.writelines(local_rerun_lines)
 
                     coffea_image = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest" 
-                    os.system(f"cp dist/Qawa-0.0.3-py2.py3-none-any.whl {jobs_dir}")   
+                    os.system(f"cp dist/Qawa-0.0.5-py2.py3-none-any.whl {jobs_dir}")   
                     htc = os.popen(f"singularity exec -B {jobs_dir}:/srv/ {coffea_image} bash /srv/rerun-script.sh").read()
                     print(htr)
                     

@@ -7,7 +7,7 @@ import time
 
 logging.basicConfig(level=logging.DEBUG)
 
-qawa_version = '0.0.3'
+qawa_version = '0.0.5'
 
 
 script_TEMPLATE = """#!/bin/bash
