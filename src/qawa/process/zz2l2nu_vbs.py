@@ -153,7 +153,7 @@ class zzinc_processor(processor.ProcessorABC):
             'dphi_met_ll': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1, name="dphi_met_ll", label="$\Delta \phi(\ell\ell,\vec p_{T}^{miss})/\pi$"),
+                hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label="$\Delta \phi(\ell\ell,\vec p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'gnn_score': hist.Hist(
@@ -165,7 +165,7 @@ class zzinc_processor(processor.ProcessorABC):
             'dijet_mass': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 100, 2100, name="dijet_mass", label="$m_{jj}$ (GeV)"),
+                hist.axis.Regular(50, 0, 2000, name="dijet_mass", label="$m_{jj}$ (GeV)"),
                 hist.storage.Weight() 
             ),
             'dijet_deta': hist.Hist(
@@ -173,7 +173,38 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(50, 0, 10, name="gnn_score", label="gnn_score"),
                 hist.storage.Weight()
-            )
+            ),
+            "lead_jet_pt": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="lead_jet_pt", label="$p_T^{j_1}$ (GeV)"),
+                hist.storage.Weight()
+            ), 
+            "trail_jet_pt": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="trail_jet_pt", label="$p_T^{j_2}$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            "lead_jet_eta": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="lead_jet_eta", label="$\eta(j_1)$"),
+                hist.storage.Weight()
+            ), 
+            "trail_jet_eta": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="trail_jet_eta", label="$\eta(j_2)$"),
+                hist.storage.Weight()
+            ),
+            "min_dphi_met_j": hist.Hist( 
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label="$\eta(j_2)$"),
+                hist.storage.Weight()
+            ), 
+
         }
     
     def _add_trigger_sf(self, weights, lead_lep, subl_lep):
@@ -396,7 +427,7 @@ class zzinc_processor(processor.ProcessorABC):
                 ak.fill_none(reco_met >70, False)
             )
         )
-        selection.add('low_met'   , ak.fill_none((reco_met<100) & (reco_met>50), False))
+        selection.add('low_met_pt', ak.fill_none((reco_met<100) & (reco_met>50), False))
         selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - 91) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
         selection.add(
@@ -424,10 +455,10 @@ class zzinc_processor(processor.ProcessorABC):
             )
         )
         # jet demography
-        selection.add('1njet' , ngood_jets  >= 1 )
-        selection.add('2njet' , ngood_jets  >= 1 )
-        selection.add('1nbjet', ngood_bjets >= 1 )
-        selection.add('0nhtau', nhtaus_lep  == 0 )
+        selection.add('1njets' , ngood_jets  >= 1 )
+        selection.add('2njets' , ngood_jets  >= 1 )
+        selection.add('1nbjets', ngood_bjets >= 1 )
+        selection.add('0nhtaus', nhtaus_lep  == 0 )
         
         selection.add('dijet_deta', ak.fill_none(dijet_deta > 2.5, False))
         selection.add('dijet_mass_400', ak.fill_none(dijet_mass >  400, False))
@@ -440,7 +471,7 @@ class zzinc_processor(processor.ProcessorABC):
         event['dilep_mt'] = dilep_mt
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
-        event['dphi_met_ll'] = dilep_dphi_met/np.pi
+        event['dphi_met_ll'] = dilep_dphi_met
 
         event['leading_lep_pt'  ] = lead_lep.pt
         event['leading_lep_eta' ] = lead_lep.eta
