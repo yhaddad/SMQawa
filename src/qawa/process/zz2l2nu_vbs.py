@@ -31,10 +31,10 @@ def build_leptons(muons, electrons):
     tight_muons = muons[tight_muons_mask]
     loose_muons = muons[
         ~tight_muons_mask &
-        (muons.pt            >  7.  ) &
+        (muons.pt            >  10. ) &
         (np.abs(muons.eta)   <  2.4 ) &
-        (muons.pfRelIso04_all<= 0.15) &
-        muons.looseId   
+        (muons.pfRelIso04_all<= 0.25) &
+        muons.softId   
     ]
     # select tight/loose electron
     tight_electrons_mask = (
@@ -45,7 +45,7 @@ def build_leptons(muons, electrons):
     tight_electrons = electrons[tight_electrons_mask]
     loose_electrons = electrons[
         ~tight_electrons_mask &
-        (electrons.pt           > 7. ) &
+        (electrons.pt           > 10. ) &
         (np.abs(electrons.eta)  < 2.5) &
         electrons.mvaFall17V2Iso_WPL
     ]
@@ -57,7 +57,7 @@ def build_leptons(muons, electrons):
 
 def build_htaus(tau, lepton):
     base = (
-        (tau.pt         > 20. ) & 
+        (tau.pt         > 18. ) & 
         (np.abs(tau.eta)< 2.3 ) & 
         (tau.decayMode != 5   ) & 
         (tau.decayMode != 6   )
@@ -291,15 +291,6 @@ class zzinc_processor(processor.ProcessorABC):
         event['ngood_bjets'] = ngood_bjets
         event['ngood_jets']  = ngood_jets
        
-        # jet selections
-        selection.add('0bjet', ngood_bjets == 0)
-        selection.add('1bjet', ngood_bjets >= 1)
-        selection.add('0jets', ngood_jets == 0 )
-        selection.add('1jets', ngood_jets == 1 )
-        selection.add('2jets', ngood_jets >= 2 )
-        selection.add('01jet', ngood_jets <= 1 )
-        selection.add('0htau', nhtaus_lep == 0 )
-
         # lepton quantities
         def z_lepton_pair(leptons):
             pair = ak.combinations(leptons, 2, axis=1, fields=['l1', 'l2'])
@@ -333,22 +324,23 @@ class zzinc_processor(processor.ProcessorABC):
             with_name="PtEtaPhiMCandidate",
             behavior=candidate.behavior,
         )
+
         emu_met = ak.firsts(extra_lep, axis=1) + p4_met
-        
         dilep_et = np.sqrt(dilep_pt**2 + dilep_m**2)
         dilep_mt = ak.where(
             ntight_lep==3,
             np.sqrt((dilep_et + emu_met.pt)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
             np.sqrt((dilep_et +  p4_met.pt)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
         )
-        
-        dphi_ll = lead_lep.delta_phi(subl_lep)
-        deta_ll = np.abs(lead_lep.eta - subl_lep.eta)
-        #dR_ll   = lead_lep.delta_r(subl_lep)
-        dphi_met_ll    = ak.where(ntight_lep==3, dilep_p4.delta_phi(emu_met), dilep_p4.delta_phi(p4_met))
-        vector_balance = ak.where(ntight_lep==3, (emu_met - dilep_p4).pt/dilep_p4.pt, (p4_met - dilep_p4).pt/dilep_p4.pt)
+        reco_met = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
+        dilep_dphi = lead_lep.delta_phi(subl_lep)
+        dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
+        dilep_dR   = lead_lep.delta_r(subl_lep)
+        dilep_dphi_met  = ak.where(ntight_lep==3, dilep_p4.delta_phi(emu_met), dilep_p4.delta_phi(p4_met))
         scalar_balance = ak.where(ntight_lep==3, emu_met.pt/dilep_p4.pt, p4_met.pt/dilep_p4.pt)
+        
 
+        
         # 2jet and vbs related variables
         lead_jet = ak.firsts(jets)
         subl_jet = ak.firsts(jets[lead_jet.delta_r(jets)>0.01])
@@ -359,7 +351,8 @@ class zzinc_processor(processor.ProcessorABC):
         dijet_deta = np.abs(lead_jet.eta - subl_jet.eta)
         dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
-        jmet_dphi  = ak.min(np.abs(
+        
+        min_dphi_met_j = ak.min(np.abs(
             ak.where(
                 ntight_lep==3, 
                 jets.delta_phi(emu_met), 
@@ -367,70 +360,144 @@ class zzinc_processor(processor.ProcessorABC):
             )
         ), axis=1) 
         
+        # define basic selection
+        selection.add(
+            "require-ossf",
+            (ntight_lep==2) & (nloose_lep==0) &
+            (ak.firsts(tight_lep).pt>25) &
+            ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
+        )
+        
+        selection.add(
+            "require-osof",
+            (ntight_lep==2) & (nloose_lep==0) &
+            (ak.firsts(tight_lep).pt>25) &
+           ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False)
+        )
+        
+        selection.add(
+            "require-3lep",
+            (ntight_lep==3) & (nloose_lep==0) &
+            (ak.firsts(tight_lep).pt>25) &
+            ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
+        )
+        
+        selection.add(
+            "require-4lep",
+            (ntight_lep>=2) & (nloose_lep + ntight_lep)==4 &
+            (ak.firsts(tight_lep).pt>25) &
+            ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
+        )
+        selection.add(
+            'met_pt' ,
+            ak.where(
+                ngood_jets<2, 
+                ak.fill_none(reco_met >100, False),
+                ak.fill_none(reco_met >70, False)
+            )
+        )
+        selection.add('low_met'   , ak.fill_none((reco_met<100) & (reco_met>50), False))
+        selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - 91) < 15, False))
+        selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
+        selection.add(
+            'dilep_pt',
+            ak.where(
+                selection.require(**{"require-3lep":True}),
+                ak.fill_none(dilep_pt>45, False),
+                ak.fill_none(dilep_pt>60, False)
+            )
+        )
+        selection.add(
+            "dilep_dphi_met", 
+            ak.where(
+                ngood_jets <= 1, 
+                ak.fill_none(np.abs(dilep_dphi_met)>0.5, False), 
+                ak.fill_none(np.abs(dilep_dphi_met)>1.0, False)
+            )
+        )
+        selection.add(
+            "min_dphi_met_j",
+            ak.where(
+                ngood_jets <= 1, 
+                ak.fill_none(np.abs(min_dphi_met_j)>0.25, False), 
+                ak.fill_none(np.abs(min_dphi_met_j)>0.5, False), 
+            )
+        )
+        # jet demography
+        selection.add('1njet' , ngood_jets  >= 1 )
+        selection.add('2njet' , ngood_jets  >= 1 )
+        selection.add('1nbjet', ngood_bjets >= 1 )
+        selection.add('0nhtau', nhtaus_lep  == 0 )
+        
+        selection.add('dijet_dphi', ak.fill_none(dijet_dphi > 2.5, False))
+        selection.add('dijet_mass_400', ak.fill_none(dijet_mass >  400, False))
+        selection.add('dijet_mass_800', ak.fill_none(dijet_mass >  800, False))
+        selection.add('dijet_mass_1200', ak.fill_none(dijet_mass > 1200, False))
+
         # high level selections
-        selection.add(
-                "require-2lep",
-                (ntight_lep==2) & (nloose_lep==0) &
-                (ak.firsts(tight_lep).pt>25) &
-                ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
-                ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
-                ak.fill_none(dilep_pt  >   60, False) &
-                ak.fill_none(p4_met.pt >  100, False) &
-                ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
-                # ak.fill_none(dR_ll     <  1.8, False) & # to me uncommneted when needed
-                ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
-        )
-        selection.add(
-                "require-3lep",
-                (ntight_lep==3) & (nloose_lep==0) &
-                (ak.firsts(tight_lep).pt>25) & 
-                ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
-                ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
-                ak.fill_none(dilep_pt   > 30, False) &
-                ak.fill_none(emu_met.pt > 70, False) &
-                ak.fill_none(jmet_dphi  > 0.25, False) & # from HIG-21-013
-                ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
-        )
-        selection.add(
-                "require-OF",
-                (ntight_lep==2) & (nloose_lep==0) &
-                (ak.firsts(tight_lep).pt>25) & 
-                ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
-                ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False) & 
-                ak.fill_none(dilep_pt  > 45, False) &
-                ak.fill_none(p4_met.pt > 70, False) &
-                ak.fill_none(np.abs(dphi_met_ll) > 0.5, False) &
-                ak.fill_none(jmet_dphi > 0.25, False) # from HIG-21-013
-        )
-        selection.add(
-                "require-NR",
-                (ntight_lep==2) & (nloose_lep==0) &
-                (ak.firsts(tight_lep).pt>25) & 
-                ak.fill_none(np.abs(dilep_m - self.zmass) > 15, False) &
-                ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False)  & 
-                ak.fill_none(dilep_pt  > 45, False) &
-                ak.fill_none(p4_met.pt > 70, False)
-        )
-        selection.add(
-                "require-DY", 
-                (ntight_lep==2) & (nloose_lep==0) &
-                (ak.firsts(tight_lep).pt>25) & 
-                ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
-                ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
-                ak.fill_none(dilep_pt  >   60, False) &
-                ak.fill_none(p4_met.pt >   50, False) &
-                ak.fill_none(p4_met.pt <  100, False)
-                #ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
-                #ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
-        )
-        selection.add(
-                "require-vbs", 
-                ak.fill_none(dijet_mass > 400, False) & 
-                ak.fill_none(dijet_deta > 2.5, False) & 
-                ak.fill_none(p4_met.pt  > 120, False)
-                #ak.fill_none(jmet_dphi  > 0.5, False) &
-                #ak.fill_none(np.abs(dphi_met_ll) > 1.0, False)
-        )
+        # selection.add(
+        #         "require-2lep",
+        #         (ntight_lep==2) & (nloose_lep==0) &
+        #         (ak.firsts(tight_lep).pt>25) &
+        #         ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
+        #         ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
+        #         ak.fill_none(dilep_pt  >   60, False) &
+        #         ak.fill_none(p4_met.pt >  100, False) &
+        #         ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
+        #         # ak.fill_none(dR_ll     <  1.8, False) & # to me uncommneted when needed
+        #         ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
+        # )
+        # selection.add(
+        #         "require-3lep",
+        #         (ntight_lep==3) & (nloose_lep==0) &
+        #         (ak.firsts(tight_lep).pt>25) & 
+        #         ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
+        #         ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
+        #         ak.fill_none(dilep_pt   > 30, False) &
+        #         ak.fill_none(emu_met.pt > 70, False) &
+        #         ak.fill_none(jmet_dphi  > 0.25, False) & # from HIG-21-013
+        #         ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
+        # )
+        # selection.add(
+        #         "require-OF",
+        #         (ntight_lep==2) & (nloose_lep==0) &
+        #         (ak.firsts(tight_lep).pt>25) & 
+        #         ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
+        #         ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False) & 
+        #         ak.fill_none(dilep_pt  > 45, False) &
+        #         ak.fill_none(p4_met.pt > 70, False) &
+        #         ak.fill_none(np.abs(dphi_met_ll) > 0.5, False) &
+        #         ak.fill_none(jmet_dphi > 0.25, False) # from HIG-21-013
+        # )
+        # selection.add(
+        #         "require-NR",
+        #         (ntight_lep==2) & (nloose_lep==0) &
+        #         (ak.firsts(tight_lep).pt>25) & 
+        #         ak.fill_none(np.abs(dilep_m - self.zmass) > 15, False) &
+        #         ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False)  & 
+        #         ak.fill_none(dilep_pt  > 45, False) &
+        #         ak.fill_none(p4_met.pt > 70, False)
+        # )
+        # selection.add(
+        #         "require-DY", 
+        #         (ntight_lep==2) & (nloose_lep==0) &
+        #         (ak.firsts(tight_lep).pt>25) & 
+        #         ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
+        #         ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
+        #         ak.fill_none(dilep_pt  >   60, False) &
+        #         ak.fill_none(p4_met.pt >   50, False) &
+        #         ak.fill_none(p4_met.pt <  100, False)
+        #         #ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
+        #         #ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
+        # )
+        # selection.add(
+        #         "require-vbs", 
+        #         ak.fill_none(dijet_mass > 400, False) & 
+        #         ak.fill_none(dijet_deta > 2.5, False) & 
+        #         ak.fill_none(p4_met.pt  > 120, False)
+        #         #ak.fill_none(jmet_dphi  > 0.5, False) &
+        #         #ak.fill_none(np.abs(dphi_met_ll) > 1.0, False)
+        # )
 
         # Define all variables for the GNN
         event['met_pt'  ] = p4_met.pt
@@ -438,7 +505,7 @@ class zzinc_processor(processor.ProcessorABC):
         event['dilep_mt'] = dilep_mt
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
-        event['dphi_met_ll'] = dphi_met_ll/np.pi
+        event['dphi_met_ll'] = dilep_dphi_met/np.pi
 
         event['leading_lep_pt'  ] = lead_lep.pt
         event['leading_lep_eta' ] = lead_lep.eta
@@ -497,19 +564,15 @@ class zzinc_processor(processor.ProcessorABC):
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
             # inclusive categories
-            "catSR0j-inc": common_sel + ['require-2lep','0jets', '0bjet', '0htau'], 
-            "catSR1j-inc": common_sel + ['require-2lep','1jets', '0bjet', '0htau'], 
-            "catSR2j-inc": common_sel + ['require-2lep','2jets', '0bjet', '0htau'], 
-            
-            #
-            "cat3L-inc": common_sel + ['require-3lep', '01jet', '0bjet'], 
-            "catEM-inc": common_sel + ['require-OF', '01jet'], 
-            "catDY-inc": common_sel + ['require-DY', '01jet'], 
-            "catTT-inc": common_sel + ['require-NR', '01jet'], 
-                
+            "catSR0J"  : common_sel + ['require-ossf', 'dilep_m', 'dilep_pt', 'met_pt', '~1nbjet', '0nhtau', ''], 
+            "catSR1J"  : common_sel + [], 
+            "catSR2J"  : common_sel + [],  
+            "cat3L-inc": common_sel + [],
+            "cat4L-inc": common_sel + [],
+            "catDY-inc": common_sel + [],
+            "catEM-inc": common_sel + [],
+            "catTT-inc": common_sel + [],
             # vbs categories
-            "catSR-vbs": common_sel + ['require-2lep', 'require-vbs'],
-            "cat3L-vbs": common_sel + ['require-3lep', 'require-vbs']
         }
 
         if shift_name is None:
@@ -525,8 +588,11 @@ class zzinc_processor(processor.ProcessorABC):
         
         def _histogram_filler(ch, syst, var, _weight=None):
             sel_ = channels[ch]
-            sel_ = [s for s in sel_ if var not in s]
-            cut =  selection.all(*sel_)
+            sel_args_ = {
+                s.replace('~',''): (False if '~' in s else True) for s in sel_ if var not in s
+            }
+            cut =  selection.require(**sel_args_)
+
             systname = 'nominal' if syst is None else syst
             
             if _weight is None: 
