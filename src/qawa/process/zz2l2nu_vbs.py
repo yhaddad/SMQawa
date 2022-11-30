@@ -333,11 +333,11 @@ class zzinc_processor(processor.ProcessorABC):
             np.sqrt((dilep_et +  p4_met.pt)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
         )
         reco_met = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
-        dilep_dphi = lead_lep.delta_phi(subl_lep)
-        dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
-        dilep_dR   = lead_lep.delta_r(subl_lep)
+        # dilep_dphi = lead_lep.delta_phi(subl_lep)
+        # dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
+        # dilep_dR   = lead_lep.delta_r(subl_lep)
         dilep_dphi_met  = ak.where(ntight_lep==3, dilep_p4.delta_phi(emu_met), dilep_p4.delta_phi(p4_met))
-        scalar_balance = ak.where(ntight_lep==3, emu_met.pt/dilep_p4.pt, p4_met.pt/dilep_p4.pt)
+        #scalar_balance = ak.where(ntight_lep==3, emu_met.pt/dilep_p4.pt, p4_met.pt/dilep_p4.pt)
         
 
         
@@ -347,10 +347,10 @@ class zzinc_processor(processor.ProcessorABC):
         third_jet = ak.firsts(jets[(lead_jet.delta_r(jets)>0.01) & (subl_jet.delta_r(jets)>0.01)])
         
         dijet_mass = (lead_jet + subl_jet).mass
-        dijet_dphi = lead_jet.delta_phi(subl_jet)
+        #dijet_dphi = lead_jet.delta_phi(subl_jet)
         dijet_deta = np.abs(lead_jet.eta - subl_jet.eta)
-        dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
-        dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
+        #dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
+        #dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         
         min_dphi_met_j = ak.min(np.abs(
             ak.where(
@@ -429,75 +429,10 @@ class zzinc_processor(processor.ProcessorABC):
         selection.add('1nbjet', ngood_bjets >= 1 )
         selection.add('0nhtau', nhtaus_lep  == 0 )
         
-        selection.add('dijet_dphi', ak.fill_none(dijet_dphi > 2.5, False))
+        selection.add('dijet_deta', ak.fill_none(dijet_deta > 2.5, False))
         selection.add('dijet_mass_400', ak.fill_none(dijet_mass >  400, False))
         selection.add('dijet_mass_800', ak.fill_none(dijet_mass >  800, False))
         selection.add('dijet_mass_1200', ak.fill_none(dijet_mass > 1200, False))
-
-        # high level selections
-        # selection.add(
-        #         "require-2lep",
-        #         (ntight_lep==2) & (nloose_lep==0) &
-        #         (ak.firsts(tight_lep).pt>25) &
-        #         ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
-        #         ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
-        #         ak.fill_none(dilep_pt  >   60, False) &
-        #         ak.fill_none(p4_met.pt >  100, False) &
-        #         ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
-        #         # ak.fill_none(dR_ll     <  1.8, False) & # to me uncommneted when needed
-        #         ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
-        # )
-        # selection.add(
-        #         "require-3lep",
-        #         (ntight_lep==3) & (nloose_lep==0) &
-        #         (ak.firsts(tight_lep).pt>25) & 
-        #         ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
-        #         ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
-        #         ak.fill_none(dilep_pt   > 30, False) &
-        #         ak.fill_none(emu_met.pt > 70, False) &
-        #         ak.fill_none(jmet_dphi  > 0.25, False) & # from HIG-21-013
-        #         ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
-        # )
-        # selection.add(
-        #         "require-OF",
-        #         (ntight_lep==2) & (nloose_lep==0) &
-        #         (ak.firsts(tight_lep).pt>25) & 
-        #         ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
-        #         ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False) & 
-        #         ak.fill_none(dilep_pt  > 45, False) &
-        #         ak.fill_none(p4_met.pt > 70, False) &
-        #         ak.fill_none(np.abs(dphi_met_ll) > 0.5, False) &
-        #         ak.fill_none(jmet_dphi > 0.25, False) # from HIG-21-013
-        # )
-        # selection.add(
-        #         "require-NR",
-        #         (ntight_lep==2) & (nloose_lep==0) &
-        #         (ak.firsts(tight_lep).pt>25) & 
-        #         ak.fill_none(np.abs(dilep_m - self.zmass) > 15, False) &
-        #         ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False)  & 
-        #         ak.fill_none(dilep_pt  > 45, False) &
-        #         ak.fill_none(p4_met.pt > 70, False)
-        # )
-        # selection.add(
-        #         "require-DY", 
-        #         (ntight_lep==2) & (nloose_lep==0) &
-        #         (ak.firsts(tight_lep).pt>25) & 
-        #         ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False) &
-        #         ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False) & 
-        #         ak.fill_none(dilep_pt  >   60, False) &
-        #         ak.fill_none(p4_met.pt >   50, False) &
-        #         ak.fill_none(p4_met.pt <  100, False)
-        #         #ak.fill_none(jmet_dphi > 0.25, False) & # from HIG-21-013
-        #         #ak.fill_none(np.abs(dphi_met_ll) > 0.5, False)
-        # )
-        # selection.add(
-        #         "require-vbs", 
-        #         ak.fill_none(dijet_mass > 400, False) & 
-        #         ak.fill_none(dijet_deta > 2.5, False) & 
-        #         ak.fill_none(p4_met.pt  > 120, False)
-        #         #ak.fill_none(jmet_dphi  > 0.5, False) &
-        #         #ak.fill_none(np.abs(dphi_met_ll) > 1.0, False)
-        # )
 
         # Define all variables for the GNN
         event['met_pt'  ] = p4_met.pt
@@ -563,16 +498,77 @@ class zzinc_processor(processor.ProcessorABC):
         # selections
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
-            # inclusive categories
-            "catSR0J"  : common_sel + ['require-ossf', 'dilep_m', 'dilep_pt', 'met_pt', '~1nbjet', '0nhtau', ''], 
-            "catSR1J"  : common_sel + [], 
-            "catSR2J"  : common_sel + [],  
-            "cat3L-inc": common_sel + [],
-            "cat4L-inc": common_sel + [],
-            "catDY-inc": common_sel + [],
-            "catEM-inc": common_sel + [],
-            "catTT-inc": common_sel + [],
-            # vbs categories
+            # inclusive regions
+            "cat-SR0J": common_sel + [
+                'require-ossf', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "~1njets"], 
+            "cat-SR1J": common_sel + [
+                'require-ossf', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "1njets", "~2njets"],
+            "cat-SR2J": common_sel + [
+                'require-ossf', 'dilep_m', 'dilep_pt',
+                'met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"], 
+            "cat-DY": common_sel + [
+                'require-ossf', 'dilep_m', 'dilep_pt',
+                'low_met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"], 
+            "cat-3L": common_sel + [
+                'require-3lep', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets',
+                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"],
+            "cat-EM": common_sel + [
+                'require-osof', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets',
+                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"],
+            "cat-TT": common_sel + [
+                'require-osof', 'dilep_m', 'dilep_pt', 
+                'met_pt', '1nbjets',
+                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"],
+            "cat-NR": common_sel + [
+                'require-osof', '~dilep_m', '~dilep_m_50', 
+                'dilep_pt', 'met_pt', '1nbjets',
+                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"],
+            
+            # vector boson scattering
+            "vbs-SR": common_sel + [
+                "dijet_deta", "dijet_mass_400",
+                'require-ossf', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+            "vbs-SR0": common_sel + [
+                "dijet_deta", "dijet_mass_400", "~dijet_mass_400",
+                'require-ossf', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+            "vbs-SR1": common_sel + [
+                "dijet_deta", "dijet_mass_800", "~dijet_mass_1200",
+                'require-ossf', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+            "vbs-SR2": common_sel + [
+                "dijet_deta", "dijet_mass_1200",
+                'require-ossf', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+            "vbs-3L": common_sel + [
+                'require-3lep', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets',
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+            "vbs-EM": common_sel + [
+                'require-osof', 'dilep_m', 'dilep_pt', 
+                'met_pt', '~1nbjets',
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+            "vbs-TT": common_sel + [
+                'require-osof', 'dilep_m', 'dilep_pt', 
+                'met_pt', '1nbjets',
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+            "vbs-NR": common_sel + [
+                'require-osof', '~dilep_m', '~dilep_m_50', 
+                'dilep_pt', 'met_pt', '1nbjets',
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
         }
 
         if shift_name is None:
