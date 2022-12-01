@@ -363,11 +363,13 @@ class zzinc_processor(processor.ProcessorABC):
             np.sqrt((dilep_et + emu_met.pt)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
             np.sqrt((dilep_et +  p4_met.pt)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
         )
-        reco_met = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
+        reco_met_pt = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
+        reco_met_phi = ak.where(ntight_lep==2, p4_met.phi, emu_met.phi)
+
         # dilep_dphi = lead_lep.delta_phi(subl_lep)
         # dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
         # dilep_dR   = lead_lep.delta_r(subl_lep)
-        dilep_dphi_met  = ak.where(ntight_lep==3, dilep_p4.delta_phi(emu_met), dilep_p4.delta_phi(p4_met))
+        dilep_dphi_met  = ak.where(ntight_lep==2, dilep_p4.delta_phi(p4_met), dilep_p4.delta_phi(emu_met))
         #scalar_balance = ak.where(ntight_lep==3, emu_met.pt/dilep_p4.pt, p4_met.pt/dilep_p4.pt)
         
 
@@ -423,8 +425,8 @@ class zzinc_processor(processor.ProcessorABC):
             'met_pt' ,
             ak.where(
                 ngood_jets<2, 
-                ak.fill_none(reco_met >100, False),
-                ak.fill_none(reco_met >70, False)
+                ak.fill_none(reco_met > 100, False),
+                ak.fill_none(reco_met > 70, False)
             )
         )
         selection.add('low_met_pt', ak.fill_none((reco_met<100) & (reco_met>50), False))
@@ -466,8 +468,8 @@ class zzinc_processor(processor.ProcessorABC):
         selection.add('dijet_mass_1200', ak.fill_none(dijet_mass > 1200, False))
 
         # Define all variables for the GNN
-        event['met_pt'  ] = p4_met.pt
-        event['met_phi' ] = p4_met.phi
+        event['met_pt'  ] = reco_met_pt
+        event['met_phi' ] = reco_met_phi
         event['dilep_mt'] = dilep_mt
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
@@ -641,7 +643,6 @@ class zzinc_processor(processor.ProcessorABC):
                 
             
         for ch in channels:
-            cut = selection.all(*channels[ch])
             for sys in systematics:
                 _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'dilep_mt')
