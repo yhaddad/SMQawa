@@ -171,7 +171,7 @@ class zzinc_processor(processor.ProcessorABC):
             'dijet_deta': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 10, name="gnn_score", label="gnn_score"),
+                hist.axis.Regular(50, 0, 10, name="dijet_deta", label="dijet_deta"),
                 hist.storage.Weight()
             ),
             "lead_jet_pt": hist.Hist(
@@ -380,8 +380,10 @@ class zzinc_processor(processor.ProcessorABC):
         third_jet = ak.firsts(jets[(lead_jet.delta_r(jets)>0.01) & (subl_jet.delta_r(jets)>0.01)])
         
         dijet_mass = (lead_jet + subl_jet).mass
+        event['dijet_mass'] = dijet_mass
         #dijet_dphi = lead_jet.delta_phi(subl_jet)
         dijet_deta = np.abs(lead_jet.eta - subl_jet.eta)
+        event['dijet_deta'] = dijet_deta
         #dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         #dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         
@@ -391,7 +393,9 @@ class zzinc_processor(processor.ProcessorABC):
                 jets.delta_phi(emu_met), 
                 jets.delta_phi(p4_met)
             )
-        ), axis=1) 
+        ), axis=1)
+
+        event['min_dphi_met_j'] = min_dphi_met_j
         
         # define basic selection
         selection.add(
@@ -425,11 +429,11 @@ class zzinc_processor(processor.ProcessorABC):
             'met_pt' ,
             ak.where(
                 ngood_jets<2, 
-                ak.fill_none(reco_met > 100, False),
-                ak.fill_none(reco_met > 70, False)
+                ak.fill_none(reco_met_pt > 100, False),
+                ak.fill_none(reco_met_pt > 70, False)
             )
         )
-        selection.add('low_met_pt', ak.fill_none((reco_met<100) & (reco_met>50), False))
+        selection.add('low_met_pt', ak.fill_none((reco_met_pt <100) & (reco_met_pt >50), False))
         selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - 91) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
         selection.add(
@@ -572,7 +576,7 @@ class zzinc_processor(processor.ProcessorABC):
                 'met_pt', '~1nbjets', '0nhtaus', 
                 'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
             "vbs-SR0": common_sel + [
-                "dijet_deta", "dijet_mass_400", "~dijet_mass_400",
+                "dijet_deta", "dijet_mass_400", "~dijet_mass_800",
                 'require-ossf', 'dilep_m', 'dilep_pt', 
                 'met_pt', '~1nbjets', '0nhtaus', 
                 'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
@@ -585,6 +589,10 @@ class zzinc_processor(processor.ProcessorABC):
                 "dijet_deta", "dijet_mass_1200",
                 'require-ossf', 'dilep_m', 'dilep_pt', 
                 'met_pt', '~1nbjets', '0nhtaus', 
+                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+            "vbs-DY": common_sel + [
+                'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',"~dijet_mass_400",
+                'low_met_pt', '~1nbjets', '0nhtaus', 
                 'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
             "vbs-3L": common_sel + [
                 'require-3lep', 'dilep_m', 'dilep_pt', 
@@ -650,6 +658,13 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'bjets')
                 _histogram_filler(ch, sys, 'dphi_met_ll')
                 _histogram_filler(ch, sys, 'gnn_score')
+                _histogram_filler(ch, sys, 'dijet_mass')
+                _histogram_filler(ch, sys, 'dijet_deta')
+                _histogram_filler(ch, sys, 'lead_jet_pt')
+                _histogram_filler(ch, sys, 'trail_jet_pt')
+                _histogram_filler(ch, sys, 'lead_jet_eta')
+                _histogram_filler(ch, sys, 'trail_jet_eta')
+                _histogram_filler(ch, sys, 'min_dphi_met_j')
                 
         return {dataset: histos}
         
