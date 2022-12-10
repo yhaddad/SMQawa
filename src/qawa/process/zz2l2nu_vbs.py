@@ -462,7 +462,7 @@ class zzinc_processor(processor.ProcessorABC):
         )
         # jet demography
         selection.add('1njets' , ngood_jets  >= 1 )
-        selection.add('2njets' , ngood_jets  >= 1 )
+        selection.add('2njets' , ngood_jets  >= 2 )
         selection.add('1nbjets', ngood_bjets >= 1 )
         selection.add('0nhtaus', nhtaus_lep  == 0 )
         
