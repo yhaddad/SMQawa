@@ -12,29 +12,30 @@ qawa_version = '0.0.5'
 
 script_TEMPLATE = """#!/bin/bash
 export X509_USER_PROXY={proxy}
+export XRD_REQUESTTIMEOUT=6400
+export XRD_REDIRECTLIMIT=64
+
+voms-proxy-info -all
+voms-proxy-info -all -file {proxy}
 
 python -m venv --without-pip --system-site-packages jobenv
 source jobenv/bin/activate
 python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-{qawa_version}-py2.py3-none-any.whl
 
-echo "... start job at" `date "+%Y-%m-%d %H:%M:%S"`
-echo "----- directory before running:"
-echo "----- Found Proxy in: $X509_USER_PROXY"
+echo "----- JOB STARTS @" `date "+%Y-%m-%d %H:%M:%S"`
+echo "----- X509_USER_PROXY    : $X509_USER_PROXY"
+echo "----- XRD_REDIRECTLIMIT  : $XRD_REDIRECTLIMIT"
+echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
 
-echo "python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2"
+echo "----- processing the files : "
 python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2
 
 echo "----- directory after running :"
-ls -lthr .
-
+ls -lthr
 if [ ! -f "histogram_$1.pkl.gz" ]; then
   exit 1;
 fi
-
-echo "----- transfert output to eos {eosdir}"
-xrdcp -s -f histogram_$1.pkl.gz {eosdir}
-
 echo " ------ THE END (everyone dies !) ----- "
 """
 
@@ -44,11 +45,13 @@ universe              = vanilla
 request_disk          = 10000000
 
 executable            = {jobdir}/script.sh
-arguments             = $(ProcId) $(jobid)
+arguments             = $(ProcId) $(jobfn)
 transfer_input_files  = {transfer_file}
+# transfer_output_files = histogram_$(ProcId).pkl.gz 
 should_transfer_files = YES
 WhenToTransferOutput  = ON_EXIT_OR_EVICT
 initialdir            = {jobdir}
+# output_destination    = root://eosuser.cern.ch//eos/user/y/yhaddad/condor_jobs/{jobdir}/
 
 output                = $(ClusterId).$(ProcId).out
 error                 = $(ClusterId).$(ProcId).err
@@ -57,17 +60,17 @@ log                   = $(ClusterId).$(ProcId).log
 on_exit_remove        = (ExitBySignal == False) && (ExitCode == 0)
 max_retries           = 2
 requirements          = Machine =!= LastRemoteHost
-
+# MY.XRDCP_CREATE_DIR   = True
 +SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest"
 +JobFlavour           = "{queue}"
 
-queue jobid from {jobdir}/inputfiles.dat
+queue jobfn from {jobdir}/inputfiles.dat
 """
 
 def main():
     parser = argparse.ArgumentParser(description='Famous Submitter')
     parser.add_argument("-i"   , "--input" , type=str, default="data.txt" , help="input datasets", required=True)
-    parser.add_argument("-t"   , "--tag"   , type=str, default="algiers"  , help="production tag", required=True)
+    parser.add_argument("-t"   , "--tag"   , type=str, default="atakour"  , help="production tag", required=True)
     parser.add_argument("-isMC", "--isMC"  , type=int, default=1          , help="")
     parser.add_argument("-q"   , "--queue" , type=str, default="longlunch", help="")
     parser.add_argument("-e"   , "--era"   , type=str, default="2018"     , help="")
@@ -81,7 +84,7 @@ def main():
     proxy_base = 'x509up_u{}'.format(os.getuid())
     home_base  = os.environ['HOME']
     proxy_copy = os.path.join(home_base,proxy_base)
-    eosbase = "/eos/user/y/yixiao/ZZTo2L2Nu/{tag}/{sample}/"
+    eosbase = "/eos/user/y/yhaddad/ZZTo2L2Nu/{tag}/{sample}/"
 
     regenerate_proxy = False
     if not os.path.isfile(proxy_copy):
