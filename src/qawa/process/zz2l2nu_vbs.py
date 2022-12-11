@@ -111,8 +111,7 @@ class zzinc_processor(processor.ProcessorABC):
         self._json = {
             '2018': LumiMask(f'{_data_path}/json/{era}/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'),
             '2017': LumiMask(f'{_data_path}/json/{era}/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'),
-            '2016': LumiMask(f'{_data_path}/json/{era}/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'),
-
+            '2016': LumiMask(f'{_data_path}/json/{era}/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt'),
         }
         with open(f'{_data_path}/{era}-trigger-rules.yaml') as ftrig:
             self._triggers = yaml.load(ftrig, Loader=yaml.FullLoader)
@@ -171,7 +170,7 @@ class zzinc_processor(processor.ProcessorABC):
             'dijet_deta': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 10, name="gnn_score", label="gnn_score"),
+                hist.axis.Regular(50, 0, 10, name="dijet_deta", label="gnn_score"),
                 hist.storage.Weight()
             ),
             "lead_jet_pt": hist.Hist(
@@ -317,8 +316,9 @@ class zzinc_processor(processor.ProcessorABC):
         good_jets = jets[~jet_btag & jet_mask]
         good_bjet = jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.4)]
         
-        ngood_jets  = ak.num(jets[~jet_btag & jet_mask])
-        ngood_bjets = ak.num(jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.4)])
+        ngood_jets  = ak.num(good_jets)
+        ngood_bjets = ak.num(good_bjet)
+        
         event['ngood_bjets'] = ngood_bjets
         event['ngood_jets']  = ngood_jets
        
@@ -375,9 +375,9 @@ class zzinc_processor(processor.ProcessorABC):
 
         
         # 2jet and vbs related variables
-        lead_jet = ak.firsts(jets)
-        subl_jet = ak.firsts(jets[lead_jet.delta_r(jets)>0.01])
-        third_jet = ak.firsts(jets[(lead_jet.delta_r(jets)>0.01) & (subl_jet.delta_r(jets)>0.01)])
+        lead_jet = ak.firsts(good_jets)
+        subl_jet = ak.firsts(good_jets[lead_jet.delta_r(good_jets)>0.01])
+        third_jet = ak.firsts(good_jets[(lead_jet.delta_r(good_jets)>0.01) & (subl_jet.delta_r(good_jets)>0.01)])
         
         dijet_mass = (lead_jet + subl_jet).mass
         #dijet_dphi = lead_jet.delta_phi(subl_jet)
@@ -425,11 +425,11 @@ class zzinc_processor(processor.ProcessorABC):
             'met_pt' ,
             ak.where(
                 ngood_jets<2, 
-                ak.fill_none(reco_met > 100, False),
-                ak.fill_none(reco_met > 70, False)
+                ak.fill_none(reco_met_pt>100, False),
+                ak.fill_none(reco_met_pt>70, False)
             )
         )
-        selection.add('low_met_pt', ak.fill_none((reco_met<100) & (reco_met>50), False))
+        selection.add('low_met_pt', ak.fill_none((reco_met_pt<100) & (reco_met_pt>50), False))
         selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - 91) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
         selection.add(
@@ -474,6 +474,9 @@ class zzinc_processor(processor.ProcessorABC):
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
         event['dphi_met_ll'] = dilep_dphi_met
+        event['dijet_mass'] = dijet_mass
+        event['dijet_deta'] = dijet_deta
+        event['min_dphi_met_j'] = min_dphi_met_j
 
         event['leading_lep_pt'  ] = lead_lep.pt
         event['leading_lep_eta' ] = lead_lep.eta
@@ -649,6 +652,13 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'njets')
                 _histogram_filler(ch, sys, 'bjets')
                 _histogram_filler(ch, sys, 'dphi_met_ll')
+                _histogram_filler(ch, sys, 'dijet_mass')
+                _histogram_filler(ch, sys, 'dijet_deta')
+                _histogram_filler(ch, sys, 'lead_jet_pt')
+                _histogram_filler(ch, sys, 'trail_jet_pt')
+                _histogram_filler(ch, sys, 'lead_jet_eta')
+                _histogram_filler(ch, sys, 'trail_jet_eta')
+                _histogram_filler(ch, sys, 'min_dphi_met_j')
                 _histogram_filler(ch, sys, 'gnn_score')
                 
         return {dataset: histos}
@@ -740,9 +750,10 @@ class zzinc_processor(processor.ProcessorABC):
             ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.up     }, "UESUp"  ),
             ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.down   }, "UESDown"), 
             
-            # Leptons + MET shift (FIXME: shift to be added)
+            # Electrons + MET shift (FIXME: shift to be added)
             ({"Electron": electronEnUp  }, "ElectronEnUp"  ),
             ({"Electron": electronEnDown}, "ElectronEnDown"),
+            # Muon + MET shifts
             ({"Muon": muonEnUp  }, "MuonRocUp"),
             ({"Muon": muonEnDown}, "MuonRocDown"),
         ]
