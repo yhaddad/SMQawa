@@ -128,13 +128,25 @@ class zzinc_processor(processor.ProcessorABC):
             'dilep_mt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1000, name="dilep_mt", label="$M_{T}$ (GeV)"),
+                hist.axis.Regular(60, 0, 600, name="dilep_mt", label="$M_{T}^{\ell\ell}$ (GeV)"),
+                hist.storage.Weight()
+            ), 
+	    'dilep_pt': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="dilep_pt", label="$p_{T}^{\ell\ell}$ (GeV)"),
+                hist.storage.Weight()
+            ), 
+	    'dilep_m': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 120, name="dilep_m", label="$M_{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
             'met_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1000, name="met_pt", label="$p_{T}^{miss}$ (GeV)"),
+                hist.axis.Regular(60, 0, 600, name="met_pt", label="$p_{T}^{miss}$ (GeV)"),
                 hist.storage.Weight()
             ),
             'njets': hist.Hist(
@@ -152,13 +164,13 @@ class zzinc_processor(processor.ProcessorABC):
             'dphi_met_ll': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label="$\Delta \phi(\ell\ell,\vec p_{T}^{miss})$"),
+                hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label="$\Delta \phi(\ell\ell,p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'gnn_score': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1, name="gnn_score", label="gnn_score"),
+                hist.axis.Regular(50, 0, 1, name="gnn_score", label="$O_{GNN}$"),
                 hist.storage.Weight()
             ),
             'dijet_mass': hist.Hist(
@@ -200,7 +212,7 @@ class zzinc_processor(processor.ProcessorABC):
             "min_dphi_met_j": hist.Hist( 
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label="$\eta(j_2)$"),
+                hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label="$\min\Delta\phi(p_{T}^{miss},j)$"),
                 hist.storage.Weight()
             ), 
 
@@ -357,15 +369,20 @@ class zzinc_processor(processor.ProcessorABC):
         )
 
         emu_met = ak.firsts(extra_lep, axis=1) + p4_met
-        dilep_et = np.sqrt(dilep_pt**2 + dilep_m**2)
-        dilep_mt = ak.where(
-            ntight_lep==3,
-            np.sqrt((dilep_et + emu_met.pt)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
-            np.sqrt((dilep_et +  p4_met.pt)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
-        )
+	
         reco_met_pt = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
         reco_met_phi = ak.where(ntight_lep==2, p4_met.phi, emu_met.phi)
 
+	
+	# this definition is not correct as it doesn't include the mass of the second Z
+        dilep_et_ll = np.sqrt(dilep_pt**2 + dilep_m**2)
+	dilep_et_met = np.sqrt(reco_met_pt**2 + self.zmass**2)
+        dilep_mt = ak.where(
+            ntight_lep==3,
+            np.sqrt((dilep_et + dilep_et_met)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
+            np.sqrt((dilep_et + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
+	)
+	
         # dilep_dphi = lead_lep.delta_phi(subl_lep)
         # dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
         # dilep_dR   = lead_lep.delta_r(subl_lep)
@@ -434,7 +451,7 @@ class zzinc_processor(processor.ProcessorABC):
             )
         )
         selection.add('low_met_pt', ak.fill_none((reco_met_pt < 100) & (reco_met_pt > 50), False))
-        selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - 91) < 15, False))
+        selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
         selection.add(
             'dilep_pt',
@@ -468,6 +485,8 @@ class zzinc_processor(processor.ProcessorABC):
         event['met_pt'  ] = reco_met_pt
         event['met_phi' ] = reco_met_phi
         event['dilep_mt'] = dilep_mt
+	event['dilep_m'] = dilep_m
+	event['dilep_pt'] = dilep_pt
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
         event['dphi_met_ll'] = dilep_dphi_met
@@ -669,6 +688,8 @@ class zzinc_processor(processor.ProcessorABC):
             for sys in systematics:
                 _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'dilep_mt')
+		_histogram_filler(ch, sys, 'dilep_pt')
+		_histogram_filler(ch, sys, 'dilep_m')
                 _histogram_filler(ch, sys, 'njets')
                 _histogram_filler(ch, sys, 'bjets')
                 _histogram_filler(ch, sys, 'dphi_met_ll')
