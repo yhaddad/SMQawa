@@ -128,13 +128,25 @@ class zzinc_processor(processor.ProcessorABC):
             'dilep_mt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1000, name="dilep_mt", label="$M_{T}$ (GeV)"),
+                hist.axis.Regular(60, 0, 600, name="dilep_mt", label="$M_{T}^{\ell\ell}$ (GeV)"),
+                hist.storage.Weight()
+            ), 
+	    'dilep_pt': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="dilep_pt", label="$p_{T}^{\ell\ell}$ (GeV)"),
+                hist.storage.Weight()
+            ), 
+	    'dilep_m': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 120, name="dilep_m", label="$M_{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
             'met_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1000, name="met_pt", label="$p_{T}^{miss}$ (GeV)"),
+                hist.axis.Regular(60, 0, 600, name="met_pt", label="$p_{T}^{miss}$ (GeV)"),
                 hist.storage.Weight()
             ),
             'njets': hist.Hist(
@@ -152,13 +164,13 @@ class zzinc_processor(processor.ProcessorABC):
             'dphi_met_ll': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label="$\Delta \phi(\ell\ell,\vec p_{T}^{miss})$"),
+                hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label="$\Delta \phi(\ell\ell,p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'gnn_score': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1, name="gnn_score", label="gnn_score"),
+                hist.axis.Regular(50, 0, 1, name="gnn_score", label="$O_{GNN}$"),
                 hist.storage.Weight()
             ),
             'dijet_mass': hist.Hist(
@@ -200,7 +212,7 @@ class zzinc_processor(processor.ProcessorABC):
             "min_dphi_met_j": hist.Hist( 
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label="$\eta(j_2)$"),
+                hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label="$\min\Delta\phi(p_{T}^{miss},j)$"),
                 hist.storage.Weight()
             ), 
 
@@ -357,15 +369,20 @@ class zzinc_processor(processor.ProcessorABC):
         )
 
         emu_met = ak.firsts(extra_lep, axis=1) + p4_met
-        dilep_et = np.sqrt(dilep_pt**2 + dilep_m**2)
-        dilep_mt = ak.where(
-            ntight_lep==3,
-            np.sqrt((dilep_et + emu_met.pt)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
-            np.sqrt((dilep_et +  p4_met.pt)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
-        )
+	
         reco_met_pt = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
         reco_met_phi = ak.where(ntight_lep==2, p4_met.phi, emu_met.phi)
 
+	
+	# this definition is not correct as it doesn't include the mass of the second Z
+        dilep_et_ll = np.sqrt(dilep_pt**2 + dilep_m**2)
+	dilep_et_met = np.sqrt(reco_met_pt**2 + self.zmass**2)
+        dilep_mt = ak.where(
+            ntight_lep==3,
+            np.sqrt((dilep_et + dilep_et_met)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
+            np.sqrt((dilep_et + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
+	)
+	
         # dilep_dphi = lead_lep.delta_phi(subl_lep)
         # dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
         # dilep_dR   = lead_lep.delta_r(subl_lep)
@@ -434,7 +451,7 @@ class zzinc_processor(processor.ProcessorABC):
             )
         )
         selection.add('low_met_pt', ak.fill_none((reco_met_pt < 100) & (reco_met_pt > 50), False))
-        selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - 91) < 15, False))
+        selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
         selection.add(
             'dilep_pt',
@@ -444,14 +461,7 @@ class zzinc_processor(processor.ProcessorABC):
                 ak.fill_none(dilep_pt>60, False)
             )
         )
-        selection.add(
-            "dilep_dphi_met", 
-            ak.where(
-                ngood_jets <= 1, 
-                ak.fill_none(np.abs(dilep_dphi_met)>0.5, False), 
-                ak.fill_none(np.abs(dilep_dphi_met)>1.0, False)
-            )
-        )
+        selection.add("dilep_dphi_met", ak.fill_none(np.abs(dilep_dphi_met)>1.0, False))
         selection.add(
             "min_dphi_met_j",
             ak.where(
@@ -467,14 +477,16 @@ class zzinc_processor(processor.ProcessorABC):
         selection.add('0nhtaus', nhtaus_lep  == 0 )
         
         selection.add('dijet_deta', ak.fill_none(dijet_deta > 2.5, False))
-        selection.add('dijet_mass_400', ak.fill_none(dijet_mass >  400, False))
-        selection.add('dijet_mass_800', ak.fill_none(dijet_mass >  800, False))
+        selection.add('dijet_mass_400' , ak.fill_none(dijet_mass >  400, False))
+        selection.add('dijet_mass_800' , ak.fill_none(dijet_mass >  800, False))
         selection.add('dijet_mass_1200', ak.fill_none(dijet_mass > 1200, False))
 
         # Define all variables for the GNN
         event['met_pt'  ] = reco_met_pt
         event['met_phi' ] = reco_met_phi
         event['dilep_mt'] = dilep_mt
+	event['dilep_m'] = dilep_m
+	event['dilep_pt'] = dilep_pt
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
         event['dphi_met_ll'] = dilep_dphi_met
@@ -540,79 +552,98 @@ class zzinc_processor(processor.ProcessorABC):
         channels = {
             # inclusive regions
             "cat-SR0J": common_sel + [
-                'require-ossf', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "~1njets"], 
+		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', 
+		    "~1njets" # 0 jets
+	    ], 
             "cat-SR1J": common_sel + [
-                'require-ossf', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "1njets", "~2njets"],
+		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', 
+		    "1njets", "~2njets" # 1 jet selection
+	    ],
             "cat-SR2J": common_sel + [
-                'require-ossf', 'dilep_m', 'dilep_pt',
-                'met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"], 
+		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', 
+		    "2njets" # more that 2 jets
+	    ], 
             "cat-DY": common_sel + [
-                'require-ossf', 'dilep_m', 'dilep_pt',
-                'low_met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"], 
+		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'low_met_pt', # between 50 to 100 GeV
+		    '~1nbjets', "~2njets" # low jet mutiplicity below 2 jets
+	    ], 
             "cat-3L": common_sel + [
-                'require-3lep', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets',
-                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"],
+		    'require-3lep', 'dilep_m', 'dilep_pt',
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', "~2njets" 
+	    ],
             "cat-EM": common_sel + [
-                'require-osof', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets',
-                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"],
+		    'require-osof', 'dilep_m', 'dilep_pt',
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', "~2njets"],
             "cat-TT": common_sel + [
-                'require-osof', 'dilep_m', 'dilep_pt', 
-                'met_pt', '1nbjets',
-                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"],
+		    'require-osof', 'dilep_m', 'dilep_pt', 
+		    'dilep_dphi_met', 
+		    # 'min_dphi_met_j',
+		    'met_pt', '1nbjets', "~2njets"
+	    ],
             "cat-NR": common_sel + [
-                'require-osof', '~dilep_m', '~dilep_m_50', 
-                'dilep_pt', 'met_pt', '1nbjets',
-                'dilep_dphi_met', 'min_dphi_met_j', "~2njets"],
-            
+		    'require-osof', '~dilep_m', 'dilep_pt',
+		    'dilep_dphi_met', 'min_dphi_met_j',  
+		    'met_pt', '1nbjets', "~2njets"
+	    ],
             # vector boson scattering
             "vbs-SR": common_sel + [
-                "dijet_deta", "dijet_mass_400",
-                'require-ossf', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', 
+		    "2njets", "dijet_deta", "dijet_mass_400"
+	    ],
             "vbs-SR0": common_sel + [
-                "dijet_deta", "dijet_mass_400", "~dijet_mass_800",
-                'require-ossf', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', 
+		    "2njets", "dijet_deta", "dijet_mass_400", "~dijet_mass_800"
+	    ],
             "vbs-SR1": common_sel + [
-                "dijet_deta", "dijet_mass_800", "~dijet_mass_1200",
-                'require-ossf', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', 
+		    "2njets", "dijet_deta", "dijet_mass_800", "~dijet_mass_1200"
+	    ],
             "vbs-SR2": common_sel + [
-                "dijet_deta", "dijet_mass_1200",
-                'require-ossf', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'require-ossf', 'dilep_m', 'dilep_pt', 
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'met_pt', '~1nbjets', '0nhtaus',
+		    "2njets", "dijet_deta", "dijet_mass_1200",
+	    ],
             "vbs-DY": common_sel + [
-                'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',"~dijet_mass_400",
-                'low_met_pt', '~1nbjets', '0nhtaus', 
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
+		    'dilep_dphi_met', 'min_dphi_met_j', 
+		    'low_met_pt', '~1nbjets', '0nhtaus', 
+		    "2njets", "~dijet_mass_400"],
             "vbs-3L": common_sel + [
-                'require-3lep', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets',
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'require-3lep', 'dilep_m', 'dilep_pt',
+		    'dilep_dphi_met', 'min_dphi_met_j',
+		    'met_pt', '~1nbjets', "2njets"
+	    ],
             "vbs-EM": common_sel + [
-                'require-osof', 'dilep_m', 'dilep_pt', 
-                'met_pt', '~1nbjets',
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'require-osof', 'dilep_m', 'dilep_pt', 
+		    'dilep_dphi_met', 'min_dphi_met_j',
+		    'met_pt', '~1nbjets',"2njets"],
             "vbs-TT": common_sel + [
-                'require-osof', 'dilep_m', 'dilep_pt', 
-                'met_pt', '1nbjets',
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'require-osof', 'dilep_m', 'dilep_pt', 
+		    'dilep_dphi_met', 'min_dphi_met_j',
+		    'met_pt', '1nbjets', "2njets"
+	    ],
             "vbs-NR": common_sel + [
-                'require-osof', '~dilep_m', '~dilep_m_50', 
-                'dilep_pt', 'met_pt', '1nbjets',
-                'dilep_dphi_met', 'min_dphi_met_j', "2njets"],
+		    'require-osof', '~dilep_m', 'dilep_pt',
+		    'dilep_dphi_met', 'min_dphi_met_j',
+		    'met_pt', '1nbjets', "2njets"
+	    ],
         }
 
         if shift_name is None:
@@ -657,6 +688,8 @@ class zzinc_processor(processor.ProcessorABC):
             for sys in systematics:
                 _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'dilep_mt')
+		_histogram_filler(ch, sys, 'dilep_pt')
+		_histogram_filler(ch, sys, 'dilep_m')
                 _histogram_filler(ch, sys, 'njets')
                 _histogram_filler(ch, sys, 'bjets')
                 _histogram_filler(ch, sys, 'dphi_met_ll')
@@ -752,8 +785,8 @@ class zzinc_processor(processor.ProcessorABC):
         electronEnDown=event.Electron
 
         electronEnUp  ['pt'] = event.Electron['pt'] + event.Electron.energyErr/np.cosh(event.Electron.eta)
-        electronEnDown['pt'] = event.Electron['pt'] - event.Electron.energyErr/np.cosh(event.Electron.eta)
-         
+        electronEnDown['pt'] = event.Electron['pt'] - event.Electron.energyErr/np.cosh(event.Electron.eta)	
+	
         # define all the shifts
         shifts = [
             # Jets
@@ -767,7 +800,7 @@ class zzinc_processor(processor.ProcessorABC):
             
             # Electrons + MET shift (FIXME: shift to be added)
             ({"Electron": electronEnUp  }, "ElectronEnUp"  ),
-            ({"Electron": electronEnDown}, "ElectronEnDown"),
+            ({"Electron": electronEnDown}, "ElectronEnudronDown"),
             # Muon + MET shifts
             ({"Muon": muonEnUp  }, "MuonRocUp"),
             ({"Muon": muonEnDown}, "MuonRocDown"),
