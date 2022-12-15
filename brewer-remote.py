@@ -112,10 +112,16 @@ def main():
                 },
             )
             
+            ewk_flag = None
+            if "ZZTo" in options.infile and "GluGluTo" not in options.infile and "ZZJJ" not in options.infile:
+                ewk_flag= 'ZZ'
+            if "WZTo" in options.infile and "GluGluTo" not in options.infile:
+                ewk_flag = 'WZ'
+
             print(" --- zz2l2nu_vbs processor ... ")
             vbs_out = processor.run_uproot_job(
                 samples,
-                processor_instance=zzinc_processor(era=options.era),
+                processor_instance=zzinc_processor(era=options.era,  ewk_process_name=ewk_flag),
                 treename='Events',
                 executor=processor.futures_executor,
                 executor_args={

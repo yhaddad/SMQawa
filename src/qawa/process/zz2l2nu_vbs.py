@@ -124,7 +124,7 @@ class zzinc_processor(processor.ProcessorABC):
             _hvalue = np.dstack([_fn[_hn].values() for _hn in _fn.keys()] + [np.ones((7,7))])
             _herror = np.dstack([np.sqrt(_fn[_hn].variances()) for _hn in _fn.keys()] + [np.zeros((7,7))])
             self.trig_sf_map = np.stack([_hvalue, _herror], axis=-1)
-
+        self.dump_gnn_array  = dump_gnn_array
         self.ewk_process_name = ewk_process_name
         if self.ewk_process_name is not None:
             self.ewk_corr = ewk_corrector(process=ewk_process_name)
