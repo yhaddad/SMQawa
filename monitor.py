@@ -148,7 +148,19 @@ def main():
                                 )
                                 _stream.write(script_file_)
                                 _stream.close()
-                                
+                        else: 
+                            assert options.era != "", f'please specify the era of the dataset you are running. ex: --era=2018'
+                            script_command = f"python brewer-remote.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile}\n"
+                            script_command += "ls -lthr\n"
+                            with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
+                                script_file_ = resub_script_header.format(
+                                    proxy=proxy_copy, 
+                                    command=script_command,
+                                    jobid=jid
+                                )
+                                _stream.write(script_file_)
+                                _stream.close()
+
                         condor_sub = open(jobs_dir + "/condor.sub").readlines()
                         for il, line in enumerate(condor_sub):
                             if 'executable' in line.lower():
@@ -156,7 +168,7 @@ def main():
                             if 'arguments' in line.lower():
                                 condor_sub [il] = ""
                             if 'jobflavour' in line.lower():
-                                condor_sub [il] = '+JobFlavour           = "longlunch"\n'
+                                condor_sub [il] = '+JobFlavour           = "workday"\n'
                             if 'queue' in line.lower():
                                 condor_sub[il] = "queue"
                         with open(jobs_dir + f'/condor_resub_{jid}.sub', 'w') as new_condor:
