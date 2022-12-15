@@ -58,50 +58,7 @@ def main():
     
     era=options.era
     is_data = not options.isMC
-    """
-    samples ={
-        dataset:{
-            'files': [options.infile], 
-            'metadata':{
-                'era': era,
-                'is_data': is_data
-            }
-        }
-    }
-    
-    sumw_out = processor.run_uproot_job(
-        samples,
-        treename="Runs",
-        processor_instance=coffea_sumw(),
-        executor=processor.futures_executor,
-        executor_args={
-            "schema" : nanoevents.BaseSchema,
-            "workers": 8,
-        },
-    )
 
-    vbs_out = processor.run_uproot_job(
-        samples,
-        processor_instance=zzinc_processor(era=options.era),
-        treename='Events',
-        executor=processor.futures_executor,
-        executor_args={
-            "schema" : nanoevents.NanoAODSchema,
-            "workers": 8,
-        },
-        #chunksize=50000,
-    )
-    bh_output = {}
-    for key, content in vbs_out.items():
-        bh_output[key] = {
-            "hist": content,
-            "sumw": sumw_out[key],
-    }
-    with gzip.open("histogram_%s.pkl.gz" % str(options.jobNum), "wb") as f:
-        pickle.dump(bh_output, f)
-    """
-
-    failed = True
     ixrd = 0
     aliases = [
         "root://xrootd-cms.infn.it/",
@@ -142,10 +99,16 @@ def main():
         },
     )
     
+    ewk_flag = None
+    if "ZZTo" in options.infile and "GluGluTo" not in options.infile and "ZZJJ" not in options.infile:
+        ewk_flag= 'ZZ'
+    if "WZTo" in options.infile and "GluGluTo" not in options.infile:
+        ewk_flag = 'WZ'
+
     print(" --------------------------- ")
     vbs_out = processor.run_uproot_job(
         samples,
-        processor_instance=zzinc_processor(era=options.era),
+        processor_instance=zzinc_processor(era=options.era, ewk_process_name=ewk_flag),
         treename='Events',
         executor=processor.futures_executor,
         executor_args={

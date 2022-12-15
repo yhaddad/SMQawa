@@ -2,6 +2,7 @@ from coffea.lookup_tools import dense_lookup
 from coffea.analysis_tools import Weights
 from coffea import processor
 from scipy import interpolate
+from coffea.nanoevents.methods import candidate
 
 import awkward as ak
 import numpy as np
@@ -123,7 +124,7 @@ def theory_pdf_weight(weights, pdf_weight):
     _up = np.ones(len(weights.weight()))
     _dw = np.ones(len(weights.weight()))
 
-    if pdf_weight is not None and "306000 - 306102" in pdf_weight.__doc__:
+    if pdf_weight is not None and (("306" in pdf_weight.__doc__) or ("325" in pdf_weight.__doc__)):
         arg = pdf_weight[:, 1:-2] - np.ones((len(weights.weight()), 100))
         summed  = ak.sum(np.square(arg), axis=1)
         pdf_unc = np.sqrt((1. / 99.) * summed)
@@ -153,10 +154,10 @@ def theory_ps_weight(weights, ps_weight):
 
     if ps_weight is not None:
         if len(ps_weight[0]) == 4:
-            up_isr   = ps_weight[:, 0]
-            down_isr = ps_weight[:, 2]
-            up_fsr   = ps_weight[:, 1]
-            down_fsr = ps_weight[:, 3]
+            up_isr = ps_weight[:, 0]
+            dw_isr = ps_weight[:, 2]
+            up_fsr = ps_weight[:, 1]
+            dw_fsr = ps_weight[:, 3]
 
     weights.add('UEPS_ISR', nominal, up_isr, dw_isr)
     weights.add('UEPS_FSR', nominal, up_fsr, dw_fsr)
@@ -221,7 +222,7 @@ class LinearNDInterpolatorExt(object):
             return z
     
 class ewk_corrector:
-    def __init__(self, process:str='ZZ', do_syst:bool=True, beam_energy:float = 6500, use_inv_masses:bool=False):
+    def __init__(self, process:str='ZZ', beam_energy:float = 6500, use_inv_masses:bool=False):
         _data_path = os.path.join(os.path.dirname(__file__), 'data/')
         self.corr_file = f"{_data_path}/ewk/data_{process}_EwkCorrections.dat"
         self.corr_data = np.loadtxt(self.corr_file)

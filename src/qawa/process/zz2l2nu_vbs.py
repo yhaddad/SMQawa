@@ -82,7 +82,8 @@ def build_photons(photon):
 
 
 class zzinc_processor(processor.ProcessorABC):
-    def __init__(self, era: str ='2018'):
+    # EWK corrections process has to be define before hand, it has to change when we move to dask
+    def __init__(self, era: str ='2018', dump_gnn_array=False, ewk_process_name=None):
         self._era = era
         
         jec_tag = ''
@@ -124,65 +125,69 @@ class zzinc_processor(processor.ProcessorABC):
             _herror = np.dstack([np.sqrt(_fn[_hn].variances()) for _hn in _fn.keys()] + [np.zeros((7,7))])
             self.trig_sf_map = np.stack([_hvalue, _herror], axis=-1)
 
+        self.ewk_process_name = ewk_process_name
+        if self.ewk_process_name is not None:
+            self.ewk_corr = ewk_corrector(process=ewk_process_name)
+
         self.build_histos = lambda: {
             'dilep_mt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(60, 0, 600, name="dilep_mt", label="$M_{T}^{\ell\ell}$ (GeV)"),
+                hist.axis.Regular(60, 0, 600, name="dilep_mt", label=r"$M_{T}^{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
-	    'dilep_pt': hist.Hist(
+	        'dilep_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(60, 0, 600, name="dilep_pt", label="$p_{T}^{\ell\ell}$ (GeV)"),
+                hist.axis.Regular(60, 0, 600, name="dilep_pt", label=r"$p_{T}^{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
-	    'dilep_m': hist.Hist(
+	        'dilep_m': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(60, 0, 120, name="dilep_m", label="$M_{\ell\ell}$ (GeV)"),
+                hist.axis.Regular(60, 0, 120, name="dilep_m", label=r"$M_{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
             'met_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(60, 0, 600, name="met_pt", label="$p_{T}^{miss}$ (GeV)"),
+                hist.axis.Regular(60, 0, 600, name="met_pt", label=r"$p_{T}^{miss}$ (GeV)"),
                 hist.storage.Weight()
             ),
             'njets': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(5, 0, 5, name="njets", label="$N_{jet}$ ($p_{T}>30$ GeV)"),
+                hist.axis.Regular(5, 0, 5, name="njets", label=r"$N_{jet}$ ($p_{T}>30$ GeV)"),
                 hist.storage.Weight()
             ), 
             'bjets': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(5, 0, 5, name="bjets", label="$N_{b-jet}$ ($p_{T}>30$ GeV)"),
+                hist.axis.Regular(5, 0, 5, name="bjets", label=r"$N_{b-jet}$ ($p_{T}>30$ GeV)"),
                 hist.storage.Weight()
             ),
             'dphi_met_ll': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label="$\Delta \phi(\ell\ell,p_{T}^{miss})$"),
+                hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label=r"$\Delta \phi(\ell\ell,p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'gnn_score': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1, name="gnn_score", label="$O_{GNN}$"),
+                hist.axis.Regular(50, 0, 1, name="gnn_score", label=r"$O_{GNN}$"),
                 hist.storage.Weight()
             ),
             'dijet_mass': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 2000, name="dijet_mass", label="$m_{jj}$ (GeV)"),
+                hist.axis.Regular(50, 0, 2000, name="dijet_mass", label=r"$m_{jj}$ (GeV)"),
                 hist.storage.Weight() 
             ),
             'dijet_deta': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True),
-                hist.axis.Regular(20, 0, 8, name="dijet_deta", label="$Delta\eta_{jj}$"),
+                hist.axis.Regular(20, 0, 8, name="dijet_deta", label=r"$Delta\eta_{jj}$"),
                 hist.storage.Weight()
             ),
             "lead_jet_pt": hist.Hist(
@@ -194,29 +199,29 @@ class zzinc_processor(processor.ProcessorABC):
             "trail_jet_pt": hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 30, 530, name="trail_jet_pt", label="$p_T^{j_2}$ (GeV)"),
+                hist.axis.Regular(50, 30, 530, name="trail_jet_pt", label=r"$p_T^{j_2}$ (GeV)"),
                 hist.storage.Weight()
             ),
             "lead_jet_eta": hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, -5, 5, name="lead_jet_eta", label="$\eta(j_1)$"),
+                hist.axis.Regular(50, -5, 5, name="lead_jet_eta", label=r"$\eta(j_1)$"),
                 hist.storage.Weight()
             ), 
             "trail_jet_eta": hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, -5, 5, name="trail_jet_eta", label="$\eta(j_2)$"),
+                hist.axis.Regular(50, -5, 5, name="trail_jet_eta", label=r"$\eta(j_2)$"),
                 hist.storage.Weight()
             ),
             "min_dphi_met_j": hist.Hist( 
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label="$\min\Delta\phi(p_{T}^{miss},j)$"),
+                hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label=r"$\min\Delta\phi(p_{T}^{miss},j)$"),
                 hist.storage.Weight()
-            ), 
-
+            ),
         }
+
     
     def _add_trigger_sf(self, weights, lead_lep, subl_lep):
         mask_BB = ak.fill_none((lead_lep.eta <= 1.5) & (subl_lep.eta <= 1.5), False)
@@ -278,6 +283,9 @@ class zzinc_processor(processor.ProcessorABC):
         
         histos = self.build_histos()
         
+        if self.dump_gnn_array:
+            hist['gnn_score_arr'] = []
+
         if is_data:
             selection.add('lumimask', self._json[self._era](event.run, event.luminosityBlock))
             selection.add('triggers', trigger_rules(event, self._triggers, self._era))
@@ -292,8 +300,8 @@ class zzinc_processor(processor.ProcessorABC):
             event.Flag.HBHENoiseFilter &
             event.Flag.HBHENoiseIsoFilter & 
             event.Flag.EcalDeadCellTriggerPrimitiveFilter & 
-            event.Flag.goodVertices & 
-            event.Flag.eeBadScFilter & 
+            event.Flag.goodVertices &
+            event.Flag.eeBadScFilter &
             event.Flag.globalTightHalo2016Filter &
             event.Flag.BadChargedCandidateFilter & 
             event.Flag.BadPFMuonFilter
@@ -374,14 +382,14 @@ class zzinc_processor(processor.ProcessorABC):
         reco_met_phi = ak.where(ntight_lep==2, p4_met.phi, emu_met.phi)
 
 	
-	# this definition is not correct as it doesn't include the mass of the second Z
+	    # this definition is not correct as it doesn't include the mass of the second Z
         dilep_et_ll = np.sqrt(dilep_pt**2 + dilep_m**2)
-	dilep_et_met = np.sqrt(reco_met_pt**2 + self.zmass**2)
+        dilep_et_met = np.sqrt(reco_met_pt**2 + self.zmass**2)
         dilep_mt = ak.where(
-            ntight_lep==3,
-            np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
-            np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
-	)
+                ntight_lep==3,
+                np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
+                np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
+	    )
 	
         # dilep_dphi = lead_lep.delta_phi(subl_lep)
         # dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
@@ -397,10 +405,9 @@ class zzinc_processor(processor.ProcessorABC):
         third_jet = ak.firsts(good_jets[(lead_jet.delta_r(good_jets)>0.01) & (subl_jet.delta_r(good_jets)>0.01)])
         
         dijet_mass = (lead_jet + subl_jet).mass
-        event['dijet_mass'] = dijet_mass
-        #dijet_dphi = lead_jet.delta_phi(subl_jet)
         dijet_deta = np.abs(lead_jet.eta - subl_jet.eta)
-        event['dijet_deta'] = dijet_deta
+        event['dijet_mass'] = dijet_mass
+        event['dijet_deta'] = dijet_deta 
         #dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         #dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         
@@ -485,8 +492,8 @@ class zzinc_processor(processor.ProcessorABC):
         event['met_pt'  ] = reco_met_pt
         event['met_phi' ] = reco_met_phi
         event['dilep_mt'] = dilep_mt
-	event['dilep_m'] = dilep_m
-	event['dilep_pt'] = dilep_pt
+        event['dilep_m'] = dilep_m
+        event['dilep_pt'] = dilep_pt
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
         event['dphi_met_ll'] = dilep_dphi_met
@@ -513,7 +520,9 @@ class zzinc_processor(processor.ProcessorABC):
         
         # Apply GNN
         event['gnn_score'] = applyGNN(event).get_nnscore()
-        
+        if self.dump_gnn_array:
+            histos["gnn_score_arr"] = event["gnn_score"].to_list()
+
         # Now adding weights
         if not is_data:
             weights.add('genweight', event.genWeight)
@@ -527,7 +536,14 @@ class zzinc_processor(processor.ProcessorABC):
                     lead_lep.SF_up*subl_lep.SF_up, 
                     lead_lep.SF_down*subl_lep.SF_down
             )
-
+            if self.ewk_process_name:
+                self.ewk_corr.get_weight(
+                        event.GenPart,
+                        event.Generator.x1,
+                        event.Generator.x2,
+                        weights
+                )
+            
             _ones = np.ones(len(weights.weight()))
             if "PSWeight" in event.fields:
                 theory_ps_weight(weights, event.PSWeight)
@@ -688,8 +704,8 @@ class zzinc_processor(processor.ProcessorABC):
             for sys in systematics:
                 _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'dilep_mt')
-		_histogram_filler(ch, sys, 'dilep_pt')
-		_histogram_filler(ch, sys, 'dilep_m')
+                _histogram_filler(ch, sys, 'dilep_pt')
+                _histogram_filler(ch, sys, 'dilep_m')
                 _histogram_filler(ch, sys, 'njets')
                 _histogram_filler(ch, sys, 'bjets')
                 _histogram_filler(ch, sys, 'dphi_met_ll')
