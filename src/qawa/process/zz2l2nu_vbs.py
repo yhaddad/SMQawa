@@ -109,9 +109,9 @@ class zzinc_processor(processor.ProcessorABC):
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
         self._json = {
-            '2018': LumiMask(f'{_data_path}/json/{era}/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'),
-            '2017': LumiMask(f'{_data_path}/json/{era}/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'),
-            '2016': LumiMask(f'{_data_path}/json/{era}/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt'),
+            '2018': LumiMask(f'{_data_path}/json/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'),
+            '2017': LumiMask(f'{_data_path}/json/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'),
+            '2016': LumiMask(f'{_data_path}/json/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt'),
         }
         with open(f'{_data_path}/{era}-trigger-rules.yaml') as ftrig:
             self._triggers = yaml.load(ftrig, Loader=yaml.FullLoader)
@@ -379,8 +379,8 @@ class zzinc_processor(processor.ProcessorABC):
 	dilep_et_met = np.sqrt(reco_met_pt**2 + self.zmass**2)
         dilep_mt = ak.where(
             ntight_lep==3,
-            np.sqrt((dilep_et + dilep_et_met)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
-            np.sqrt((dilep_et + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
+            np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
+            np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
 	)
 	
         # dilep_dphi = lead_lep.delta_phi(subl_lep)
