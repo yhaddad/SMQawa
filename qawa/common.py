@@ -100,17 +100,23 @@ def trigger_rules(event, rules:dict, era:str='2018'):
     
     _ds = event.metadata['dataset'].split('_')[0]
     
+    #just a hack for using photon trigger, need to make it work properly
+    _ds="Photon"
+
     for t in rules[f'Run{era}.{_ds}']['pass']:
+        print("pass",t)
         if t in event.HLT.fields:
             _pass = _pass | event.HLT[t]
         else:
             print(f'{t} not present in the data')
             
     for t in rules[f'Run{era}.{_ds}']['veto']:
+        print("_veto",t)
         if t in event.HLT.fields:
             _veto =  _veto | event.HLT[t]
             
     # passing triggers and vetoing triggers from other datasets
+    print(_pass)
     return _pass & ~_veto
 
 
@@ -440,41 +446,8 @@ class ewk_corrector:
             
 
 
-def getPhotonTrigger(photonpt):
-    trigname="NULL"
-    selectedtrig=-1
-    for i in range(ntrigs):
-        if photonpt >= photrignames[i]["threshold"] :
-            selectedtrig=i
-    if selectedtrig ==-1: trigname = "NULL"
-    if selectedtrig >=0: trigname=photrignames[selectedtrig]["name"]
 
-    return trigname
 
-#def getPhotonTrigPrescale(run=277069, lumi= -96, photrigdict:dict,pt):
-def getPhotonTrigPrescale(run=277069, lumi= -96, pt):
-    pt[run==277069]
-    #photrignames = photrigdict['photon_triggers']['triggers']
-    #prescales=photrigdict['photon_triggers']['prescale']
-    prescale =1
-    #trigname=  (getPhotonTrigger(pt))
-    #if(trigname == "NULL"):
-    #    prescale = 1
-    #else:
-    #    LSList= (prescales[trigname][run].keys())
-    #    LSList.sort()
-    #    newlumi=lumi
-    #    if lumi>LSList[-1]: newlumi=LSList[-1]
-    #    for i in range(len(LSList)-1):
-    #        if lumi <= LSList[i+1]:
-    #            newlumi=LSList[i]
-    #            break
-    #    if lumi <LSList[0]:
-    #        prescale = 1
-    #        return(prescale)
-    #    prescale =prescales[trigname][run][newlumi]
-    return(prescale)        
-        
         
         
 #phhoton SF
@@ -505,3 +478,22 @@ evaluator = ext.make_evaluator()
 for key in evaluator.keys():
     print("\t", key)
 print("testSF2d:", evaluator['EGamma_SF2D_T'])
+
+from correctionlib import _core
+def getPhotonTrigPrescale(run, lb, photrigdict, photonpt, era:str='2016'):
+    photrignames = photrigdict['photon_triggers']['triggers']
+    prescales=photrigdict['photon_triggers']['prescale']
+
+    trigname="NULL"
+    selectedtrig=-1
+    for i in range(len(photrignames)):  
+        if photonpt >= photrignames[i]["threshold"] :selectedtrig=i 
+        if selectedtrig ==-1: trigname = "NULL"
+        if selectedtrig >=0: trigname=photrignames[selectedtrig]["name"]
+
+
+    evaluator = _core.CorrectionSet.from_file('data/Photon/'+prescales)     
+    k=evaluator["HLT_prescale"].evaluate(era,trigname,run,float(lb))                                                                                                     
+    return k
+
+

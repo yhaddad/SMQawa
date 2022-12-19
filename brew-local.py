@@ -16,10 +16,11 @@ def main():
     options  = parser.parse_args()
 
     samples = {}
-    with open('./qawa/data/datasetUL2018.yaml') as s_file:
+    #with open('./qawa/data/datasetUL2018.yaml') as s_file:
+    with open('./qawa/data/input-NanoAOD-2018UL-test.yaml') as s_file: 
         samples = yaml.full_load(s_file)
 
-#    print(samples)
+    print(samples)
     #trigger_sf_map = np.load('./data/trigger-sf-table-2018.npy')
 
 
@@ -45,7 +46,7 @@ def main():
                 "workers": 5,
             },
     )
-    
+
     sumw_out = processor.run_uproot_job(
             samples,
             treename="Runs",

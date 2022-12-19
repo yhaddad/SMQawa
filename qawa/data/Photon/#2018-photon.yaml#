@@ -1,0 +1,16 @@
+photon_triggers:
+  triggers:
+    - name: HLT_Photon50_R9Id90_HE10_IsoM
+      threshold: 55.
+    - name: HLT_Photon75_R9Id90_HE10_IsoM
+      threshold: 82.5
+    - name: HLT_Photon90_R9Id90_HE10_IsoM
+      threshold: 99.
+    - name: HLT_Photon120_R9Id90_HE10_IsoM
+      threshold: 132.
+    - name: HLT_Photon165_R9Id90_HE10_IsoM
+      threshold: 181.5
+    - name: HLT_Photon200
+      threshold: 220.
+
+  prescale: photon_prescales_2018.yaml
