@@ -4,10 +4,12 @@ import logging
 import subprocess
 import shutil
 import time
+import importlib.metadata
 
 logging.basicConfig(level=logging.DEBUG)
 
-qawa_version = '0.0.5'
+qawa_version = importlib.metadata.version('qawa')
+#qawa_version = '0.0.5'
 
 
 script_TEMPLATE = """#!/bin/bash
