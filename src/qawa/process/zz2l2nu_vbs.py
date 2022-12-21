@@ -693,8 +693,8 @@ class zzinc_processor(processor.ProcessorABC):
                     "weight": weight,
                 }
             )
-		
-		def _gnn_dumper(ch):
+            
+        def _gnn_dumper(ch):
             sel_ = channels[ch]
             sel_args_ = {
                 s.replace('~',''): (False if '~' in s else True) for s in sel_
@@ -714,8 +714,8 @@ class zzinc_processor(processor.ProcessorABC):
                 histos["gnn_dump"] = _dicv
             
         for ch in channels:
-			if self.dump_gnn_array:
-				_gnn_dumper(ch)
+            if self.dump_gnn_array:
+                _gnn_dumper(ch)
             for sys in systematics:
                 _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'dilep_mt')
