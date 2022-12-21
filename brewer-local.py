@@ -108,7 +108,11 @@ def main():
     print(" --------------------------- ")
     vbs_out = processor.run_uproot_job(
         samples,
-        processor_instance=zzinc_processor(era=options.era, ewk_process_name=ewk_flag),
+        processor_instance=zzinc_processor(
+            era=options.era,
+            ewk_process_name=ewk_flag,
+            dump_gnn_array=True
+        ),
         treename='Events',
         executor=processor.futures_executor,
         executor_args={

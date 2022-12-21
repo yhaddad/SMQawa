@@ -51,7 +51,9 @@ def main():
     parser.add_argument('--era'    ,   type=str, default="2018", help="")
     parser.add_argument('--isMC'   ,   type=int, default=1     , help="")
     parser.add_argument('--infile' ,   type=str, default=None  , help="input root file")
-    parser.add_argument('--dataset',   type=str, default=None  , help="dataset name. need to specify if file is not in EOS") 
+    parser.add_argument('--dataset',   type=str, default=None  , help="dataset name. need to specify if file is not in EOS")
+    parser.add_argument('--dumpgnn', action='store_true', help='dump the GNN output into outputfiles')
+
     options = parser.parse_args()
 
     if options.dataset is None: 
@@ -121,7 +123,11 @@ def main():
             print(" --- zz2l2nu_vbs processor ... ")
             vbs_out = processor.run_uproot_job(
                 samples,
-                processor_instance=zzinc_processor(era=options.era,  ewk_process_name=ewk_flag),
+                processor_instance=zzinc_processor(
+                    era=options.era,
+                    ewk_process_name=ewk_flag,
+                    dump_gnn_array=options.dumpgnn
+                ),
                 treename='Events',
                 executor=processor.futures_executor,
                 executor_args={
