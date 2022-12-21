@@ -8,7 +8,32 @@ import awkward as ak
 import numpy as np
 import uproot
 import os
+import re
 
+# These are all the pdf sets we got in all our UL samples
+_lhapdf_config = {
+    306000: {
+        "variation_type": "hessian",
+        "central_pdf_id": 0,
+        "alphas_indices": [101, 102]
+    }, 
+    325300: {
+        "variation_type": "hessian", 
+        "central_pdf_id": 0,
+        "alphas_indices": [101, 102]
+    },
+    320900: {
+        "variation_type": "mc", 
+        "central_pdf_id": 0,
+        "alphas_indices": []
+    },
+    325500: {
+        "variation_type": "hessian", 
+        "central_pdf_id": 0,
+        "alphas_indices": []
+    }
+
+}
 
 def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
     xcor = ak.ones_like(run)
@@ -119,30 +144,71 @@ def trigger_rules(event, rules:dict, era:str='2018'):
     # passing triggers and vetoing triggers from other datasets
     return _pass & ~_veto
 
+# def theory_pdf_weight(weights, pdf_weight):
+#     _nm = np.ones(len(weights.weight()))
+#     _up = np.ones(len(weights.weight()))
+#     _dw = np.ones(len(weights.weight()))
+
+#     if pdf_weight is not None and (("306" in pdf_weight.__doc__) or ("325" in pdf_weight.__doc__)):
+#         arg = pdf_weight[:, 1:-2] - np.ones((len(weights.weight()), 100))
+#         summed  = ak.sum(np.square(arg), axis=1)
+#         pdf_unc = np.sqrt((1. / 99.) * summed)
+#         weights.add('PDF_weight', _nm, pdf_unc + _nm)
+
+#         # alpha_S weights
+#         # Eq. 27 of same ref
+#         as_unc = 0.5 * (pdf_weight[:, 102] - pdf_weight[:, 101])
+#         weights.add('aS_weight', _nm, as_unc + _nm)
+
+#         # PDF + alpha_S weights
+#         # Eq. 28 of same ref
+#         pdfas_unc = np.sqrt(np.square(pdf_unc) + np.square(as_unc))
+#         weights.add('PDFaS_weight', _nm, pdfas_unc + _nm)
+#     else:
+#         weights.add('aS_weight'   , _nm, _up, _dw)
+#         weights.add('PDF_weight'  , _nm, _up, _dw)
+#         weights.add('PDFaS_weight', _nm, _up, _dw)
+
 def theory_pdf_weight(weights, pdf_weight):
     _nm = np.ones(len(weights.weight()))
     _up = np.ones(len(weights.weight()))
     _dw = np.ones(len(weights.weight()))
-
-    if pdf_weight is not None and (("306" in pdf_weight.__doc__) or ("325" in pdf_weight.__doc__)):
-        arg = pdf_weight[:, 1:-2] - np.ones((len(weights.weight()), 100))
-        summed  = ak.sum(np.square(arg), axis=1)
-        pdf_unc = np.sqrt((1. / 99.) * summed)
-        weights.add('PDF_weight', _nm, pdf_unc + _nm)
-
-        # alpha_S weights
-        # Eq. 27 of same ref
-        as_unc = 0.5 * (pdf_weight[:, 102] - pdf_weight[:, 101])
-        weights.add('aS_weight', _nm, as_unc + _nm)
-
-        # PDF + alpha_S weights
-        # Eq. 28 of same ref
-        pdfas_unc = np.sqrt(np.square(pdf_unc) + np.square(as_unc))
-        weights.add('PDFaS_weight', _nm, pdfas_unc + _nm)
-    else:
+    
+    match = re.findall(r"(LHA\s+IDs\s+(\d+)\s*-\s*(\d+)\b)", pdf_weight.__doc__)
+    if len(match) == 0:
+        print("[warning] sample has no PDF weights stored. setting aS/PDF_weight to 1.0")
         weights.add('aS_weight'   , _nm, _up, _dw)
         weights.add('PDF_weight'  , _nm, _up, _dw)
-        weights.add('PDFaS_weight', _nm, _up, _dw)
+        return
+
+    lhapdf_id_range = np.array(match[0][1:]).astype(int)
+    lhapdf_id = lhapdf_id_range[0]
+    
+    variation_type = _lhapdf_config[lhapdf_id]['variation_type']
+    alphas_indices = _lhapdf_config[lhapdf_id]['alphas_indices']
+    
+    n = np.diff(lhapdf_id_range)[0]-2 if len(alphas_indices) else np.diff(lhapdf_id_range)[0]
+    
+    weight = pdf_weight[:, 1:-2] if len(alphas_indices) else pdf_weight[:, 1:]
+    weight = weight * np.ones((len(weights.weight()), n))
+        
+    mean = ak.sum(weight, axis=1)/n
+    sumw2 = ak.sum(np.square(weight), axis=1)
+    sumdiff2 = sumw2 - n * np.power(mean, 2)
+
+    if variation_type == "hessian":
+        weights.add('PDF_weight', _nm, np.sqrt(sumdiff2) + _nm)
+        if len(alphas_indices):
+            as_unc = 0.5 * (pdf_weight[:, alphas_indices[1]] - pdf_weight[:, alphas_indices[0]])
+            weights.add('aS_weight', _nm, as_unc + _nm)
+        else:
+            weights.add('aS_weight', _nm, _up, _dw)
+        return 
+            
+    else:
+        weights.add('PDF_weight', _nm, np.sqrt(sumdiff2/(n - 1)) + _nm)
+        weights.add('aS_weight', _nm, _up, _dw)
+        return
         
 
 def theory_ps_weight(weights, ps_weight):
