@@ -283,9 +283,6 @@ class zzinc_processor(processor.ProcessorABC):
         
         histos = self.build_histos()
         
-        if self.dump_gnn_array:
-            histos['gnn_score_arr'] = []
-
         if is_data:
             selection.add('lumimask', self._json[self._era](event.run, event.luminosityBlock))
             selection.add('triggers', trigger_rules(event, self._triggers, self._era))
@@ -520,8 +517,6 @@ class zzinc_processor(processor.ProcessorABC):
         
         # Apply GNN
         event['gnn_score'] = applyGNN(event).get_nnscore()
-        if self.dump_gnn_array:
-            histos["gnn_score_arr"] = event["gnn_score"].to_list()
 
         # Now adding weights
         if not is_data:
@@ -698,9 +693,29 @@ class zzinc_processor(processor.ProcessorABC):
                     "weight": weight,
                 }
             )
-                
+		
+		def _gnn_dumper(ch):
+            sel_ = channels[ch]
+            sel_args_ = {
+                s.replace('~',''): (False if '~' in s else True) for s in sel_
+            }
+            cut =  selection.require(**sel_args_)
+            weight = weights.weight()[cut]
+            
+            _dicv = {
+                ch: {
+                    "gnn": _format_variable(event["gnn_score"], cut).tolist(), 
+                    "weight": weight.tolist()
+                }
+            }
+            if 'gnn_dump' in histos:
+                histos["gnn_dump"].update(_dicv)
+            else:
+                histos["gnn_dump"] = _dicv
             
         for ch in channels:
+			if self.dump_gnn_array:
+				_gnn_dumper(ch)
             for sys in systematics:
                 _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'dilep_mt')
