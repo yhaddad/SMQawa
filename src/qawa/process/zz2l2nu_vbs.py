@@ -284,7 +284,7 @@ class zzinc_processor(processor.ProcessorABC):
         histos = self.build_histos()
         
         if self.dump_gnn_array:
-            hist['gnn_score_arr'] = []
+            histos['gnn_score_arr'] = []
 
         if is_data:
             selection.add('lumimask', self._json[self._era](event.run, event.luminosityBlock))
