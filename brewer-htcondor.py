@@ -31,7 +31,7 @@ echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
 
 echo "----- processing the files : "
-python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2
+python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2 --dumpgnn
 
 echo "----- directory after running :"
 ls -lthr
@@ -85,8 +85,9 @@ def main():
     # Making sure that the proxy is good
     proxy_base = 'x509up_u{}'.format(os.getuid())
     home_base  = os.environ['HOME']
+    user_name  = os.environ['USER']
     proxy_copy = os.path.join(home_base,proxy_base)
-    eosbase = "/eos/user/y/yixiao/ZZTo2L2Nu/{tag}/{sample}/"
+    eosbase = f"/eos/user/{user_name[0]}/{user_name}/ZZTo2L2Nu/" + "{tag}/{sample}/"
 
     regenerate_proxy = False
     if not os.path.isfile(proxy_copy):
@@ -119,7 +120,7 @@ def main():
             if len(sample.split('/')) <= 1: continue
             sample_name = sample.split("/")[1] if options.isMC else '_'.join(sample.split("/")[1:3])
             sample_name = sample_name.replace("*", "")
-            jobs_dir = '_'.join(['jobs', options.tag, sample_name])
+            jobs_dir = '_'.join(['jobs', options.tag, options.era, sample_name])
             logging.info("-- sample_name : " + sample)
 
             if os.path.isdir(jobs_dir):

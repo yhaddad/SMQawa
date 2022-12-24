@@ -19,21 +19,32 @@ def btag_id(wp:str='L', era:str='2018'):
     # using deepjet
     # ref : https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation
     dict_wp = {
-            "2016preVFP" : {"L": 0.0508, "M": 0.2598, "T": 0.6502},
-            "2016postVFP": {"L": 0.0480, "M": 0.2489, "T": 0.6377},
-            "2017"       : {"L": 0.0532, "M": 0.3040, "T": 0.7476},
-            "2018"       : {"L": 0.0490, "M": 0.2783, "T": 0.7100}
+            "2016"   : {"L": 0.0508, "M": 0.2598, "T": 0.6502},
+            "2016APV": {"L": 0.0480, "M": 0.2489, "T": 0.6377},
+            "2017"   : {"L": 0.0532, "M": 0.3040, "T": 0.7476},
+            "2018"   : {"L": 0.0490, "M": 0.2783, "T": 0.7100}
     }
     return dict_wp[era][wp]
 
 class BTVCorrector:
     def __init__(self, era:str='2018', wp:str='L', tagger:str='deepJet'):
-        self._era = era
+        if '2016' in era:
+            if 'APV' in era:
+                self._isAPV = True
+            else:
+                self._isAPV = True
+            self._era = era.replace('APV','')
+        else:
+            self._era = era
+
         self._wp  = wp
         self._tagger = tagger
         self.eff_hist = None
         _data_path = os.path.join(os.path.dirname(__file__), 'data')
-        with gzip.open(f"{_data_path}/btv/{era}_UL/eff-btag-{era}.pkl.gz", 'rb') as ifile:
+        with gzip.open(
+                f"{_data_path}/btv/{era+'_APV' if self._isAPV else era}_UL"
+                f"/eff-btag-{era}.pkl.gz", 
+                'rb') as ifile:
             self.eff_hist = pickle.loads(ifile.read())
 
         b_tag = self.eff_hist[{'tagger':self._tagger, 'WP': wp, 'passWP': 1  }].values()
@@ -46,7 +57,10 @@ class BTVCorrector:
         self.eff_statUp = dense_lookup.dense_lookup(up ,[ax.edges for ax in self.eff_hist.axes[3:]])
         self.eff_statDw = dense_lookup.dense_lookup(dw ,[ax.edges for ax in self.eff_hist.axes[3:]])
 
-        self.clib = correctionlib.CorrectionSet.from_file(f"{_data_path}/btv/{era}_UL/btagging.json.gz")
+        self.clib = correctionlib.CorrectionSet.from_file(
+                f"{_data_path}/btv/{era+'APV'}_UL/"
+                f"btagging.json.gz"
+        )
 
         
     def lightSF(self, jet, syst="central"):

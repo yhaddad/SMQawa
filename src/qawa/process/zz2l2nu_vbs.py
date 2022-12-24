@@ -3,7 +3,8 @@ import numpy as np
 import uproot
 import hist
 import yaml
-import os 
+import os
+import re
 
 from coffea import processor
 from coffea.nanoevents.methods import candidate
@@ -83,17 +84,26 @@ def build_photons(photon):
 
 class zzinc_processor(processor.ProcessorABC):
     # EWK corrections process has to be define before hand, it has to change when we move to dask
-    def __init__(self, era: str ='2018', dump_gnn_array=False, ewk_process_name=None):
+    def __init__(self, era: str ='2018', dump_gnn_array=False, ewk_process_name=None): 
         self._era = era
+        if 'APV' in self._era:
+            self._isAPV = True
+            self._era = re.findall(r'\d+', self._era)[0] 
+        else:
+            self._isAPV = False
         
         jec_tag = ''
         jer_tag = ''
         if self._era == '2016':
-            jec_tag = 'Summer19UL18_V5_MC'
-            jer_tag = 'Summer19UL18_JRV2_MC'
+            if self._isAPV:
+                jec_tag = 'Summer19UL16APV_V7_MC'
+                jer_tag = 'Summer19UL16APV_JRV3_MC'
+            else:
+                jec_tag = 'Summer19UL16_V7_MC'
+                jer_tag = 'Summer19UL16_JRV3_MC'
         elif self._era == '2017':
-            jec_tag = 'Summer19UL18_V5_MC'
-            jer_tag = 'Summer19UL18_JRV2_MC'
+            jec_tag = 'Summer19UL17_V5_MC'
+            jer_tag = 'Summer19UL17_JRV2_MC'
         elif self._era == '2018':
             jec_tag = 'Summer19UL18_V5_MC'
             jer_tag = 'Summer19UL18_JRV2_MC'
