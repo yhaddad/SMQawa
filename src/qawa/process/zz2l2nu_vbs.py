@@ -112,10 +112,10 @@ class zzinc_processor(processor.ProcessorABC):
         
         self.btag_wp = 'M'
         self.zmass = 91.1873 # GeV 
-        self._btag = BTVCorrector(era=era, wp=self.btag_wp)
+        self._btag = BTVCorrector(era=era, wp=self.btag_wp, isAPV=self._isAPV)
         self._jmeu = JMEUncertainty(jec_tag, jer_tag)
         self._purw = pileup_weights(era=self._era)
-        self._leSF = LeptonScaleFactors(era=self._era)
+        self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
         
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
@@ -338,7 +338,12 @@ class zzinc_processor(processor.ProcessorABC):
             (jets.jetId >= 6) # tight JetID 7(2016) and 6(2017/8)
         )
         
-        jet_btag = (event.Jet.btagDeepFlavB > btag_id(self.btag_wp, self._era))
+        jet_btag = (
+                event.Jet.btagDeepFlavB > btag_id(
+                    self.btag_wp, 
+                    self._era + 'APV' if self._isAPV else self._era
+                )
+        )
         
         good_jets = jets[~jet_btag & jet_mask]
         good_bjet = jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.4)]

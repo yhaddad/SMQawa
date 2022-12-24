@@ -27,22 +27,15 @@ def btag_id(wp:str='L', era:str='2018'):
     return dict_wp[era][wp]
 
 class BTVCorrector:
-    def __init__(self, era:str='2018', wp:str='L', tagger:str='deepJet'):
-        if '2016' in era:
-            if 'APV' in era:
-                self._isAPV = True
-            else:
-                self._isAPV = True
-            self._era = era.replace('APV','')
-        else:
-            self._era = era
-
+    def __init__(self, era:str='2018', wp:str='L', tagger:str='deepJet', isAPV=False):
+        self._era = era
         self._wp  = wp
+        self.isAPV = isAPV
         self._tagger = tagger
         self.eff_hist = None
         _data_path = os.path.join(os.path.dirname(__file__), 'data')
         with gzip.open(
-                f"{_data_path}/btv/{era+'_APV' if self._isAPV else era}_UL"
+                f"{_data_path}/btv/{era+'_APV' if isAPV else era}_UL"
                 f"/eff-btag-{era}.pkl.gz", 
                 'rb') as ifile:
             self.eff_hist = pickle.loads(ifile.read())
@@ -58,7 +51,7 @@ class BTVCorrector:
         self.eff_statDw = dense_lookup.dense_lookup(dw ,[ax.edges for ax in self.eff_hist.axes[3:]])
 
         self.clib = correctionlib.CorrectionSet.from_file(
-                f"{_data_path}/btv/{era+'APV'}_UL/"
+                f"{_data_path}/btv/{era+'APV' if isAPV else era}_UL/"
                 f"btagging.json.gz"
         )
 
@@ -69,7 +62,7 @@ class BTVCorrector:
         njets = ak.num(jet)
         jet  = ak.flatten(jet)
         sf = self.clib[f"{self._tagger}_incl"].evaluate(
-            syst, self._wp, 
+            syst, self._wp,
             np.array(jet.hadronFlavour), 
             np.array(abs(jet.eta)), 
             np.array(jet.pt)
@@ -101,8 +94,9 @@ class BTVCorrector:
         li_jets = jets[(jets.hadronFlavour==0) & (np.abs(jets.eta) <= 2.4)]
         bc_jets = jets[(jets.hadronFlavour >0) & (np.abs(jets.eta) <= 2.4)]
 
-        b_tagged_li = (li_jets.btagDeepFlavB  > btag_id(wp = self._wp, era=self._era))
-        b_tagged_bc = (bc_jets.btagDeepFlavB  > btag_id(wp = self._wp, era=self._era))
+        wp_era_str = self._era + 'APV' if self.isAPV else self._era
+        b_tagged_li = (li_jets.btagDeepFlavB  > btag_id(wp = self._wp, era=wp_era_str))
+        b_tagged_bc = (bc_jets.btagDeepFlavB  > btag_id(wp = self._wp, era=wp_era_str))
 
         eff_li_nom = self.eff(li_jets.hadronFlavour, li_jets.pt, np.abs(li_jets.eta))
         eff_bc_nom = self.eff(bc_jets.hadronFlavour, bc_jets.pt, np.abs(bc_jets.eta))
@@ -138,13 +132,13 @@ class BTVCorrector:
 
         # uncorrelated unceertainties
         weights.add(
-            f'btag_sf_light_{self._era}',
+            f'btag_sf_light_{self._era + "APV" if self.isAPV else self._era}',
             np.ones(len(sf_nom)),
             weightUp  = self.combine(eff_li_nom, self.lightSF(li_jets, 'up'), b_tagged_li),
             weightDown= self.combine(eff_li_nom, self.lightSF(li_jets, 'down'), b_tagged_li)
         )
         weights.add(
-            f'btag_sf_bc_{self._era}',
+            f'btag_sf_bc_{self._era + "APV" if self.isAPV else self._era}',
             np.ones(len(sf_nom)),
             weightUp  = self.combine(eff_bc_nom, self.btagSF(bc_jets, 'up'), b_tagged_bc),
             weightDown= self.combine(eff_bc_nom, self.btagSF(bc_jets, 'down'), b_tagged_bc)

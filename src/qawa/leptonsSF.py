@@ -6,9 +6,11 @@ import uproot
 
 
 class LeptonScaleFactors:
-    def __init__(self, era:str='2018'):
-        self._era = era
-
+    def __init__(self, era:str='2018', isAPV:bool=False):
+        if isAPV:
+            self._era = era + 'APV'
+        else:
+            slef._era = era 
         extLepSF = extractor()
 
         _data_path = os.path.join(os.path.dirname(__file__), 'data/lep')
@@ -23,7 +25,7 @@ class LeptonScaleFactors:
             mu_h = ["NUM_IsoMu24_or_IsoTkMu24_DEN_CutBasedIdTight_and_PFIsoTight_abseta_pt",
                     "NUM_LooseID_DEN_TrackerMuons_abseta_pt",
                     "NUM_LooseRelIso_DEN_LooseID_abseta_pt"]
-        elif muonSelectionTag=="LooseWP_2016_APV":
+        elif muonSelectionTag=="LooseWP_2016APV":
             mu_f=["Efficiencies_muon_generalTracks_Z_Run2016_UL_HIPM_SingleMuonTriggers.root",
                   "Efficiencies_muon_generalTracks_Z_Run2016_UL_HIPM_ID.root",
                   "Efficiencies_muon_generalTracks_Z_Run2016_UL_HIPM_ISO.root"]
@@ -51,7 +53,7 @@ class LeptonScaleFactors:
         if electronSelectionTag=="GPMVA90_2016":
             el_f = ["egammaEffi_txt_Ele_wp90iso_postVFP_EGM2D.root"]
             el_h = ["EGamma_SF2D"]
-        if electronSelectionTag=="GPMVA90_2016_APV":
+        if electronSelectionTag=="GPMVA90_2016APV":
             el_f = ["egammaEffi_txt_Ele_wp90iso_preVFP_EGM2D.root"]
             el_h = ["EGamma_SF2D"]
         elif electronSelectionTag=="GPMVA90_2017":
