@@ -10,7 +10,7 @@ class LeptonScaleFactors:
         if isAPV:
             self._era = era + 'APV'
         else:
-            slef._era = era 
+            self._era = era 
         extLepSF = extractor()
 
         _data_path = os.path.join(os.path.dirname(__file__), 'data/lep')
