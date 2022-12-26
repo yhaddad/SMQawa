@@ -30,8 +30,8 @@ class LeptonScaleFactors:
                   "Efficiencies_muon_generalTracks_Z_Run2016_UL_HIPM_ID.root",
                   "Efficiencies_muon_generalTracks_Z_Run2016_UL_HIPM_ISO.root"]
             mu_h = ["NUM_IsoMu24_or_IsoTkMu24_DEN_CutBasedIdTight_and_PFIsoTight_abseta_pt",
-                    "Efficiencies_muon_generalTracks_Z_Run2016_UL_ID.root",
-                    "Efficiencies_muon_generalTracks_Z_Run2016_UL_ISO.root"]
+                    "NUM_LooseID_DEN_TrackerMuons_abseta_pt",
+                    "NUM_LooseRelIso_DEN_LooseID_abseta_pt"]
         elif muonSelectionTag=="LooseWP_2017":
             mu_f=["Efficiencies_muon_generalTracks_Z_Run2017_UL_SingleMuonTriggers.root",
                   "Efficiencies_muon_generalTracks_Z_Run2017_UL_ID.root",

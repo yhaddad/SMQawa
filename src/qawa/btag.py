@@ -36,7 +36,7 @@ class BTVCorrector:
         _data_path = os.path.join(os.path.dirname(__file__), 'data')
         with gzip.open(
                 f"{_data_path}/btv/{era+'_APV' if isAPV else era}_UL"
-                f"/eff-btag-{era}.pkl.gz", 
+                f"/eff-btag-{era+'_APV' if isAPV else era}.pkl.gz", 
                 'rb') as ifile:
             self.eff_hist = pickle.loads(ifile.read())
 
@@ -51,7 +51,7 @@ class BTVCorrector:
         self.eff_statDw = dense_lookup.dense_lookup(dw ,[ax.edges for ax in self.eff_hist.axes[3:]])
 
         self.clib = correctionlib.CorrectionSet.from_file(
-                f"{_data_path}/btv/{era+'APV' if isAPV else era}_UL/"
+                f"{_data_path}/btv/{era+'_APV' if isAPV else era}_UL/"
                 f"btagging.json.gz"
         )
 

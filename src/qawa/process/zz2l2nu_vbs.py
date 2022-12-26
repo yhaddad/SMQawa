@@ -89,6 +89,7 @@ class zzinc_processor(processor.ProcessorABC):
         if 'APV' in self._era:
             self._isAPV = True
             self._era = re.findall(r'\d+', self._era)[0] 
+            print(f"[YACINE DEBUG] era={self._era} APV={self._isAPV}")
         else:
             self._isAPV = False
         
@@ -97,10 +98,10 @@ class zzinc_processor(processor.ProcessorABC):
         if self._era == '2016':
             if self._isAPV:
                 jec_tag = 'Summer19UL16APV_V7_MC'
-                jer_tag = 'Summer19UL16APV_JRV3_MC'
+                jer_tag = 'Summer20UL16APV_JRV3_MC'
             else:
                 jec_tag = 'Summer19UL16_V7_MC'
-                jer_tag = 'Summer19UL16_JRV3_MC'
+                jer_tag = 'Summer20UL16_JRV3_MC'
         elif self._era == '2017':
             jec_tag = 'Summer19UL17_V5_MC'
             jer_tag = 'Summer19UL17_JRV2_MC'
@@ -112,7 +113,7 @@ class zzinc_processor(processor.ProcessorABC):
         
         self.btag_wp = 'M'
         self.zmass = 91.1873 # GeV 
-        self._btag = BTVCorrector(era=era, wp=self.btag_wp, isAPV=self._isAPV)
+        self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
         self._jmeu = JMEUncertainty(jec_tag, jer_tag)
         self._purw = pileup_weights(era=self._era)
         self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
@@ -124,13 +125,13 @@ class zzinc_processor(processor.ProcessorABC):
             '2017': LumiMask(f'{_data_path}/json/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'),
             '2016': LumiMask(f'{_data_path}/json/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt'),
         }
-        with open(f'{_data_path}/{era}-trigger-rules.yaml') as ftrig:
+        with open(f'{_data_path}/{self._era}-trigger-rules.yaml') as ftrig:
             self._triggers = yaml.load(ftrig, Loader=yaml.FullLoader)
             
         with open(f'{_data_path}/eft-names.dat') as eft_file:
             self._eftnames = [n.strip() for n in eft_file.readlines()]
 
-        with uproot.open(f'{_data_path}/trigger_sf/histo_triggerEff_sel0_{era}.root') as _fn:
+        with uproot.open(f'{_data_path}/trigger_sf/histo_triggerEff_sel0_{self._era}.root') as _fn:
             _hvalue = np.dstack([_fn[_hn].values() for _hn in _fn.keys()] + [np.ones((7,7))])
             _herror = np.dstack([np.sqrt(_fn[_hn].variances()) for _hn in _fn.keys()] + [np.zeros((7,7))])
             self.trig_sf_map = np.stack([_hvalue, _herror], axis=-1)
