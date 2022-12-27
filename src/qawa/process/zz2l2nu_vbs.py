@@ -1,5 +1,7 @@
 import awkward as ak
 import numpy as np
+import scipy.interpolate as interp
+from scipy import stats as st
 import uproot
 import hist
 import yaml
@@ -136,6 +138,10 @@ class zzinc_processor(processor.ProcessorABC):
             _herror = np.dstack([np.sqrt(_fn[_hn].variances()) for _hn in _fn.keys()] + [np.zeros((7,7))])
             self.trig_sf_map = np.stack([_hvalue, _herror], axis=-1)
         self.dump_gnn_array  = dump_gnn_array
+        
+        with open(f'{_data_path}/GNNmodel/gnn_flattening_fnc_{era}.pkl', 'rb') as _fn:
+            self.gnn_flat_fnc = pickle.load(_fn)
+
         self.ewk_process_name = ewk_process_name
         if self.ewk_process_name is not None:
             self.ewk_corr = ewk_corrector(process=ewk_process_name)
@@ -187,6 +193,12 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(50, 0, 1, name="gnn_score", label=r"$O_{GNN}$"),
+                hist.storage.Weight()
+            ),
+            'gnn_flat': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 0, 1, name="gnn_flat", label=r"$O_{GNN}$"),
                 hist.storage.Weight()
             ),
             'dijet_mass': hist.Hist(
@@ -533,6 +545,7 @@ class zzinc_processor(processor.ProcessorABC):
         
         # Apply GNN
         event['gnn_score'] = applyGNN(event).get_nnscore()
+        event['gnn_flat'] = self.gnn_flat_fnc(event['gnn_score'])
 
         # Now adding weights
         if not is_data:
@@ -747,8 +760,9 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'lead_jet_eta')
                 _histogram_filler(ch, sys, 'trail_jet_eta')
                 _histogram_filler(ch, sys, 'min_dphi_met_j')
-                _histogram_filler(ch, sys, 'gnn_score')
                 _histogram_filler(ch, sys, 'dijet_mass')
+                _histogram_filler(ch, sys, 'gnn_score')
+                _histogram_filler(ch, sys, 'gnn_falt')
                 _histogram_filler(ch, sys, 'dijet_deta')
                 _histogram_filler(ch, sys, 'lead_jet_pt')
                 _histogram_filler(ch, sys, 'trail_jet_pt')

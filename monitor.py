@@ -78,7 +78,7 @@ def main():
             if '#' in sample: continue
             if len(sample.split('/')) <= 1: continue
             sample_name = sample.split("/")[1] if options.isMC else '_'.join(sample.split("/")[1:3])
-            jobs_dir = '_'.join(['jobs', options.tag, sample_name])
+            jobs_dir = '_'.join(['jobs', options.tag, options.era, sample_name])
 
             input_root_files = list(open(jobs_dir + "/" + "inputfiles.dat").read().splitlines())
             
