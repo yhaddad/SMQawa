@@ -31,7 +31,7 @@ echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
 
 echo "----- processing the files : "
-python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2 --dumpgnn
+python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2
 
 echo "----- directory after running :"
 ls -lthr

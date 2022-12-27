@@ -3,6 +3,7 @@ import numpy as np
 import scipy.interpolate as interp
 from scipy import stats as st
 import uproot
+import pickle
 import hist
 import yaml
 import os
@@ -762,7 +763,7 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'min_dphi_met_j')
                 _histogram_filler(ch, sys, 'dijet_mass')
                 _histogram_filler(ch, sys, 'gnn_score')
-                _histogram_filler(ch, sys, 'gnn_falt')
+                _histogram_filler(ch, sys, 'gnn_flat')
                 _histogram_filler(ch, sys, 'dijet_deta')
                 _histogram_filler(ch, sys, 'lead_jet_pt')
                 _histogram_filler(ch, sys, 'trail_jet_pt')
