@@ -22,6 +22,7 @@ voms-proxy-info -all -file {proxy}
 
 python -m venv --without-pip --system-site-packages jobenv
 source jobenv/bin/activate
+python -m pip install scipy --upgrade --no-cache-dir
 python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-{qawa_version}-py2.py3-none-any.whl
 
 echo "----- JOB STARTS @" `date "+%Y-%m-%d %H:%M:%S"`
