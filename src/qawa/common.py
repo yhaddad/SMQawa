@@ -116,8 +116,8 @@ def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
 
 def trigger_rules(event, rules:dict, era:str='2018'):
     ds_names_ = {
-        '2016' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'SingleElectron', 'MuonEG'],
-        '2017' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'SingleElectron', 'MuonEG'],
+        '2016' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG'],
+        '2017' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG'],
         '2018' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'MuonEG']
     }
     
