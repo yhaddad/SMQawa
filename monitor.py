@@ -143,7 +143,8 @@ def main():
                             script_command = f"xrdcp root://cms-xrd-global.cern.ch/$2 . \n"
                             infile_name = infile.split('/')[-1]
                             script_command += f"python brewer-remote.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name}\n"
-                            script_command += "ls -lthr"
+                            script_command += f"rm {infile_name}\n"
+                            script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
                                 script_file_ = resub_script_header.format(
                                     proxy=proxy_copy, 

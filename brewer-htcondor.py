@@ -136,20 +136,32 @@ def main():
                 os.mkdir(jobs_dir)
 
             if not options.submit:
-                # ---- getting the list of file for the dataset
-                sample_files = subprocess.check_output(
-                    ['dasgoclient','--query',"file dataset={}".format(sample)]
-                )
-                sample_files=str(sample_files)
-                sample_files=sample_files.split('b\'')[1].split('\\n')
-                del sample_files[-1]
-                time.sleep(15)
+                sample_file = []
+                if '*' in sample:
+                    sample_with_ext = subprocess.check_output(
+                        ['dasgoclient', '--query', f"dataset={sample}"]
+                    )
+                    print(" --- found these samples : ")
+                    print(sample_with_ext.decode('UTF-8'))
+                    print("and these are the files : ")
+                    for sample_ in sample_with_ext.decode("UTF-8").split("\n")[:-1]:
+                        output_ = subprocess.check_output(
+                            ['dasgoclient', '--query', f'file dataset={sample_}']
+                        )
+                        sample_files += list(filter(lambda x: x != '', output_.decode('UTF-8').split('\n')))
+                else:
+                    output_ = subprocess.check_output(
+                        ['dasgoclient','--query', f"file dataset={sample}"]
+                    )
+                    sample_files = list(filter(lambda x: x != '', output_.decode('UTF-8').split('\n')))
+
+                time.sleep(1)
                 with open(os.path.join(jobs_dir, "inputfiles.dat"), 'w') as infiles:
                     for fn in sample_files:
                         infiles.write(fn)
                         infiles.write('\n')
                     infiles.close()
-            time.sleep(10)
+            time.sleep(2)
             eosoutdir =  eosbase.format(tag=options.tag,sample=sample_name)
             # crete a directory
             os.system("mkdir -p {}".format(eosoutdir))

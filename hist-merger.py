@@ -21,15 +21,17 @@ def merger():
 
     all_hists = []
     
-    for filename in tqdm(glob.glob(f'*{options.tag}*/*.pkl.gz'), desc="reading", ascii=False, ncols=75):
-        with gzip.open(filename, 'rb') as f:
-            all_hists.append(pickle.load(f))
+    for filename in tqdm(glob.glob(f'*{options.tag}*{options.era}*/*.pkl.gz'), desc="reading", ascii=False, ncols=75):
+        if os.path.getsize(filename) == 0: 
+            print(f"{filename} is empty !! ")
+        else:
+            with gzip.open(filename, 'rb') as f:
+                all_hists.append(pickle.load(f))
     
     combined_hist = {}
     combined_sumw = {}
     
     for i in tqdm(all_hists, desc="format", ascii=False, ncols=75):
-        print(i)
         for s, v in i.items():
             if s in combined_hist:
                 combined_hist[s].append(v['hist'])
