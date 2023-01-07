@@ -18,6 +18,7 @@ def main():
 
     new_list = set()
     file_name_tag = ''
+    isData = False
     with open(options.input, 'r') as stream:
         for sample in tqdm(stream.read().split('\n'), desc="format", ascii=False, ncols=75):
             #for sample in stream.read().split('\n'):
@@ -36,7 +37,12 @@ def main():
             )
             if len(sample_files)>0:
                 sample_newtag = sample_files.decode('UTF-8').split("/")[2]
-                file_name_tag = sample_newtag.split('-')[0]
+                sample_type = sample_files.decode("UTF-8").split("/")[3]
+                if sample_type == 'NANOAOD\n':
+                    file_name_tag = sample_newtag.split('-')[1]
+                else:
+                    file_name_tag = sample_newtag.split('-')[0]
+                #print(sample_type, sample_newtag, file_name_tag)
                 new_list.add(sample_files.decode('UTF-8'))
             else:
                 sample_newtag = ''
@@ -46,6 +52,7 @@ def main():
     
 
     print(new_list)
+
     with open(f"./data/dataset-{file_name_tag}.txt", 'w') as stream:
         stream.writelines(sorted(list(new_list)))
         stream.close()

@@ -21,7 +21,7 @@ def merger():
 
     all_hists = []
     
-    for filename in tqdm(glob.glob(f'*{options.tag}*{options.era}*/*.pkl.gz'), desc="reading", ascii=False, ncols=75):
+    for filename in tqdm(glob.glob(f'*{options.tag}*_{options.era}_*/*.pkl.gz'), desc="reading", ascii=False, ncols=75):
         if os.path.getsize(filename) == 0: 
             print(f"{filename} is empty !! ")
         else:
