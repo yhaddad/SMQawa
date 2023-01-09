@@ -561,6 +561,7 @@ class zzinc_processor(processor.ProcessorABC):
                     lead_lep.SF_up*subl_lep.SF_up, 
                     lead_lep.SF_down*subl_lep.SF_down
             )
+            _ones = np.ones(len(weights.weight()))
             if self.ewk_process_name:
                 self.ewk_corr.get_weight(
                         event.GenPart,
@@ -568,8 +569,9 @@ class zzinc_processor(processor.ProcessorABC):
                         event.Generator.x2,
                         weights
                 )
+            else:
+                weights.add("kEW", _ones, _ones, _ones)
             
-            _ones = np.ones(len(weights.weight()))
             if "PSWeight" in event.fields:
                 theory_ps_weight(weights, event.PSWeight)
             else:
@@ -862,7 +864,7 @@ class zzinc_processor(processor.ProcessorABC):
             
             # Electrons + MET shift (FIXME: shift to be added)
             ({"Electron": electronEnUp  }, "ElectronEnUp"  ),
-            ({"Electron": electronEnDown}, "ElectronEnudronDown"),
+            ({"Electron": electronEnDown}, "ElectronEnDown"),
             # Muon + MET shifts
             ({"Muon": muonEnUp  }, "MuonRocUp"),
             ({"Muon": muonEnDown}, "MuonRocDown"),
