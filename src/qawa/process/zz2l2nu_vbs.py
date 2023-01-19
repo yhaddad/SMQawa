@@ -20,7 +20,7 @@ from qawa.applyGNN import applyGNN
 from qawa.leptonsSF import LeptonScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
-from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
+from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules,getPhotonTrigPrescale, PhotonSF
 
 def build_leptons(muons, electrons):
     # select tight/loose muons
@@ -72,17 +72,35 @@ def build_htaus(tau, lepton):
     )
     return tau[base & ~overlap_leptons]
 
-def build_photons(photon):
+def build_photons(photons):
     base = (
-        (photon.pt          > 20. ) & 
-        (np.abs(photon.eta) < 2.5 )
+        (photons.pt          > 20. ) & 
+        (np.abs(photons.eta) < 2.5 )
     )
+
+    dd_photons_base = (
+        (photons.pt          > 55. ) &
+        (np.abs(photons.eta) <= 2.5 ) &
+        (~(photons.pixelSeed)) &
+        (photons.electronVeto) &
+        (photons.sieie >= 0.001) &
+        (photons.cutBased ==3)
+    )
+    dd_photons_loose = photons[
+        (~dd_photons_base) &
+        (base) &
+        (photons.cutBased ==3)
+    ]
+    
     # MVA ID
-    tight_photons = photon[base & photon.mvaID_WP90]
-    loose_photons = photon[base & photon.mvaID_WP80 & ~photon.mvaID_WP90]
+    tight_photons = photons[base & photons.mvaID_WP90]
+    loose_photons = photons[base & photons.mvaID_WP80 & ~photons.mvaID_WP90]
+
+    dd_photons = photons[dd_photons_base]
     
     # cut based ID
-    return tight_photons, loose_photons
+    return tight_photons, loose_photons, dd_photons_loose, dd_photons
+
 
 
 class zzinc_processor(processor.ProcessorABC):
@@ -121,6 +139,11 @@ class zzinc_processor(processor.ProcessorABC):
         self._purw = pileup_weights(era=self._era)
         self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
         
+        self._phEval = PhotonSF(era=self._era)
+
+        #if its is photon CR 
+        self._isnotpho= False
+
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
         self._json = {
@@ -133,6 +156,11 @@ class zzinc_processor(processor.ProcessorABC):
             
         with open(f'{_data_path}/eft-names.dat') as eft_file:
             self._eftnames = [n.strip() for n in eft_file.readlines()]
+
+        #adding prescale value to triggers
+        with open(f'{_data_path}/Photon/{era}-photon.yaml') as ftrigpre:
+            self._triggers_prescale = yaml.load(ftrigpre, Loader=yaml.FullLoader)
+
 
         with uproot.open(f'{_data_path}/trigger_sf/histo_triggerEff_sel0_{self._era}.root') as _fn:
             _hvalue = np.dstack([_fn[_hn].values() for _hn in _fn.keys()] + [np.ones((7,7))])
@@ -247,7 +275,7 @@ class zzinc_processor(processor.ProcessorABC):
         }
 
     
-    def _add_trigger_sf(self, weights, lead_lep, subl_lep):
+    def _add_trigger_sf(self, weights, lead_, subl_lep):
         mask_BB = ak.fill_none((lead_lep.eta <= 1.5) & (subl_lep.eta <= 1.5), False)
         mask_EB = ak.fill_none((lead_lep.eta >= 1.5) & (subl_lep.eta <= 1.5), False)
         mask_BE = ak.fill_none((lead_lep.eta <= 1.5) & (subl_lep.eta >= 1.5), False)
@@ -327,7 +355,30 @@ class zzinc_processor(processor.ProcessorABC):
             event.Flag.BadChargedCandidateFilter & 
             event.Flag.BadPFMuonFilter
         ) 
+
+        #photon CR
+        tight_photons, loose_photons, dd_photons_loose, dd_photons = build_photons(event.Photon)
+        #tight_photons,loose_photons = build_photons(event.Photon)
+        lead_photon=ak.firsts(dd_photons)
+        #print(event.run[:14].tolist(),event.luminosityBlock[:14].tolist())
+        #print("lead pt",lead_photon.pt[:1000].tolist())
+
         
+        ntight_pho = ak.num(dd_photons)
+        nloose_pho = ak.num(dd_photons_loose)
+
+        #lead_photon=ak.firsts(dd_photons)
+        #print("monika",event.run,event.luminosityBlock)
+        if  is_data:
+            event.prescaleweight = getPhotonTrigPrescale(event.run, event.luminosityBlock, self._triggers_prescale, lead_photon.pt,'2018')
+            print("I can calculate the prescaleweight")
+        self._phSF = self._phEval["EGamma_SF2D_T"](lead_photon.eta,lead_photon.pt)
+        print("I can come here")
+        #IDscale factor
+        #need to get SF from https://github.com/jdulemba/NanoAOD_Analyses/blob/new_kfactor_files/Analysis/python/LeptonSF.py
+        
+
+
         tight_lep, loose_lep = build_leptons(
             event.Muon,
             event.Electron
@@ -340,10 +391,18 @@ class zzinc_processor(processor.ProcessorABC):
         nhtaus_lep = ak.num(had_taus)
         
         jets = event.Jet
-        overlap_leptons = ak.any(
-            jets.metric_table(tight_lep) <= 0.4,
-            axis=2
-        )
+        if (self._isnotpho):
+            overlap_leptons =  ak.any(
+                jets.metric_table(tight_lep) <= 0.4,
+                axis=2
+            )    
+        else:
+            overlap_leptons = ak.any(
+                jets.metric_table(dd_photons) <= 0.4,
+                axis=2
+            )
+
+
         
         jet_mask = (
             ~overlap_leptons & 
@@ -369,26 +428,36 @@ class zzinc_processor(processor.ProcessorABC):
         event['ngood_jets']  = ngood_jets
        
         # lepton quantities
-        def z_lepton_pair(leptons):
-            pair = ak.combinations(leptons, 2, axis=1, fields=['l1', 'l2'])
-            mass = (pair.l1 + pair.l2).mass
-            cand = ak.local_index(mass, axis=1) == ak.argmin(np.abs(mass - self.zmass), axis=1)
+        if(self._isnotpho):
+            def z_lepton_pair(leptons):
+                pair = ak.combinations(leptons, 2, axis=1, fields=['l1', 'l2'])
+                mass = (pair.l1 + pair.l2).mass
+                cand = ak.local_index(mass, axis=1) == ak.argmin(np.abs(mass - self.zmass), axis=1)
 
-            extra_lepton = leptons[(
-                ~ak.any(leptons.metric_table(pair[cand].l1) <= 0.01, axis=2) & 
-                ~ak.any(leptons.metric_table(pair[cand].l2) <= 0.01, axis=2) )
-            ]
-            return pair[cand], extra_lepton, cand
+                extra_lepton = leptons[(
+                    ~ak.any(leptons.metric_table(pair[cand].l1) <= 0.01, axis=2) & 
+                    ~ak.any(leptons.metric_table(pair[cand].l2) <= 0.01, axis=2) )
+                                   ]
+                return pair[cand], extra_lepton, cand
         
-        dilep, extra_lep, z_cand_mask = z_lepton_pair(tight_lep)
+            dilep, extra_lep, z_cand_mask = z_lepton_pair(tight_lep)
+            lead_lep = ak.firsts(ak.where(dilep.l1.pt >  dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
+            subl_lep = ak.firsts(ak.where(dilep.l1.pt <= dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
         
-        lead_lep = ak.firsts(ak.where(dilep.l1.pt >  dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
-        subl_lep = ak.firsts(ak.where(dilep.l1.pt <= dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
-        
-        dilep_p4 = (lead_lep + subl_lep)
+            dilep_p4 = (lead_lep + subl_lep)
+        else:
+            dilep_p4 = lead_photon
+
+            #need to ffix it extra lep why we need it in the caluculation off met variables just put the dummy values for now 
+            extra_lep = loose_lep
+            lead_lep = ak.firsts(dd_photons)
+            subl_lep = ak.firsts(dd_photons)
+            
         dilep_m  = dilep_p4.mass
         dilep_pt = dilep_p4.pt
-        
+        #deltaphi Z+jets and met
+        Z_jet_p4 = (dilep_p4+jets)
+
         # high level observables
         p4_met = ak.zip(
             {
@@ -404,8 +473,8 @@ class zzinc_processor(processor.ProcessorABC):
 
         emu_met = ak.firsts(extra_lep, axis=1) + p4_met
 	
-        reco_met_pt = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
-        reco_met_phi = ak.where(ntight_lep==2, p4_met.phi, emu_met.phi)
+        reco_met_pt = ak.where(ntight_lep==3,emu_met.pt, p4_met.pt)
+        reco_met_phi = ak.where(ntight_lep==3,emu_met.phi, p4_met.phi)
 
 	
 	    # this definition is not correct as it doesn't include the mass of the second Z
@@ -420,7 +489,7 @@ class zzinc_processor(processor.ProcessorABC):
         # dilep_dphi = lead_lep.delta_phi(subl_lep)
         # dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
         # dilep_dR   = lead_lep.delta_r(subl_lep)
-        dilep_dphi_met  = ak.where(ntight_lep==2, dilep_p4.delta_phi(p4_met), dilep_p4.delta_phi(emu_met))
+        dilep_dphi_met  = ak.where(ntight_lep==3,dilep_p4.delta_phi(emu_met), dilep_p4.delta_phi(p4_met))
         #scalar_balance = ak.where(ntight_lep==3, emu_met.pt/dilep_p4.pt, p4_met.pt/dilep_p4.pt)
         
 
@@ -437,6 +506,8 @@ class zzinc_processor(processor.ProcessorABC):
         #dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         #dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         
+        delta_phi_Zjets_met  = np.abs(Z_jet_p4.delta_phi(p4_met))
+
         min_dphi_met_j = ak.min(np.abs(
             ak.where(
                 ntight_lep==3, 
@@ -446,7 +517,7 @@ class zzinc_processor(processor.ProcessorABC):
         ), axis=1)
 
         event['min_dphi_met_j'] = min_dphi_met_j
-        
+        event['delta_phi_Zjets_met'] = delta_phi_Zjets_met
         # define basic selection
         selection.add(
             "require-ossf",
@@ -503,10 +574,20 @@ class zzinc_processor(processor.ProcessorABC):
                 ak.fill_none(np.abs(min_dphi_met_j)>0.5, False), 
             )
         )
+        #selection.add("delta_phi_Zjets_met", ak.fill_none(delta_phi_Zjets_met > 2.5 ,False))
+
+
+        #zero lep
+        selection.add('0lep', (ntight_lep==0))
+        selection.add('1pho', ak.fill_none((ntight_pho==1) & (nloose_pho==0) & (ak.firsts(tight_photons).pt>55),False))
+        selection.add('met_0'        , ak.fill_none(p4_met.pt > 0, False))
+        
+
         # jet demography
         selection.add('1njets' , ngood_jets  >= 1 )
         selection.add('2njets' , ngood_jets  >= 2 )
         selection.add('1nbjets', ngood_bjets >= 1 )
+        selection.add('0bjets', ngood_bjets == 0 )
         selection.add('0nhtaus', nhtaus_lep  == 0 )
         
         selection.add('dijet_deta', ak.fill_none(dijet_deta > 2.5, False))
@@ -549,6 +630,8 @@ class zzinc_processor(processor.ProcessorABC):
         event['gnn_flat'] = self.gnn_flat_fnc(event['gnn_score'])
 
         # Now adding weights
+        #if is_data:
+        #    weights.add('prescaleweight', event.prescaleweight)
         if not is_data:
             weights.add('genweight', event.genWeight)
             self._btag.append_btag_sf(jets, weights)
@@ -561,6 +644,8 @@ class zzinc_processor(processor.ProcessorABC):
                     lead_lep.SF_up*subl_lep.SF_up, 
                     lead_lep.SF_down*subl_lep.SF_down
             )
+            #weights.add (
+            #    'PhotonSF',self._phSF)
             if self.ewk_process_name:
                 self.ewk_corr.get_weight(
                         event.GenPart,
@@ -685,6 +770,14 @@ class zzinc_processor(processor.ProcessorABC):
 		    'dilep_dphi_met', 'min_dphi_met_j',
 		    'met_pt', '1nbjets', "2njets"
 	    ],
+
+           "photon_VBS":common_sel + [
+               '1pho','2njets','0bjets',
+               '0nhtaus','0lep','dilep_pt',
+               'met_0','dilep_dphi_met',
+               'min_dphi_met_j',
+               'dijet_deta','dijet_mass_400'
+           ],
         }
 
         if shift_name is None:

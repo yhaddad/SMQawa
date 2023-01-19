@@ -84,10 +84,13 @@ def main():
     options = parser.parse_args()
 
     # Making sure that the proxy is good
+    print(os.getuid())
     proxy_base = 'x509up_u{}'.format(os.getuid())
     home_base  = os.environ['HOME']
+    home_base  = '/tmp'
     user_name  = os.environ['USER']
     proxy_copy = os.path.join(home_base,proxy_base)
+
     eosbase = f"/eos/user/{user_name[0]}/{user_name}/ZZTo2L2Nu/" + "{tag}/{sample}/"
 
     regenerate_proxy = False

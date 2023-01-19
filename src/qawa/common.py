@@ -3,7 +3,9 @@ from coffea.analysis_tools import Weights
 from coffea import processor
 from scipy import interpolate
 from coffea.nanoevents.methods import candidate
+from correctionlib import _core
 
+from coffea.lookup_tools import extractor
 import awkward as ak
 import numpy as np
 import uproot
@@ -116,15 +118,19 @@ def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
 
 def trigger_rules(event, rules:dict, era:str='2018'):
     ds_names_ = {
-        '2016' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG'],
-        '2017' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG'],
-        '2018' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'MuonEG']
+        '2016' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG','Photon'],
+        '2017' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG','Photon'],
+        '2018' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'MuonEG','Photon']
     }
     
     _pass = np.zeros(len(event), dtype='bool')
     _veto = np.zeros(len(event), dtype='bool')
     
     _ds = event.metadata['dataset']
+
+
+    #just a hack for using photon trigger, need to make it work properly
+    _ds="Photon"
     ds_name = ''
     for s in ds_names_[era]:
         if s in _ds:
@@ -513,3 +519,82 @@ class ewk_corrector:
         
         
         
+
+        
+        
+#phhoton SF
+#harcoded for now
+era='2018'
+
+
+def PhotonSF(era:str='2016'):
+    ext = extractor()
+    if '2016' in era:
+        if('APV' in era):
+            sff="egammaEffi_EGM2D_Pho_Tight_UL16.root"
+        else :
+            sff ="egammaEffi_EGM2D_Pho_Tight_UL16_postVFP.root"
+
+    if '2017' in era :
+        sff ="egammaEffi_EGM2D_Pho_Tight_UL17.root"
+     
+    if '2018' in era :
+        sff ="egammaEffi_EGM2D_Pho_Tight_UL18.root"
+
+
+
+    ext.add_weight_sets(["EGamma_SF2D_T EGamma_SF2D src/qawa/data/Photon/"+sff,
+                     "EGamma_SF2D_T_err EGamma_SF2D_error src/qawa/data/Photon/"+sff])
+
+    ext.finalize()
+    evaluatorPSF = ext.make_evaluator()
+    return evaluatorPSF
+    #for key in evaluator.keys():
+    #    print("\t", key)
+    #    print("testSF2d:", evaluator['EGamma_SF2D_T'])
+
+
+def getPhotonTrigPrescale(run, lb, photrigdict, photonpt, era:str='2016'):
+    photrignames = photrigdict['photon_triggers']['triggers']
+    prescales=photrigdict['photon_triggers']['prescale']
+    eva = _core.CorrectionSet.from_file('src/qawa/data/Photon/'+prescales)     
+    #k=eva["HLT_prescale"].evaluate(era,trigname,run,float(lb))                                                                                                     
+
+
+    b=ak.Array(photrignames)
+    c= b['threshold'].tolist()
+    d= b['name'].tolist()
+    c1= ak.Array(c)
+    d1= ak.Array(d)
+    #t =  ak.broadcast_arrays(np.array(ak.fill_none(photonpt,0))[:, np.newaxis],np.array([c]),depth=1)[0]
+    t =  ak.broadcast_arrays(np.array(ak.fill_none(photonpt,0))[:, np.newaxis],np.array([[0.1, 0.2, 0.3,0.4,0.5,0.6]]),depth=1)[0]
+    #print("threshold",c1)
+    #print("broadcast array",t)
+    #print(ak.to_list(t))
+    ans=t>c1
+    ans_index=ak.argmin(ans,axis=1)
+    trig_names = d1[ans_index-1]
+
+    #need to get rid of this loop
+    pre=[]
+    #print("len off run,lumi, pt", len(run),len(lb),len(photonpt)) 
+    for i in range(len(photonpt)):
+        if photonpt[i] is None :
+            pre.append(0)
+        else:    
+            #print("in else condition:  ", era,trig_names[i],run[i],float(lb[i]), photonpt[i],eva["HLT_prescale"].evaluate(era,trig_names[i],run[i],float(lb[i])))
+            pre.append(eva["HLT_prescale"].evaluate(era,trig_names[i],run[i],float(lb[i])))
+
+
+    #trigname="NULL"
+    #selectedtrig=-1
+    #for i in range(len(photrignames)):  
+        
+    #    if photonpt >= photrignames[i]["threshold"] :selectedtrig=i 
+    #    if selectedtrig ==-1: trigname = "NULL"
+    #    if selectedtrig >=0: trigname=photrignames[selectedtrig]["name"]
+
+    #return k
+    print("i return (pre)")
+    
+    return(ak.Array(pre))

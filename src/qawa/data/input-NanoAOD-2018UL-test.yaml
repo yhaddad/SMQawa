@@ -9,11 +9,21 @@ EWK_ZZ2l2nu:
         is_data: False
 EGamma_Run2018A-UL2018_MiniAODv2_NanoAODv9-v1:
     files:
-        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/F8F84CA2-7E90-2D45-98B0-2773BCDCEF1D.root
-        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/EB703433-936F-F942-9341-635CB46ADD71.root
-        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/95A159AA-5B87-DA42-B1C9-DCC030E5A0FE.root
-        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/8FB5FED6-0D24-8F44-B7E3-25CE15D5E7E8.root
-        - root://cms-xrd-global.cern.ch//store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/965CAD39-753A-5D45-B477-CED9B3A7F41E.root
+
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/DBB419EF-F51C-AF4E-A2D6-7ACF2AC750E5.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/B9305A72-FE54-724E-A39F-4157FC701700.root 
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/805790E6-65C8-EE4B-B9FB-C107FF5D0F15.root 
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/1E6C41CF-1F92-4C42-A66D-FCE82840002A.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/8C0C0D28-F982-0F47-8CE7-514F0FBF9258.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/A2426132-055B-FD44-9590-F40D14FF5BFA.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/5AC91018-DF39-554C-9E95-9351C1C4E8ED.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/463F13CF-F60D-764E-B46B-75ABFE2DF590.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/9C3541E0-ACF7-FC40-BBDB-DCD999520085.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/96F49573-1CA9-AF48-86C0-0AAB12503411.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/4FD7226E-1466-584B-9E6B-CB8EE868FFFC.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/A7303656-3D4B-0F48-BBD1-0C585DF331AE.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/C864968C-74DB-9048-BA65-634F9CB031F3.root
+	- root://cms-xrd-global.cern.ch/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9_GT36-v1/2830000/C77B30FB-025E-8C44-9BF6-DD2722C1082C.root
     metadata:
         era: '2018'
         is_data: True

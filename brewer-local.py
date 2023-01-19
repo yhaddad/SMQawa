@@ -62,8 +62,8 @@ def main():
     ixrd = 0
     aliases = [
         "root://xrootd-cms.infn.it/",
-        #"root://cmsxrootd.fnal.gov/",
-        #"root://cms-xrd-global.cern.ch/",
+        "root://cmsxrootd.fnal.gov/",
+        "root://cms-xrd-global.cern.ch/",
     ]
     
     samples ={
