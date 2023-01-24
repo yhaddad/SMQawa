@@ -10,6 +10,6 @@ pip install . --upgrade --no-deps  --ignore-installed --no-cache-dir
 
 python brewer-local.py --jobNum=0 \
   --isMC=0 --era=2018 \
-  --infile=/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv2_NanoAODv9-v1/270000/195CD88F-D50A-5340-B78D-A7B6345EBBFD.root
+  --infile=/store/data/Run2018A/EGamma/NANOAOD/UL2018_MiniAODv1_NanoAODv2_GT36-v1/60000/7E31C206-C2AF-B340-BAD1-8D45231DA7EB.root
 
   

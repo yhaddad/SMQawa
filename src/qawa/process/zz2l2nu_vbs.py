@@ -72,31 +72,31 @@ def build_htaus(tau, lepton):
     )
     return tau[base & ~overlap_leptons]
 
-def build_photons(photons):
+def build_photons(photon):
     base = (
-        (photons.pt          > 20. ) & 
-        (np.abs(photons.eta) < 2.5 )
+        (photon.pt          > 20. ) & 
+        (np.abs(photon.eta) < 2.5 )
     )
 
     dd_photons_base = (
-        (photons.pt          > 55. ) &
-        (np.abs(photons.eta) <= 2.5 ) &
-        (~(photons.pixelSeed)) &
-        (photons.electronVeto) &
-        (photons.sieie >= 0.001) &
-        (photons.cutBased ==3)
+        (photon.pt          > 55. ) &
+        (np.abs(photon.eta) <= 2.5 ) &
+        (~(photon.pixelSeed)) &
+        (photon.electronVeto) &
+        (photon.sieie >= 0.001) &
+        (photon.cutBased ==3)
     )
-    dd_photons_loose = photons[
+    dd_photons_loose = photon[
         (~dd_photons_base) &
         (base) &
-        (photons.cutBased ==3)
+        (photon.cutBased ==3)
     ]
     
     # MVA ID
-    tight_photons = photons[base & photons.mvaID_WP90]
-    loose_photons = photons[base & photons.mvaID_WP80 & ~photons.mvaID_WP90]
+    tight_photons = photon[base & photon.mvaID_WP90]
+    loose_photons = photon[base & photon.mvaID_WP80 & ~photon.mvaID_WP90]
 
-    dd_photons = photons[dd_photons_base]
+    dd_photons = photon[dd_photons_base]
     
     # cut based ID
     return tight_photons, loose_photons, dd_photons_loose, dd_photons
@@ -275,7 +275,7 @@ class zzinc_processor(processor.ProcessorABC):
         }
 
     
-    def _add_trigger_sf(self, weights, lead_, subl_lep):
+    def _add_trigger_sf(self, weights, lead_lep, subl_lep):
         mask_BB = ak.fill_none((lead_lep.eta <= 1.5) & (subl_lep.eta <= 1.5), False)
         mask_EB = ak.fill_none((lead_lep.eta >= 1.5) & (subl_lep.eta <= 1.5), False)
         mask_BE = ak.fill_none((lead_lep.eta <= 1.5) & (subl_lep.eta >= 1.5), False)
@@ -336,6 +336,10 @@ class zzinc_processor(processor.ProcessorABC):
         histos = self.build_histos()
         
         if is_data:
+            goodlumi_ = ak.Array(self._json[self._era](event.run, event.luminosityBlock))
+            print ("goodlumi_", goodlumi_, type(goodlumi_))
+            
+            print("json:", type(self._json[self._era](event.run, event.luminosityBlock)),len(self._json[self._era](event.run, event.luminosityBlock)),len(event.luminosityBlock),len(event.run) )
             selection.add('lumimask', self._json[self._era](event.run, event.luminosityBlock))
             selection.add('triggers', trigger_rules(event, self._triggers, self._era))
         else:
@@ -370,7 +374,7 @@ class zzinc_processor(processor.ProcessorABC):
         #lead_photon=ak.firsts(dd_photons)
         #print("monika",event.run,event.luminosityBlock)
         if  is_data:
-            event.prescaleweight = getPhotonTrigPrescale(event.run, event.luminosityBlock, self._triggers_prescale, lead_photon.pt,'2018')
+            event.prescaleweight = getPhotonTrigPrescale(event.run, event.luminosityBlock, self._triggers_prescale, lead_photon.pt, goodlumi_,self._era)
             print("I can calculate the prescaleweight")
         self._phSF = self._phEval["EGamma_SF2D_T"](lead_photon.eta,lead_photon.pt)
         print("I can come here")
@@ -644,8 +648,8 @@ class zzinc_processor(processor.ProcessorABC):
                     lead_lep.SF_up*subl_lep.SF_up, 
                     lead_lep.SF_down*subl_lep.SF_down
             )
-            #weights.add (
-            #    'PhotonSF',self._phSF)
+
+            _ones = np.ones(len(weights.weight()))
             if self.ewk_process_name:
                 self.ewk_corr.get_weight(
                         event.GenPart,
@@ -653,8 +657,9 @@ class zzinc_processor(processor.ProcessorABC):
                         event.Generator.x2,
                         weights
                 )
+            else:
+                weights.add("kEW", _ones, _ones, _ones)
             
-            _ones = np.ones(len(weights.weight()))
             if "PSWeight" in event.fields:
                 theory_ps_weight(weights, event.PSWeight)
             else:
@@ -955,7 +960,7 @@ class zzinc_processor(processor.ProcessorABC):
             
             # Electrons + MET shift (FIXME: shift to be added)
             ({"Electron": electronEnUp  }, "ElectronEnUp"  ),
-            ({"Electron": electronEnDown}, "ElectronEnudronDown"),
+            ({"Electron": electronEnDown}, "ElectronEnDown"),
             # Muon + MET shifts
             ({"Muon": muonEnUp  }, "MuonRocUp"),
             ({"Muon": muonEnDown}, "MuonRocDown"),

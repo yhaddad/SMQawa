@@ -5,14 +5,17 @@ import logging
 import subprocess
 from pandas.core.internals.array_manager import new_block
 from termcolor import colored
+import importlib.metadata
+qawa_version = importlib.metadata.version('qawa')
 
 logging.basicConfig(level=logging.INFO)
 
-rerun_script_header = """#!/bin/bash
+rerun_script_header = f"""#!/bin/bash
 cd /srv/
 python -m venv --without-pip --system-site-packages jobenv
 source jobenv/bin/activate
-python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-0.0.5-py2.py3-none-any.whl
+python -m pip install scipy --upgrade --no-cache-dir
+python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-{qawa_version}-py2.py3-none-any.whl
 
 echo "... start job at" `date "+%Y-%m-%d %H:%M:%S"`
 echo "----- directory before running:"
@@ -25,7 +28,8 @@ export X509_USER_PROXY={proxy}
 
 python -m venv --without-pip --system-site-packages jobenv
 source jobenv/bin/activate
-python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-0.0.5-py2.py3-none-any.whl
+python -m pip install scipy --upgrade --no-cache-dir
+python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-{qawa_version}-py2.py3-none-any.whl
 
 echo "... start job at" `date "+%Y-%m-%d %H:%M:%S"`
 echo "----- directory before running:"
@@ -136,13 +140,15 @@ def main():
                     else:
                         if options.copyfile:
                             assert options.era != "", f'please specify the era of the dataset you are running. ex: --era=2018'
-                            script_command = f"xrdcp root://cms-xrd-global.cern.ch/{infile} . \n"
+                            script_command = f"xrdcp root://cms-xrd-global.cern.ch/$2 . \n"
                             infile_name = infile.split('/')[-1]
-                            script_command += f"python brewer-remote.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name}\n"
-                            script_command += "ls -lthr"
+                            script_command += f"python brewer-remote.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name}\n"
+                            script_command += f"rm {infile_name}\n"
+                            script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
                                 script_file_ = resub_script_header.format(
                                     proxy=proxy_copy, 
+                                    qawa_version=qawa_version,
                                     command=script_command,
                                     jobid=jid
                                 )
@@ -150,11 +156,12 @@ def main():
                                 _stream.close()
                         else: 
                             assert options.era != "", f'please specify the era of the dataset you are running. ex: --era=2018'
-                            script_command = f"python brewer-remote.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile}\n"
+                            script_command = f"python brewer-remote.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile=$2\n"
                             script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
                                 script_file_ = resub_script_header.format(
                                     proxy=proxy_copy, 
+                                    qawa_version=qawa_version,
                                     command=script_command,
                                     jobid=jid
                                 )
@@ -163,10 +170,11 @@ def main():
 
                         condor_sub = open(jobs_dir + "/condor.sub").readlines()
                         for il, line in enumerate(condor_sub):
-                            if 'executable' in line.lower():
+                            if 'executable' in line.lower(): 
                                 condor_sub [il] = f'executable = {jobs_dir}/resub-script-{jid}.sh\n'
+                                #condor_sub [il] = f'executable = {jobs_dir}/script.sh\n'
                             if 'arguments' in line.lower():
-                                condor_sub [il] = ""
+                                condor_sub [il] = f"arguments = {jid} {infile}\n"
                             if 'jobflavour' in line.lower():
                                 condor_sub [il] = '+JobFlavour           = "workday"\n'
                             if 'queue' in line.lower():

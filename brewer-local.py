@@ -53,7 +53,8 @@ def main():
     parser.add_argument('-infile','--infile', type=str, default=None  , help="")
     
     options = parser.parse_args()
-    dataset = options.infile.split('/')[4]
+    #dataset = options.infile.split('/')[4]
+    dataset = options.infile.split('/')[-1]
     #options.infile = validate_input_file(options.infile)
     
     era=options.era
@@ -68,7 +69,8 @@ def main():
     
     samples ={
         dataset:{
-            'files': [aliases[ixrd] + options.infile],
+            #'files': [aliases[ixrd] + options.infile],
+            'files': [options.infile],
             'metadata':{
                 'era': era,
                 'is_data': is_data

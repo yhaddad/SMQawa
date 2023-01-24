@@ -99,7 +99,6 @@ class LeptonScaleFactors:
             if 'Muon' not in n: continue
             _nom = self.maps_nom[n](muons.pt, np.abs(muons.eta))
             _err = self.maps_err[n](muons.pt, np.abs(muons.eta))
-            print(n, _nom)
             sf_nom = sf_nom * _nom 
             sf_up = sf_up * (_nom + _err)
             sf_down = sf_down * (_nom - _err)
@@ -115,7 +114,6 @@ class LeptonScaleFactors:
             if 'Electron' not in n: continue
             _nom = self.maps_nom[n](electrons.pt, np.abs(electrons.eta))
             _err = self.maps_err[n](electrons.pt, np.abs(electrons.eta))
-            print(n, _nom)
             sf_nom = sf_nom * _nom 
             sf_up = sf_up * (_nom + _err)
             sf_down = sf_down * (_nom - _err)

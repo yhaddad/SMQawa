@@ -554,7 +554,7 @@ def PhotonSF(era:str='2016'):
     #    print("testSF2d:", evaluator['EGamma_SF2D_T'])
 
 
-def getPhotonTrigPrescale(run, lb, photrigdict, photonpt, era:str='2016'):
+def getPhotonTrigPrescale(run, lb, photrigdict, photonpt,glumi,  era:str='2016'):
     photrignames = photrigdict['photon_triggers']['triggers']
     prescales=photrigdict['photon_triggers']['prescale']
     eva = _core.CorrectionSet.from_file('src/qawa/data/Photon/'+prescales)     
@@ -579,7 +579,7 @@ def getPhotonTrigPrescale(run, lb, photrigdict, photonpt, era:str='2016'):
     pre=[]
     #print("len off run,lumi, pt", len(run),len(lb),len(photonpt)) 
     for i in range(len(photonpt)):
-        if photonpt[i] is None :
+        if (photonpt[i] is None) | (~glumi[i]) :
             pre.append(0)
         else:    
             #print("in else condition:  ", era,trig_names[i],run[i],float(lb[i]), photonpt[i],eva["HLT_prescale"].evaluate(era,trig_names[i],run[i],float(lb[i])))
