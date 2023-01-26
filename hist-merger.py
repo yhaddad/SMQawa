@@ -41,7 +41,7 @@ def merger():
                 combined_hist[s].append(v_hist)
                 combined_sumw[s].append(v['sumw'])
             else:
-                combined_hist[s] = [v["hist"]]
+                combined_hist[s] = [v_hist]
                 combined_sumw[s] = [v["sumw"]]
     
     del all_hists
