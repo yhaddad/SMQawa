@@ -36,8 +36,9 @@ def merger():
     
     for i in tqdm(all_hists, desc="format", ascii=False, ncols=75):
         for s, v in i.items():
+            v_hist = dict(filter(lambda n: not isinstance(n[1], dict), v['hist'].items()))
             if s in combined_hist:
-                combined_hist[s].append(v['hist'])
+                combined_hist[s].append(v_hist)
                 combined_sumw[s].append(v['sumw'])
             else:
                 combined_hist[s] = [v["hist"]]
