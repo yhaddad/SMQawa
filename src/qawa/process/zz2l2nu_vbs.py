@@ -696,8 +696,14 @@ class zzinc_processor(processor.ProcessorABC):
             
         def _format_variable(variable, cut):
             if cut is None:
+                vv = ak.to_numpy(ak.fill_none(variable, np.nan))
+                if np.isnan(np.any(vv)):
+                    print(" - vv with nan:", vv)
                 return ak.to_numpy(ak.fill_none(variable, np.nan))
             else:
+                vv = ak.to_numpy(ak.fill_none(variable[cut], np.nan))
+                if np.isnan(np.any(vv)):
+                    print(" - vv with nan:", vv)
                 return ak.to_numpy(ak.fill_none(variable[cut], np.nan))
         
         def _histogram_filler(ch, syst, var, _weight=None):
@@ -717,6 +723,10 @@ class zzinc_processor(processor.ProcessorABC):
             else:
                 weight = weights.weight()[cut] * _weight[cut]
             
+            vv = ak.to_numpy(ak.fill_none(weight, np.nan))
+            if np.isnan(np.any(vv)):
+                print(f" - {syst} weight nan:", vv)
+
             histos[var].fill(
                 **{
                     "channel": ch, 
