@@ -589,16 +589,10 @@ class zzinc_processor(processor.ProcessorABC):
             if 'LHEReweightingWeight' in event.fields and 'aQGC' in dataset:
                 for i in range(1057):
                     weights.add(f"eft_{self._eftnames[i]}", event.LHEReweightingWeight[:, i])
-		
-	    # 2017 Prefiring correction weight
-	    if 'L1PreFiringWeight' in event.fields:
-	 	weight.add(
-			"prefiring_weight",
-			event.L1PreFiringWeight.Nom,
-			event.L1PreFiringWeight.Dn,
-			event.L1PreFiringWeight.Up
-		)
-        
+            # 2017 Prefiring correction weight
+            if 'L1PreFiringWeight' in event.fields:
+                weights.add("prefiring_weight", event.L1PreFiringWeight.Nom, event.L1PreFiringWeight.Dn, event.L1PreFiringWeight.Up)
+
         # selections
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
