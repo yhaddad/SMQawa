@@ -562,6 +562,7 @@ class zzinc_processor(processor.ProcessorABC):
                     lead_lep.SF_down*subl_lep.SF_down
             )
             _ones = np.ones(len(weights.weight()))
+            
             if self.ewk_process_name:
                 self.ewk_corr.get_weight(
                         event.GenPart,
@@ -576,19 +577,28 @@ class zzinc_processor(processor.ProcessorABC):
                 theory_ps_weight(weights, event.PSWeight)
             else:
                 theory_ps_weight(weights, None)
+            
             if "LHEPdfWeight" in event.fields:
                 theory_pdf_weight(weights, event.LHEPdfWeight)
             else:
                 theory_pdf_weight(weights, None)
-                
+
             if ('LHEScaleWeight' in event.fields) and (len(event.LHEScaleWeight[0]) > 0):
-                weights.add('QCDScale0w'  , _ones, event.LHEScaleWeight[:, 1], event.LHEScaleWeight[:, 7])
-                weights.add('QCDScale1w'  , _ones, event.LHEScaleWeight[:, 3], event.LHEScaleWeight[:, 5])
-                weights.add('QCDScale2w'  , _ones, event.LHEScaleWeight[:, 0], event.LHEScaleWeight[:, 8])
+                if len(event.LHEScaleWeight[0]) == 9:
+                    weights.add('QCDScale0w'  , _ones, event.LHEScaleWeight[:, 1], event.LHEScaleWeight[:, 7])
+                    weights.add('QCDScale1w'  , _ones, event.LHEScaleWeight[:, 3], event.LHEScaleWeight[:, 5])
+                    weights.add('QCDScale2w'  , _ones, event.LHEScaleWeight[:, 0], event.LHEScaleWeight[:, 8])
+                elif len(event.LHEScaleWeight[0]) == 8:
+                    weights.add('QCDScale0w'  , _ones, event.LHEScaleWeight[:, 1], event.LHEScaleWeight[:, 6])
+                    weights.add('QCDScale1w'  , _ones, event.LHEScaleWeight[:, 3], event.LHEScaleWeight[:, 4])
+                    weights.add('QCDScale2w'  , _ones, event.LHEScaleWeight[:, 0], event.LHEScaleWeight[:, 7])
+                else:
+                    print("WARNING: QCD scale variation type not recongnised ... ")
                 
             if 'LHEReweightingWeight' in event.fields and 'aQGC' in dataset:
                 for i in range(1057):
                     weights.add(f"eft_{self._eftnames[i]}", event.LHEReweightingWeight[:, i])
+            
             # 2017 Prefiring correction weight
             if 'L1PreFiringWeight' in event.fields:
                 weights.add("prefiring_weight", event.L1PreFiringWeight.Nom, event.L1PreFiringWeight.Dn, event.L1PreFiringWeight.Up)
