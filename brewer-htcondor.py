@@ -136,7 +136,7 @@ def main():
                 os.mkdir(jobs_dir)
 
             if not options.submit:
-                sample_file = []
+                sample_files = []
                 if '*' in sample:
                     sample_with_ext = subprocess.check_output(
                         ['dasgoclient', '--query', f"dataset={sample}"]
