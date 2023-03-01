@@ -1,4 +1,4 @@
-#python brewer-htcondor.py -i ./data/dataset-UL2018_MiniAODv2_NanoAODv9.txt      -t amalfi --isMC=0 --era=2018
-python brewer-htcondor.py -i ./data/dataset-UL2017_MiniAODv2_NanoAODv9.txt      -t amalfi --isMC=0 --era=2017 --force
-python brewer-htcondor.py -i ./data/dataset-UL2016_MiniAODv2_NanoAODv9.txt      -t amalfi --isMC=0 --era=2016 --force 
-python brewer-htcondor.py -i ./data/dataset-HIPM_UL2016_MiniAODv2_NanoAODv9.txt -t amalfi --isMC=0 --era=2016APV --force
+python brewer-htcondor.py -i ./data/input-NanoAOD-2018UL_data.txt     -t PhotonCR  --isMC=0 --era=2018 --force
+python monitor.py -i ./data/input-NanoAOD-2018UL_data.txt -t PhotonCR --isMC=0 --era=2018 --resubmit --copyfile
+python brewer-htcondor.py  -i ./data/list_2018_MC_Photon_UL.txt -t PhotonCR --isMC=1 --era=2018 --force
+python monitor.py -i ./data/list_2018_MC_Photon_UL.txt -t PhotonCR --isMC=1 --era=2018 --resubmit --copyfile

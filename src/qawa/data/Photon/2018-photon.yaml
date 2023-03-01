@@ -13,4 +13,4 @@ photon_triggers:
     - name: HLT_Photon200
       threshold: 220.
 
-  prescale: prescale.json.gz
+  prescale: prescale_2018.json

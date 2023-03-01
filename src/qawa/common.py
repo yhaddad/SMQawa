@@ -118,8 +118,8 @@ def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
 
 def trigger_rules(event, rules:dict, era:str='2018'):
     ds_names_ = {
-        '2016' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG','Photon'],
-        '2017' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG','Photon'],
+        '2016' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG','SinglePhoton'],
+        '2017' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG','SinglePhoton'],
         '2018' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'MuonEG','Photon']
     }
     
@@ -128,9 +128,11 @@ def trigger_rules(event, rules:dict, era:str='2018'):
     
     _ds = event.metadata['dataset']
 
-
+    #print("_ds",_ds,"ds_names_",ds_names_[era])
     #just a hack for using photon trigger, need to make it work properly
-    _ds="Photon"
+
+    if '2018' in era :
+        _ds="Photon"
     ds_name = ''
     for s in ds_names_[era]:
         if s in _ds:
@@ -149,7 +151,7 @@ def trigger_rules(event, rules:dict, era:str='2018'):
             
     # passing triggers and vetoing triggers from other datasets
     return _pass & ~_veto
-
+    
 # def theory_pdf_weight(weights, pdf_weight):
 #     _nm = np.ones(len(weights.weight()))
 #     _up = np.ones(len(weights.weight()))
@@ -451,7 +453,7 @@ class ewk_corrector:
         
         corr_0 = np.where(corr_mask, np.ones_like(corr_0), corr_0)
         corr_1 = np.where(corr_mask, np.ones_like(corr_0), corr_1)
-        corr_2 = np.where(corr_mask, np.ones_like(corr_0), corr_2)
+        corr_2 = np.where(corr_mask, nxp.ones_like(corr_0), corr_2)
     
         # correction by flavour
         weight = np.where(
@@ -522,12 +524,10 @@ class ewk_corrector:
 
         
         
-#phhoton SF
-#harcoded for now
-era='2018'
 
 
-def PhotonSF(era:str='2016'):
+
+def PhotonSF(_data_path,era:str='2016'):
     ext = extractor()
     if '2016' in era:
         if('APV' in era):
@@ -537,64 +537,42 @@ def PhotonSF(era:str='2016'):
 
     if '2017' in era :
         sff ="egammaEffi_EGM2D_Pho_Tight_UL17.root"
-     
     if '2018' in era :
         sff ="egammaEffi_EGM2D_Pho_Tight_UL18.root"
 
+        
 
+    ext.add_weight_sets([f'EGamma_SF2D_T EGamma_SF2D {_data_path}/Photon/'+sff,
+                         f'EGamma_SF2D_T_err EGamma_SF2D_error {_data_path}/Photon/'+sff])
 
-    ext.add_weight_sets(["EGamma_SF2D_T EGamma_SF2D src/qawa/data/Photon/"+sff,
-                     "EGamma_SF2D_T_err EGamma_SF2D_error src/qawa/data/Photon/"+sff])
 
     ext.finalize()
     evaluatorPSF = ext.make_evaluator()
     return evaluatorPSF
-    #for key in evaluator.keys():
-    #    print("\t", key)
-    #    print("testSF2d:", evaluator['EGamma_SF2D_T'])
 
 
-def getPhotonTrigPrescale(run, lb, photrigdict, photonpt,glumi,  era:str='2016'):
+def getPhotonTrigPrescale(_data_path,run, lb, photrigdict, photonpt,glumi,  era:str='2016'):
     photrignames = photrigdict['photon_triggers']['triggers']
     prescales=photrigdict['photon_triggers']['prescale']
-    eva = _core.CorrectionSet.from_file('src/qawa/data/Photon/'+prescales)     
-    #k=eva["HLT_prescale"].evaluate(era,trigname,run,float(lb))                                                                                                     
-
-
+    eva = _core.CorrectionSet.from_file(f'{_data_path}/Photon/'+prescales)     
     b=ak.Array(photrignames)
     c= b['threshold'].tolist()
     d= b['name'].tolist()
     c1= ak.Array(c)
     d1= ak.Array(d)
-    #t =  ak.broadcast_arrays(np.array(ak.fill_none(photonpt,0))[:, np.newaxis],np.array([c]),depth=1)[0]
-    t =  ak.broadcast_arrays(np.array(ak.fill_none(photonpt,0))[:, np.newaxis],np.array([[0.1, 0.2, 0.3,0.4,0.5,0.6]]),depth=1)[0]
-    #print("threshold",c1)
-    #print("broadcast array",t)
-    #print(ak.to_list(t))
+    if '2016' in era :
+        t =  ak.broadcast_arrays(np.array(ak.fill_none(photonpt,0))[:, np.newaxis],np.array([[0.1, 0.2, 0.3,0.4,0.5,0.6,0.7,0.8]]),depth=1)[0]
+    else :    
+        t =  ak.broadcast_arrays(np.array(ak.fill_none(photonpt,0))[:, np.newaxis],np.array([[0.1, 0.2, 0.3,0.4,0.5,0.6]]),depth=1)[0]
     ans=t>c1
     ans_index=ak.argmin(ans,axis=1)
     trig_names = d1[ans_index-1]
-
-    #need to get rid of this loop
     pre=[]
-    #print("len off run,lumi, pt", len(run),len(lb),len(photonpt)) 
+
     for i in range(len(photonpt)):
-        if (photonpt[i] is None) | (~glumi[i]) :
+        if ((photonpt[i] is None) | ( not glumi[i])) :
             pre.append(0)
         else:    
-            #print("in else condition:  ", era,trig_names[i],run[i],float(lb[i]), photonpt[i],eva["HLT_prescale"].evaluate(era,trig_names[i],run[i],float(lb[i])))
             pre.append(eva["HLT_prescale"].evaluate(era,trig_names[i],run[i],float(lb[i])))
-
-
-    #trigname="NULL"
-    #selectedtrig=-1
-    #for i in range(len(photrignames)):  
-        
-    #    if photonpt >= photrignames[i]["threshold"] :selectedtrig=i 
-    #    if selectedtrig ==-1: trigname = "NULL"
-    #    if selectedtrig >=0: trigname=photrignames[selectedtrig]["name"]
-
-    #return k
-    print("i return (pre)")
-    
+                
     return(ak.Array(pre))

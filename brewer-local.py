@@ -106,6 +106,8 @@ def main():
         ewk_flag= 'ZZ'
     if "WZTo" in options.infile and "GluGluTo" not in options.infile:
         ewk_flag = 'WZ'
+    if "GJets" in options.infile:
+        ewk_flag = 'GJets'
 
     print(" --------------------------- ")
     vbs_out = processor.run_uproot_job(

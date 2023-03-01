@@ -21,6 +21,7 @@ def merger():
 
     all_hists = []
     for filename in tqdm(glob.glob(f'*{options.tag}*_{options.era}_*/*.pkl.gz'), desc="reading", ascii=False, ncols=75):
+        print("filename",filename)
         if os.path.getsize(filename) == 0: 
             print(f"{filename} is empty !! ")
         else:
@@ -30,11 +31,12 @@ def merger():
                 f.close()
                 del f 
                 del _data
-            
+                print("all_hists",all_hists)
     combined_hist = {}
     combined_sumw = {}
     
     for i in tqdm(all_hists, desc="format", ascii=False, ncols=75):
+        print
         for s, v in i.items():
             if s in combined_hist:
                 combined_hist[s].append(v['hist'])
@@ -47,6 +49,7 @@ def merger():
 
     combined_dict = {}
     for s, h in tqdm(combined_hist.items(), desc="merging", ascii=False, ncols=75):
+        print ("Monika: ", type(h))
         hist_ = dict(functools.reduce(updated, h, collections.Counter()))
         sumw_ = sum(combined_sumw[s])
         combined_dict[s] = {"hist": hist_, "sumw": sumw_}

@@ -52,13 +52,12 @@ def main():
     parser.add_argument('--isMC'   ,   type=int, default=1     , help="")
     parser.add_argument('--infile' ,   type=str, default=None  , help="input root file")
     parser.add_argument('--dataset',   type=str, default=None  , help="dataset name. need to specify if file is not in EOS")
-    parser.add_argument('--dumpgnn', action='store_false', help='dump the GNN output into outputfiles')
+    parser.add_argument('--dumpgnn', action='store_true', help='dump the GNN output into outputfiles')
 
     options = parser.parse_args()
 
     if options.dataset is None: 
         options.dataset = options.infile.split('/')[4]
-
 
     era=options.era
     is_data = not options.isMC
@@ -99,8 +98,6 @@ def main():
                 -- jobNum   = {options.jobNum}
                 -- era      = {options.era}
                 -- in file  = {aliases[ixrd] + options.infile}
-                -- filename  = {file_name}
-                -- sample    = {samples}
                 -- dataset  = {options.dataset}
                 ---------------------------"""
             )
@@ -122,6 +119,8 @@ def main():
                 ewk_flag= 'ZZ'
             if "WZTo" in options.infile and "GluGluTo" not in options.infile:
                 ewk_flag = 'WZ'
+            if "GJets" in options.infile:
+                 ewk_flag = 'GJets'   
 
             print(" --- zz2l2nu_vbs processor ... ")
             vbs_out = processor.run_uproot_job(
@@ -140,8 +139,6 @@ def main():
                 },
                 #chunksize=50000,
             )
-
-            
             bh_output = {}
             for key, content in vbs_out.items():
                 bh_output[key] = {
@@ -149,7 +146,6 @@ def main():
                     "sumw": sumw_out[key],
             }
             with gzip.open("histogram_%s.pkl.gz" % str(options.jobNum), "wb") as f:
-                print("histogram_%s.pkl.gz")
                 pickle.dump(bh_output, f)
             failed=False
         except:
