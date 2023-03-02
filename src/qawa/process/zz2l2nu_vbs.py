@@ -318,7 +318,7 @@ class zzinc_processor(processor.ProcessorABC):
         if is_data:
             selection.add(
                 'metfilter',
-                event.Flag.METFilters &
+                #event.Flag.METFilters &
                 event.Flag.globalSuperTightHalo2016Filter & 
                 event.Flag.HBHENoiseFilter &
                 event.Flag.HBHENoiseIsoFilter & 
@@ -332,7 +332,7 @@ class zzinc_processor(processor.ProcessorABC):
         else:
             selection.add(
                 'metfilter',
-                event.Flag.METFilters &
+                #event.Flag.METFilters &
                 event.Flag.globalSuperTightHalo2016Filter & 
                 event.Flag.HBHENoiseFilter &
                 event.Flag.HBHENoiseIsoFilter & 
@@ -675,46 +675,30 @@ class zzinc_processor(processor.ProcessorABC):
 		    'met_pt', '~1nbjets', 
 		    "2njets", "dijet_deta", "dijet_mass_400"
 	    ],
-            "vbs-SR0": common_sel + [
-		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
-		    'dilep_dphi_met', 'min_dphi_met_j', 
-		    'met_pt', '~1nbjets', 
-		    "2njets", "dijet_deta", "dijet_mass_400", "~dijet_mass_800"
-	    ],
-            "vbs-SR1": common_sel + [
-		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
-		    'dilep_dphi_met', 'min_dphi_met_j', 
-		    'met_pt', '~1nbjets', 
-		    "2njets", "dijet_deta", "dijet_mass_800", "~dijet_mass_1200"
-	    ],
-            "vbs-SR2": common_sel + [
-		    'require-ossf', 'dilep_m', 'dilep_pt', 
-		    'dilep_dphi_met', 'min_dphi_met_j', 
-		    'met_pt', '~1nbjets', '0nhtaus',
-		    "2njets", "dijet_deta", "dijet_mass_1200",
-	    ],
             "vbs-DY": common_sel + [
 		    'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
 		    'dilep_dphi_met', 'min_dphi_met_j', 
 		    'low_met_pt', '~1nbjets', '0nhtaus', 
-		    "2njets", "~dijet_mass_400"],
+		    "2njets", "~dijet_mass_400"
+        ],
             "vbs-3L": common_sel + [
 		    'require-3lep', 'dilep_m', 'dilep_pt',
-		    'dilep_dphi_met', 'min_dphi_met_j',
+		    'dilep_dphi_met', #'min_dphi_met_j',
 		    'met_pt', '~1nbjets', "2njets"
 	    ],
             "vbs-EM": common_sel + [
 		    'require-osof', 'dilep_m', 'dilep_pt', 
-		    'dilep_dphi_met', 'min_dphi_met_j',
-		    'met_pt', '~1nbjets',"2njets"],
+		    'dilep_dphi_met', #'min_dphi_met_j',
+		    'met_pt', '~1nbjets',"2njets"
+        ],
             "vbs-TT": common_sel + [
 		    'require-osof', 'dilep_m', 'dilep_pt', 
-		    'dilep_dphi_met', 'min_dphi_met_j',
+		    'dilep_dphi_met', #'min_dphi_met_j',
 		    'met_pt', '1nbjets', "2njets"
 	    ],
             "vbs-NR": common_sel + [
 		    'require-osof', '~dilep_m', 'dilep_pt',
-		    'dilep_dphi_met', 'min_dphi_met_j',
+		    'dilep_dphi_met', #'min_dphi_met_j',
 		    'met_pt', '1nbjets', "2njets"
 	    ],
         }
