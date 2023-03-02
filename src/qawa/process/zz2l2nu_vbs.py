@@ -315,18 +315,35 @@ class zzinc_processor(processor.ProcessorABC):
             selection.add('triggers', np.ones(len(event), dtype='bool'))
         
         # MET filters
-        selection.add(
-            'metfilter',
-            event.Flag.METFilters &
-            event.Flag.HBHENoiseFilter &
-            event.Flag.HBHENoiseIsoFilter & 
-            event.Flag.EcalDeadCellTriggerPrimitiveFilter & 
-            event.Flag.goodVertices &
-            event.Flag.eeBadScFilter &
-            event.Flag.globalTightHalo2016Filter &
-            event.Flag.BadChargedCandidateFilter & 
-            event.Flag.BadPFMuonFilter
-        ) 
+        if is_data:
+            selection.add(
+                'metfilter',
+                event.Flag.METFilters &
+                event.Flag.globalSuperTightHalo2016Filter & 
+                event.Flag.HBHENoiseFilter &
+                event.Flag.HBHENoiseIsoFilter & 
+                event.Flag.EcalDeadCellTriggerPrimitiveFilter &
+                event.Flag.goodVertices &
+                event.Flag.eeBadScFilter &
+                event.Flag.globalTightHalo2016Filter &
+                event.Flag.BadChargedCandidateFilter & 
+                event.Flag.BadPFMuonFilter
+            )
+        else:
+            selection.add(
+                'metfilter',
+                event.Flag.METFilters &
+                event.Flag.globalSuperTightHalo2016Filter & 
+                event.Flag.HBHENoiseFilter &
+                event.Flag.HBHENoiseIsoFilter & 
+                event.Flag.EcalDeadCellTriggerPrimitiveFilter & 
+                event.Flag.goodVertices &
+                event.Flag.eeBadScFilter &
+                event.Flag.globalTightHalo2016Filter &
+                event.Flag.BadChargedCandidateFilter & 
+                event.Flag.BadPFMuonFilter
+            )
+
         
         tight_lep, loose_lep = build_leptons(
             event.Muon,
@@ -738,14 +755,14 @@ class zzinc_processor(processor.ProcessorABC):
             
             vv = ak.to_numpy(ak.fill_none(weight, np.nan))
             if np.isnan(np.any(vv)):
-                print(f" - {syst} weight nan:", vv)
+                print(f" - {syst} weight nan/inf:", vv[np.isnan(vv)], vv[np.isinf(vv)])
 
             histos[var].fill(
                 **{
                     "channel": ch, 
                     "systematic": systname, 
                     var: _format_variable(event[var], cut), 
-                    "weight": weight,
+                    "weight": ak.nan_to_num(weight,nan=1.0, posinf=1.0, neginf=1.0)
                 }
             )
             
