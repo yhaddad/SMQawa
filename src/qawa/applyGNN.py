@@ -10,8 +10,8 @@ class applyGNN:
     def __init__(self, event: processor.LazyDataFrame):
         
         _data_path = os.path.join(os.path.dirname(__file__), 'data/')
-        model_2j = f'{_data_path}/GNNmodel/bestEpoch-10-2Jets.onnx'
-        model_3j = f'{_data_path}/GNNmodel/bestEpoch-10-3Jets.onnx'
+        model_2j = f'{_data_path}/GNNmodel/exactly2JetsNoBjets.onnx'
+        model_3j = f'{_data_path}/GNNmodel/atLeast3JetsNoBjets.onnx'
         
         self.event = event
         self.feature_2j = [

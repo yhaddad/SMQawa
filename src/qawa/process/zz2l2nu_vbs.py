@@ -446,7 +446,8 @@ class zzinc_processor(processor.ProcessorABC):
         lead_jet = ak.firsts(good_jets)
         subl_jet = ak.firsts(good_jets[lead_jet.delta_r(good_jets)>0.01])
         third_jet = ak.firsts(good_jets[(lead_jet.delta_r(good_jets)>0.01) & (subl_jet.delta_r(good_jets)>0.01)])
-        
+
+
         dijet_mass = (lead_jet + subl_jet).mass
         dijet_deta = np.abs(lead_jet.eta - subl_jet.eta)
         event['dijet_mass'] = dijet_mass
@@ -500,6 +501,7 @@ class zzinc_processor(processor.ProcessorABC):
                 ak.fill_none(reco_met_pt > 120, False)
             )
         )
+
         selection.add('low_met_pt', ak.fill_none((reco_met_pt < 100) & (reco_met_pt > 50), False))
         selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
@@ -609,6 +611,10 @@ class zzinc_processor(processor.ProcessorABC):
                     weights.add('QCDScale0w'  , _ones, event.LHEScaleWeight[:, 1], event.LHEScaleWeight[:, 6])
                     weights.add('QCDScale1w'  , _ones, event.LHEScaleWeight[:, 3], event.LHEScaleWeight[:, 4])
                     weights.add('QCDScale2w'  , _ones, event.LHEScaleWeight[:, 0], event.LHEScaleWeight[:, 7])
+                elif len(event.LHEScaleWeight[0]) == 18:
+                    weights.add('QCDScale0w'  , _ones, event.LHEScaleWeight[:, 2], event.LHEScaleWeight[:, 14])
+                    weights.add('QCDScale1w'  , _ones, event.LHEScaleWeight[:, 6], event.LHEScaleWeight[:, 10])
+                    weights.add('QCDScale2w'  , _ones, event.LHEScaleWeight[:, 0], event.LHEScaleWeight[:, 16])
                 else:
                     print("WARNING: QCD scale variation type not recongnised ... ")
                 
@@ -856,7 +862,7 @@ class zzinc_processor(processor.ProcessorABC):
         # JES/JER corrections
         jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
         met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
-         
+
         # Apply rochester_correction
         muon=event.Muon
         muonEnUp=event.Muon
@@ -878,13 +884,35 @@ class zzinc_processor(processor.ProcessorABC):
         # define all the shifts
         shifts = [
             # Jets
-            ({"Jet": jets               , "MET": met               }, None     ),
-            ({"Jet": jets.JES_Total.up  , "MET": met.JES_Total.up  }, "JESUp"  ),
-            ({"Jet": jets.JES_Total.down, "MET": met.JES_Total.down}, "JESDown"),
-            ({"Jet": jets.JER.up        , "MET": met.JER.up        }, "JERUp"  ),
-            ({"Jet": jets.JER.down      , "MET": met.JER.down      }, "JERDown"),
-            ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.up     }, "UESUp"  ),
-            ({"Jet": jets, "MET": met.MET_UnclusteredEnergy.down   }, "UESDown"), 
+            ({"Jet": jets                             , "MET": met                               }, None                  ),
+            ({"Jet": jets.JES_Total.up                , "MET": met.JES_Total.up                  }, "JESUp"               ),
+            ({"Jet": jets.JES_Total.down              , "MET": met.JES_Total.down                }, "JESDown"             ),
+            ({"Jet": jets.JES_Absolute.up             , "MET": met.JES_Absolute.up               }, "JES_AbsoluteUp"      ),
+            ({"Jet": jets.JES_Absolute.down           , "MET": met.JES_Absolute.down             }, "JES_AbsoluteDown"    ),
+            ({"Jet": jets.JES_Absolute_2018.up        , "MET": met.JES_Absolute_2018.up          }, "JES_Absolute2018Up"  ),
+            ({"Jet": jets.JES_Absolute_2018.down      , "MET": met.JES_Absolute_2018.down        }, "JES_Absolute2018Down"),
+            ({"Jet": jets.JES_BBEC1.up                , "MET": met.JES_BBEC1.up                  }, "JES_BBEC1Up"         ),
+            ({"Jet": jets.JES_BBEC1.down              , "MET": met.JES_BBEC1.down                }, "JES_BBEC1Down"       ),
+            ({"Jet": jets.JES_BBEC1_2018.up           , "MET": met.JES_BBEC1_2018.up             }, "JES_BBEC12018Up"     ),
+            ({"Jet": jets.JES_BBEC1_2018.down         , "MET": met.JES_BBEC1_2018.down           }, "JES_BBEC12018Down"   ),
+            ({"Jet": jets.JES_EC2.up                  , "MET": met.JES_EC2.up                    }, "JES_EC2Up"           ),
+            ({"Jet": jets.JES_EC2.down                , "MET": met.JES_EC2.down                  }, "JES_EC2Down"         ),
+            ({"Jet": jets.JES_EC2_2018.up             , "MET": met.JES_EC2_2018.up               }, "JES_EC22018Up"       ),
+            ({"Jet": jets.JES_EC2_2018.down           , "MET": met.JES_EC2_2018.down             }, "JES_EC22018Down"     ),
+            ({"Jet": jets.JES_FlavorQCD.up            , "MET": met.JES_FlavorQCD.up              }, "JES_FlavorQCDUp"     ),
+            ({"Jet": jets.JES_FlavorQCD.down          , "MET": met.JES_FlavorQCD.down            }, "JES_FlavorQCDDown"   ),
+            ({"Jet": jets.JES_HF.up                   , "MET": met.JES_HF.up                     }, "JES_HFUp"            ),
+            ({"Jet": jets.JES_HF.down                 , "MET": met.JES_HF.down                   }, "JES_HFDown"          ),
+            ({"Jet": jets.JES_HF_2018.up              , "MET": met.JES_HF_2018.up                }, "JES_HF2018Up"        ),
+            ({"Jet": jets.JES_HF_2018.down            , "MET": met.JES_HF_2018.down              }, "JES_HF2018Down"      ),
+            ({"Jet": jets.JES_RelativeBal.up          , "MET": met.JES_RelativeBal.up            }, "JES_RelativeBalUp"   ),
+            ({"Jet": jets.JES_RelativeBal.down        , "MET": met.JES_RelativeBal.down          }, "JES_RelativeBalDown" ),
+            ({"Jet": jets.JES_RelativeSample_2018.up  , "MET": met.JES_RelativeSample_2018.up    }, "JES_RelativeBalUp"   ),
+            ({"Jet": jets.JES_RelativeSample_2018.down, "MET": met.JES_RelativeSample_2018.down  }, "JES_RelativeBalDown" ),
+            ({"Jet": jets.JER.up                      , "MET": met.JER.up                        }, "JERUp"               ),
+            ({"Jet": jets.JER.down                    , "MET": met.JER.down                      }, "JERDown"             ),
+            ({"Jet": jets                             , "MET": met.MET_UnclusteredEnergy.up      }, "UESUp"               ),
+            ({"Jet": jets                             , "MET": met.MET_UnclusteredEnergy.down    }, "UESDown"             ), 
             
             # Electrons + MET shift (FIXME: shift to be added)
             ({"Electron": electronEnUp  }, "ElectronEnUp"  ),
