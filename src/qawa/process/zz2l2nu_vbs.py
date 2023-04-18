@@ -87,37 +87,49 @@ def build_photons(photon):
 
 class zzinc_processor(processor.ProcessorABC):
     # EWK corrections process has to be define before hand, it has to change when we move to dask
-    def __init__(self, era: str ='2018', dump_gnn_array=False, ewk_process_name=None): 
+    def __init__(self, era: str ='2018', dump_gnn_array=False, ewk_process_name=None, run_priod: str = ''): 
         self._era = era
         if 'APV' in self._era:
             self._isAPV = True
             self._era = re.findall(r'\d+', self._era)[0] 
-            print(f"[YACINE DEBUG] era={self._era} APV={self._isAPV}")
         else:
             self._isAPV = False
         
         jec_tag = ''
         jer_tag = ''
-        if self._era == '2016':
-            if self._isAPV:
-                jec_tag = 'Summer19UL16APV_V7_MC'
-                jer_tag = 'Summer20UL16APV_JRV3_MC'
+        if len(run_priod)==0:
+            if self._era == '2016':
+                if self._isAPV:
+                    jec_tag = 'Summer19UL16APV_V7_MC'
+                    jer_tag = 'Summer20UL16APV_JRV3_MC'
+                else:
+                    jec_tag = 'Summer19UL16_V7_MC'
+                    jer_tag = 'Summer20UL16_JRV3_MC'
+            elif self._era == '2017':
+                jec_tag = 'Summer19UL17_V5_MC'
+                jer_tag = 'Summer19UL17_JRV2_MC'
+            elif self._era == '2018':
+                jec_tag = 'Summer19UL18_V5_MC'
+                jer_tag = 'Summer19UL18_JRV2_MC'
             else:
-                jec_tag = 'Summer19UL16_V7_MC'
-                jer_tag = 'Summer20UL16_JRV3_MC'
-        elif self._era == '2017':
-            jec_tag = 'Summer19UL17_V5_MC'
-            jer_tag = 'Summer19UL17_JRV2_MC'
-        elif self._era == '2018':
-            jec_tag = 'Summer19UL18_V5_MC'
-            jer_tag = 'Summer19UL18_JRV2_MC'
+                print('error')
         else:
-            print('error')
+            if self._era == '2016':
+                if self._isAPV:
+                    jec_tag = f'Summer19UL16APV_Run{run_priod}_V5_DATA'
+                else:
+                    jec_tag = f'Summer19UL16_Run{run_priod}_V5_DATA'
+            elif self._era == '2016':
+                jec_tag = f'Summer19UL17_Run{run_priod}_V5_DATA'
+            elif self._era == '2017':
+                jec_tag = f'Summer19UL18_Run{run_priod}_V5_DATA'
+            else:
+                print('error')
         
         self.btag_wp = 'M'
         self.zmass = 91.1873 # GeV 
         self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
-        self._jmeu = JMEUncertainty(jec_tag, jer_tag)
+        self._jmeu = JMEUncertainty(jec_tag, jer_tag, era=self._era, is_mc=(len(run_priod)==0))
         self._purw = pileup_weights(era=self._era)
         self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
         
