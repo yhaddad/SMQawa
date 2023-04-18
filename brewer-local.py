@@ -104,14 +104,20 @@ def main():
         ewk_flag= 'ZZ'
     if "WZTo" in options.infile and "GluGluTo" not in options.infile:
         ewk_flag = 'WZ'
-
+        
+    # extarct the run period
+    run_period = '' 
+    if 'Run20' in options.infile and is_data:
+        run_period = options.infile.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
+    
     print(" --------------------------- ")
     vbs_out = processor.run_uproot_job(
         samples,
         processor_instance=zzinc_processor(
             era=options.era,
             ewk_process_name=ewk_flag,
-            dump_gnn_array=True
+            dump_gnn_array=True,
+            run_period=run_period if is_data else ''
         ),
         treename='Events',
         executor=processor.futures_executor,
