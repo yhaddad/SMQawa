@@ -116,9 +116,12 @@ class zzinc_processor(processor.ProcessorABC):
         else:
             if self._era == '2016':
                 if self._isAPV:
-                    jec_tag = f'Summer19UL16APV_Run{run_period}_V5_DATA'
+                    if run_period in ['B', 'C', 'D']:
+                        jec_tag = 'Summer19UL16APV_RunBCD_V7_DATA'
+                    else:
+                        jec_tag = 'Summer19UL16APV_RunEF_V7_DATA'
                 else:
-                    jec_tag = f'Summer19UL16_Run{run_period}_V5_DATA'
+                    jec_tag = 'Summer19UL16_RunFGH_V7_DATA'
             elif self._era == '2017':
                 jec_tag = f'Summer19UL17_Run{run_period}_V5_DATA'
             elif self._era == '2018':

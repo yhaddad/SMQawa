@@ -39,7 +39,7 @@ def update_collection(event, coll):
 def add_jme_variables(jets, events_rho):
     jets['pt_raw'  ] = (1 - jets.rawFactor) * jets.pt
     jets['mass_raw'] = (1 - jets.rawFactor) * jets.mass
-    if 'matched_gen' in jets.fields:
+    if hasattr(jets, 'matched_gen'):
         jets['pt_gen'  ] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
     jets['rho'     ] = ak.broadcast_arrays(events_rho, jets.pt)[0]
     return jets
@@ -69,7 +69,8 @@ class JMEUncertainty:
                 f'* * {_data_path}/{era}/{jer_tag}_PtResolution_AK4PFchs.jr.txt',
                 f'* * {_data_path}/{era}/{jer_tag}_SF_AK4PFchs.jersf.txt',
             ]
-            jec_name_map.update({'ptGenJet': 'pt_gen'})
+            
+        jec_name_map.update({'ptGenJet': 'pt_gen'})
 
         extract.add_weight_sets(correction_list)
         extract.finalize()
