@@ -123,7 +123,7 @@ def main():
             # extarct the run period
             run_period = '' 
             if 'Run20' in options.infile and is_data:
-                run_period = fname.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
+                run_period = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
 
 
             print(" --- zz2l2nu_vbs processor ... ")
