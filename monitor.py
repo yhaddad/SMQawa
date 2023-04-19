@@ -126,7 +126,11 @@ def main():
                 for jid,infile in resubmit_list.items():
                     infile_name = infile 
                     dataset_name = infile.split('/')[4]
-                    
+                    run_period = ''
+                    if options.isMC:
+                        run_period = ''
+                    else:
+                        run_period = infile.split('/')[3].replace(f'Run{options.era}','')
                     if options.runlocal:
                         assert options.era != "", f"please specify the era you are rerunning ... example: --era=2018"
                         if options.copyfile:
@@ -142,7 +146,7 @@ def main():
                             assert options.era != "", f'please specify the era of the dataset you are running. ex: --era=2018'
                             script_command = f"xrdcp root://cms-xrd-global.cern.ch/$2 . \n"
                             infile_name = infile.split('/')[-1]
-                            script_command += f"python brewer-remote.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name}\n"
+                            script_command += f"python brewer-remote.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period}\n"
                             script_command += f"rm {infile_name}\n"
                             script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
