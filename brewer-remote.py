@@ -52,6 +52,7 @@ def main():
     parser.add_argument('--isMC'   ,   type=int, default=1     , help="")
     parser.add_argument('--infile' ,   type=str, default=None  , help="input root file")
     parser.add_argument('--dataset',   type=str, default=None  , help="dataset name. need to specify if file is not in EOS")
+    parser.add_argument('--runperiod', type=str, default=None)
     parser.add_argument('--dumpgnn', action='store_true', help='dump the GNN output into outputfiles')
 
     options = parser.parse_args()
@@ -91,16 +92,6 @@ def main():
                 }
             }
             
-            print(
-                f"""---------------------------
-                -- options  = {options}
-                -- is MC    = {options.isMC}
-                -- jobNum   = {options.jobNum}
-                -- era      = {options.era}
-                -- in file  = {aliases[ixrd] + options.infile}
-                -- dataset  = {options.dataset}
-                ---------------------------"""
-            )
             
             sumw_out = processor.run_uproot_job(
                 samples,
@@ -121,10 +112,23 @@ def main():
                 ewk_flag = 'WZ'
 
             # extarct the run period
-            run_period = '' 
-            if 'Run20' in options.infile and is_data:
-                run_period = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
+            if is_data:
+                if 'Run20' in options.infile:
+                    options.runperiod = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
+            else:
+                options.runperiod = ''
 
+            print(
+                f"""---------------------------
+                -- options  = {options}
+                -- is MC    = {options.isMC}
+                -- jobNum   = {options.jobNum}
+                -- era      = {options.era}
+                -- in file  = {aliases[ixrd] + options.infile}
+                -- dataset  = {options.dataset}
+                -- period   = {options.runperiod}
+                ---------------------------"""
+            )
 
             print(" --- zz2l2nu_vbs processor ... ")
             vbs_out = processor.run_uproot_job(
@@ -133,7 +137,7 @@ def main():
                     era=options.era,
                     ewk_process_name=ewk_flag,
                     dump_gnn_array=options.dumpgnn, 
-                    run_period=run_period if is_data else ''
+                    run_period=options.runperiod if is_data else ''
                 ),
                 treename='Events',
                 executor=processor.futures_executor,
@@ -153,9 +157,9 @@ def main():
             with gzip.open("histogram_%s.pkl.gz" % str(options.jobNum), "wb") as f:
                 pickle.dump(bh_output, f)
             failed=False
-        except:
+        except Exception as err:
             print(f"[WARNING] {aliases[ixrd]} failed with the following error : ")
-            print(sys.exc_info()[0])
+            print(f"Unexpected {err=}, {type(err)=}")
             print("-------------------------------------------")
             failed=True
             ixrd += 1
