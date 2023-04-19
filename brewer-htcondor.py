@@ -30,6 +30,7 @@ echo "----- X509_USER_PROXY    : $X509_USER_PROXY"
 echo "----- XRD_REDIRECTLIMIT  : $XRD_REDIRECTLIMIT"
 echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
+echo "----- download the file locally"
 
 echo "----- processing the files : "
 python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2
