@@ -825,6 +825,12 @@ class zzinc_processor(processor.ProcessorABC):
         is_data = event.metadata.get("is_data")
         
         if is_data:
+            jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
+            met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
+
+            event = ak.with_field(event, jets, 'Jet')
+            event = ak.with_field(event, met, 'MET')
+            
             # HEM15/16 issue
             if self._era == "2018":
                 _runid = (event.run >= 319077)
@@ -832,20 +838,14 @@ class zzinc_processor(processor.ProcessorABC):
                 j_mask = ak.where((jets.phi > -1.57) & (jets.phi < -0.87) &
                                   (jets.eta > -2.50) & (jets.eta <  1.30) & 
                                   _runid, 0.8, 1)
-                met = event.MET
-                #event['met_pt'] = met.pt
-                #event['met_phi'] = met.phi            
+                # met = event.MET
+                # event['met_pt'] = met.pt
+                # event['met_phi'] = met.phi            
                 jets['pt']   = j_mask * jets.pt
                 jets['mass'] = j_mask * jets.mass
+
                 event = ak.with_field(event, jets, 'Jet')
                 
-            # JEC fordata 
-            jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
-            met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
-            
-            event = ak.with_field(event, jets, 'Jet')
-            event = ak.with_field(event, met, 'MET')
-
             return self.process_shift(event, None)
         
         # x-y met shit corrections
