@@ -49,11 +49,10 @@ class LeptonScaleFactors:
         else:
             print (f'wrong era: {muonSelectionTag}')
 
-
         if electronSelectionTag=="GPMVA90_2016":
             el_f = ["egammaEffi_txt_Ele_wp90iso_postVFP_EGM2D.root"]
             el_h = ["EGamma_SF2D"]
-        if electronSelectionTag=="GPMVA90_2016APV":
+        elif electronSelectionTag=="GPMVA90_2016APV":
             el_f = ["egammaEffi_txt_Ele_wp90iso_preVFP_EGM2D.root"]
             el_h = ["EGamma_SF2D"]
         elif electronSelectionTag=="GPMVA90_2017":
