@@ -77,3 +77,13 @@ Run2018.MuonEG:
         - Ele40_WPTight_Gsf 
         - Ele32_WPTight_Gsf_L1DoubleEG
         - Photon200
+
+Run2018.Photon:
+     pass:
+        - Photon50_R9Id90_HE10_IsoM
+        - Photon75_R9Id90_HE10_IsoM
+        - Photon90_R9Id90_HE10_IsoM
+        - Photon120_R9Id90_HE10_IsoM
+        - Photon165_R9Id90_HE10_IsoM
+        - Photon200
+     veto: []

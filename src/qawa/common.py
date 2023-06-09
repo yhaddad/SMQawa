@@ -3,7 +3,8 @@ from coffea.analysis_tools import Weights
 from coffea import processor
 from scipy import interpolate
 from coffea.nanoevents.methods import candidate
-
+from correctionlib import _core
+from coffea.lookup_tools import extractor
 import awkward as ak
 import numpy as np
 import uproot
@@ -116,15 +117,20 @@ def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
 
 def trigger_rules(event, rules:dict, era:str='2018'):
     ds_names_ = {
-        '2016' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG'],
-        '2017' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG'],
-        '2018' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'MuonEG']
+        '2016' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG','SinglePhoton'],
+        '2017' : ['DoubleMuon', 'SingleMuon', 'DoubleEG', 'SingleElectron', 'MuonEG','SinglePhoton'],
+        '2018' : ['DoubleMuon', 'SingleMuon', 'EGamma', 'MuonEG','Photon']
     }
     
     _pass = np.zeros(len(event), dtype='bool')
     _veto = np.zeros(len(event), dtype='bool')
     
     _ds = event.metadata['dataset']
+    #print("_ds",_ds,"ds_names_",ds_names_[era])
+    #just a hack for using photon trigger, need to make it work properly
+    if '2018' in era :
+        _ds="Photon"
+
     ds_name = ''
     for s in ds_names_[era]:
         if s in _ds:
@@ -513,3 +519,52 @@ class ewk_corrector:
         
         
         
+def PhotonSF(_data_path,era:str='2016'):
+    ext = extractor()
+    if '2016' in era:
+        if('APV' in era):
+            sff="egammaEffi_EGM2D_Pho_Tight_UL16.root"
+        else :
+            sff ="egammaEffi_EGM2D_Pho_Tight_UL16_postVFP.root"
+
+    if '2017' in era :
+        sff ="egammaEffi_EGM2D_Pho_Tight_UL17.root"
+    if '2018' in era :
+        sff ="egammaEffi_EGM2D_Pho_Tight_UL18.root"
+
+        
+
+    ext.add_weight_sets([f'EGamma_SF2D_T EGamma_SF2D {_data_path}/Photon/'+sff,
+                         f'EGamma_SF2D_T_err EGamma_SF2D_error {_data_path}/Photon/'+sff])
+
+
+    ext.finalize()
+    evaluatorPSF = ext.make_evaluator()
+    return evaluatorPSF
+
+
+def getPhotonTrigPrescale(_data_path,run, lb, photrigdict, photonpt,glumi,  era:str='2016'):
+    photrignames = photrigdict['photon_triggers']['triggers']
+    prescales=photrigdict['photon_triggers']['prescale']
+    eva = _core.CorrectionSet.from_file(f'{_data_path}/Photon/'+prescales)     
+    b=ak.Array(photrignames)
+    c= b['threshold'].tolist()
+    d= b['name'].tolist()
+    c1= ak.Array(c)
+    d1= ak.Array(d)
+    if '2016' in era :
+        t =  ak.broadcast_arrays(np.array(ak.fill_none(photonpt,0))[:, np.newaxis],np.array([[0.1, 0.2, 0.3,0.4,0.5,0.6,0.7,0.8]]),depth=1)[0]
+    else :    
+        t =  ak.broadcast_arrays(np.array(ak.fill_none(photonpt,0))[:, np.newaxis],np.array([[0.1, 0.2, 0.3,0.4,0.5,0.6]]),depth=1)[0]
+    ans=t>c1
+    ans_index=ak.argmin(ans,axis=1)
+    trig_names = d1[ans_index-1]
+    pre=[]
+
+    for i in range(len(photonpt)):
+        if ((photonpt[i] is None) | ( not glumi[i])) :
+            pre.append(0)
+        else:    
+            pre.append(eva["HLT_prescale"].evaluate(era,trig_names[i],run[i],float(lb[i])))
+                
+    return(ak.Array(pre))

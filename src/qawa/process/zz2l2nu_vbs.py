@@ -20,7 +20,7 @@ from qawa.applyGNN import applyGNN
 from qawa.leptonsSF import LeptonScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
-from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
+from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules,getPhotonTrigPrescale, PhotonSF
 
 def build_leptons(muons, electrons):
     # select tight/loose muons
@@ -53,11 +53,26 @@ def build_leptons(muons, electrons):
         (np.abs(electrons.eta)  < 2.5) &
         electrons.mvaFall17V2Iso_WPL
     ]
+
+    extra_mu_inph = muons[
+        (muons.pt            >  5. ) &
+        (np.abs(muons.eta)   <  2.4 ) &
+        (muons.pfRelIso03_all <= 0.4) &
+        (muons.mediumId)
+    ]
+    extra_el_inph = electrons[
+        (electrons.pt           > 5. ) &
+        (np.abs(electrons.eta)  < 2.5) &
+        (electrons.mvaFall17V2noIso_WP90 )&
+        (electrons.pfRelIso03_all <=0.4)
+        #(electrons.pfRelIso03_all <=0.4)
+    ] 
+
     # contruct a lepton object
     tight_leptons = ak.with_name(ak.concatenate([tight_muons, tight_electrons], axis=1), 'PtEtaPhiMCandidate')
     loose_leptons = ak.with_name(ak.concatenate([loose_muons, loose_electrons], axis=1), 'PtEtaPhiMCandidate')
-
-    return tight_leptons, loose_leptons
+    extra_leptons_inph = ak.with_name(ak.concatenate([extra_mu_inph,extra_el_inph], axis=1), 'PtEtaPhiMCandidate')
+    return tight_leptons, loose_leptons,extra_leptons_inph
 
 def build_htaus(tau, lepton):
     base = (
@@ -77,12 +92,31 @@ def build_photons(photon):
         (photon.pt          > 20. ) & 
         (np.abs(photon.eta) < 2.5 )
     )
+    dd_photons_base = (
+        (photon.pt          > 55. ) &
+        (np.abs(photon.eta) <= 2.5 ) &
+        (~(photon.pixelSeed)) &
+        (photon.electronVeto) &
+        (photon.sieie >= 0.001) &
+        (photon.cutBased ==3)
+    )
+    dd_photons_loose = photon[
+        (~dd_photons_base) &
+        (base) &
+        (photon.cutBased ==3)
+    ]
+    
     # MVA ID
     tight_photons = photon[base & photon.mvaID_WP90]
     loose_photons = photon[base & photon.mvaID_WP80 & ~photon.mvaID_WP90]
+
+    dd_photons = photon[dd_photons_base]
     
     # cut based ID
-    return tight_photons, loose_photons
+    return tight_photons, loose_photons, dd_photons_loose, dd_photons
+
+
+
 
 
 class zzinc_processor(processor.ProcessorABC):
@@ -94,7 +128,7 @@ class zzinc_processor(processor.ProcessorABC):
             self._era = re.findall(r'\d+', self._era)[0] 
         else:
             self._isAPV = False
-        
+
         jec_tag = ''
         jer_tag = ''
         if len(run_period)==0:
@@ -128,7 +162,6 @@ class zzinc_processor(processor.ProcessorABC):
                 jec_tag = f'Summer19UL18_Run{run_period}_V5_DATA'
             else:
                 print('error')
-        
         self.btag_wp = 'M'
         self.zmass = 91.1873 # GeV 
         self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
@@ -138,6 +171,9 @@ class zzinc_processor(processor.ProcessorABC):
         
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
+        self._phEval = PhotonSF(_data_path,era=self._era)
+        #if its is photon CR 
+        self._isnotpho= False
         self._json = {
             '2018': LumiMask(f'{_data_path}/json/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'),
             '2017': LumiMask(f'{_data_path}/json/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'),
@@ -145,10 +181,12 @@ class zzinc_processor(processor.ProcessorABC):
         }
         with open(f'{_data_path}/{self._era}-trigger-rules.yaml') as ftrig:
             self._triggers = yaml.load(ftrig, Loader=yaml.FullLoader)
-            
         with open(f'{_data_path}/eft-names.dat') as eft_file:
             self._eftnames = [n.strip() for n in eft_file.readlines()]
 
+        #adding prescale value to triggers
+        with open(f'{_data_path}/Photon/{self._era}-photon.yaml') as ftrigpre:
+            self._triggers_prescale = yaml.load(ftrigpre, Loader=yaml.FullLoader)
         with uproot.open(f'{_data_path}/trigger_sf/histo_triggerEff_sel0_{self._era}.root') as _fn:
             _hvalue = np.dstack([_fn[_hn].values() for _hn in _fn.keys()] + [np.ones((7,7))])
             _herror = np.dstack([np.sqrt(_fn[_hn].variances()) for _hn in _fn.keys()] + [np.zeros((7,7))])
@@ -160,8 +198,8 @@ class zzinc_processor(processor.ProcessorABC):
 
         self.ewk_process_name = ewk_process_name
         if self.ewk_process_name is not None:
-            self.ewk_corr = ewk_corrector(process=ewk_process_name)
-
+            if self.ewk_process_name != "GJets":   
+                self.ewk_corr = ewk_corrector(process=ewk_process_name)
         self.build_histos = lambda: {
             'dilep_mt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
@@ -169,13 +207,19 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(60, 0, 600, name="dilep_mt", label=r"$M_{T}^{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
-	        'dilep_pt': hist.Hist(
+            'dilep_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(60, 0, 600, name="dilep_pt", label=r"$p_{T}^{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
-	        'dilep_m': hist.Hist(
+            'dilep_eta': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="dilep_eta", label=r"$\eta_{\ell\ell}$ (GeV)"),
+                hist.storage.Weight()
+            ), 
+            'dilep_m': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(60, 0, 120, name="dilep_m", label=r"$M_{\ell\ell}$ (GeV)"),
@@ -259,6 +303,12 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label=r"$\min\Delta\phi(p_{T}^{miss},j)$"),
                 hist.storage.Weight()
             ),
+            "delta_phi_Zjets_met":hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 0, np.pi, name="delta_phi_Zjets_met", label=r"$\Delta\phi(p_{T}^{miss},Z+j)$"),
+                hist.storage.Weight()
+            ),
         }
 
     
@@ -306,12 +356,12 @@ class zzinc_processor(processor.ProcessorABC):
         center_value = self.trig_sf_map[lep_1_bin,lep_2_bin,trigg_bin,0]
         errors_value = self.trig_sf_map[lep_1_bin,lep_2_bin,trigg_bin,1]
         
-        weights.add(
-            'triggerSF', 
-            center_value, 
-            center_value + errors_value,
-            center_value - errors_value
-        )
+        #weights.add(
+        #    'triggerSF', 
+        #    center_value, 
+        #    center_value + errors_value,
+        #    center_value - errors_value
+        #)
 
 
     def process_shift(self, event, shift_name:str=''):
@@ -323,6 +373,7 @@ class zzinc_processor(processor.ProcessorABC):
         histos = self.build_histos()
         
         if is_data:
+            goodlumi_ = ak.Array(self._json[self._era](event.run, event.luminosityBlock))
             selection.add('lumimask', self._json[self._era](event.run, event.luminosityBlock))
             selection.add('triggers', trigger_rules(event, self._triggers, self._era))
         else:
@@ -334,49 +385,76 @@ class zzinc_processor(processor.ProcessorABC):
             selection.add(
                 'metfilter',
                 #event.Flag.METFilters &
+                event.Flag.goodVertices &
                 event.Flag.globalSuperTightHalo2016Filter & 
                 event.Flag.HBHENoiseFilter &
                 event.Flag.HBHENoiseIsoFilter & 
                 event.Flag.EcalDeadCellTriggerPrimitiveFilter &
-                event.Flag.goodVertices &
+                event.Flag.BadPFMuonFilter & 
+                event.Flag.BadPFMuonDzFilter &
+                #event.Flag.globalTightHalo2016Filter &
+                #event.Flag.BadChargedCandidateFilter & 
                 event.Flag.eeBadScFilter &
-                event.Flag.globalTightHalo2016Filter &
-                event.Flag.BadChargedCandidateFilter & 
-                event.Flag.BadPFMuonFilter
-            )
+                event.Flag.ecalBadCalibFilter )
+            
+            
         else:
             selection.add(
                 'metfilter',
                 #event.Flag.METFilters &
+                event.Flag.goodVertices & 
                 event.Flag.globalSuperTightHalo2016Filter & 
                 event.Flag.HBHENoiseFilter &
                 event.Flag.HBHENoiseIsoFilter & 
                 event.Flag.EcalDeadCellTriggerPrimitiveFilter & 
-                event.Flag.goodVertices &
+                event.Flag.BadPFMuonFilter & 
+#                event.Flag.BadPFMuonDzFilter &
                 event.Flag.eeBadScFilter &
-                event.Flag.globalTightHalo2016Filter &
-                event.Flag.BadChargedCandidateFilter & 
-                event.Flag.BadPFMuonFilter
-            )
-
+                event.Flag.ecalBadCalibFilter)
+        #photon CR
+        tight_photons, loose_photons, dd_photons_loose, dd_photons = build_photons(event.Photon)
+        #tight_photons,loose_photons = build_photons(event.Photon)
+        lead_photon=ak.firsts(dd_photons)
         
-        tight_lep, loose_lep = build_leptons(
+        ntight_pho = ak.num(dd_photons)
+        nloose_pho = ak.num(dd_photons_loose)
+        _data_path = 'qawa/data'
+        _data_path = os.path.join(os.path.dirname(__file__), '../data')
+        if not self._isnotpho:
+            if  is_data:
+                event.prescaleweight = getPhotonTrigPrescale(_data_path,event.run, event.luminosityBlock, self._triggers_prescale, lead_photon.pt, goodlumi_,self._era)
+
+            else :    
+                self._phSF = self._phEval["EGamma_SF2D_T"](lead_photon.eta,lead_photon.pt)
+                self._phSFerr = self._phSF + self._phEval["EGamma_SF2D_T_err"](lead_photon.eta,lead_photon.pt)
+                gjetsnnlo = 1.716910 - (np.multiply(lead_photon.pt, 0.001221))
+        #IDscale factor
+        #need to get SF from https://github.com/jdulemba/NanoAOD_Analyses/blob/new_kfactor_files/Analysis/python/LeptonSF.py
+
+        tight_lep, loose_lep,extra_lep_inph = build_leptons(
             event.Muon,
             event.Electron
         )
         
+        nextra_lep_inph = ak.num(extra_lep_inph)
         had_taus = build_htaus(event.Tau, tight_lep)
-        
+        had_taus_ph = build_htaus(event.Tau, dd_photons)
         ntight_lep = ak.num(tight_lep)
         nloose_lep = ak.num(loose_lep)
         nhtaus_lep = ak.num(had_taus)
+        nhtaus_ph = ak.num(had_taus_ph)
         
         jets = event.Jet
-        overlap_leptons = ak.any(
-            jets.metric_table(tight_lep) <= 0.4,
-            axis=2
-        )
-        
+        if (self._isnotpho):
+            overlap_leptons =  ak.any(
+                jets.metric_table(tight_lep) <= 0.4,
+                axis=2
+            )    
+        else:
+            overlap_leptons = ak.any(
+                jets.metric_table(dd_photons) <= 0.4,
+                axis=2
+            )
         jet_mask = (
             ~overlap_leptons & 
             (jets.pt>30.0) & 
@@ -391,7 +469,8 @@ class zzinc_processor(processor.ProcessorABC):
                 )
         )
         
-        good_jets = jets[~jet_btag & jet_mask]
+        #good_jets = jets[~jet_btag & jet_mask]
+        good_jets = jets[  jet_mask]
         good_bjet = jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.4)]
         
         ngood_jets  = ak.num(good_jets)
@@ -401,25 +480,33 @@ class zzinc_processor(processor.ProcessorABC):
         event['ngood_jets']  = ngood_jets
        
         # lepton quantities
-        def z_lepton_pair(leptons):
-            pair = ak.combinations(leptons, 2, axis=1, fields=['l1', 'l2'])
-            mass = (pair.l1 + pair.l2).mass
-            cand = ak.local_index(mass, axis=1) == ak.argmin(np.abs(mass - self.zmass), axis=1)
+        if(self._isnotpho):
+            def z_lepton_pair(leptons):
+                pair = ak.combinations(leptons, 2, axis=1, fields=['l1', 'l2'])
+                mass = (pair.l1 + pair.l2).mass
+                cand = ak.local_index(mass, axis=1) == ak.argmin(np.abs(mass - self.zmass), axis=1)
 
-            extra_lepton = leptons[(
-                ~ak.any(leptons.metric_table(pair[cand].l1) <= 0.01, axis=2) & 
-                ~ak.any(leptons.metric_table(pair[cand].l2) <= 0.01, axis=2) )
-            ]
-            return pair[cand], extra_lepton, cand
+                extra_lepton = leptons[(
+                    ~ak.any(leptons.metric_table(pair[cand].l1) <= 0.01, axis=2) & 
+                    ~ak.any(leptons.metric_table(pair[cand].l2) <= 0.01, axis=2) )
+                                   ]
+                return pair[cand], extra_lepton, cand
         
-        dilep, extra_lep, z_cand_mask = z_lepton_pair(tight_lep)
+            dilep, extra_lep, z_cand_mask = z_lepton_pair(tight_lep)
+            lead_lep = ak.firsts(ak.where(dilep.l1.pt >  dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
+            subl_lep = ak.firsts(ak.where(dilep.l1.pt <= dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
         
-        lead_lep = ak.firsts(ak.where(dilep.l1.pt >  dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
-        subl_lep = ak.firsts(ak.where(dilep.l1.pt <= dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
-        
-        dilep_p4 = (lead_lep + subl_lep)
+            dilep_p4 = (lead_lep + subl_lep)
+        else :
+            dilep_p4 = lead_photon
+            #need to ffix it extra lep why we need it in the caluculation off met variables just put the dummy values for now 
+            extra_lep = loose_lep
+            lead_lep = ak.firsts(dd_photons)
+            subl_lep = ak.firsts(dd_photons)
         dilep_m  = dilep_p4.mass
         dilep_pt = dilep_p4.pt
+        dilep_eta = dilep_p4.eta
+        dilep_phi = dilep_p4.phi
         
         # high level observables
         p4_met = ak.zip(
@@ -436,49 +523,77 @@ class zzinc_processor(processor.ProcessorABC):
 
         emu_met = ak.firsts(extra_lep, axis=1) + p4_met
 	
-        reco_met_pt = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
-        reco_met_phi = ak.where(ntight_lep==2, p4_met.phi, emu_met.phi)
-
+        reco_met_pt = ak.where(ntight_lep==3,emu_met.pt, p4_met.pt)
+        reco_met_phi = ak.where(ntight_lep==3,emu_met.phi, p4_met.phi)
+        
 	
-	    # this definition is not correct as it doesn't include the mass of the second Z
+        # this definition is not correct as it doesn't include the mass of the second Z
         dilep_et_ll = np.sqrt(dilep_pt**2 + dilep_m**2)
         dilep_et_met = np.sqrt(reco_met_pt**2 + self.zmass**2)
         dilep_mt = ak.where(
-                ntight_lep==3,
-                np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
-                np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
-	    )
+            ntight_lep==3,
+            np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2),
+            np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec + emu_met.pvec).p2),
+        )
 	
         # dilep_dphi = lead_lep.delta_phi(subl_lep)
         # dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
         # dilep_dR   = lead_lep.delta_r(subl_lep)
-        dilep_dphi_met  = ak.where(ntight_lep==2, dilep_p4.delta_phi(p4_met), dilep_p4.delta_phi(emu_met))
+        dilep_dphi_met  = ak.where(ntight_lep==3, dilep_p4.delta_phi(emu_met), dilep_p4.delta_phi(p4_met))
         #scalar_balance = ak.where(ntight_lep==3, emu_met.pt/dilep_p4.pt, p4_met.pt/dilep_p4.pt)
         
-
+        
         
         # 2jet and vbs related variables
         lead_jet = ak.firsts(good_jets)
         subl_jet = ak.firsts(good_jets[lead_jet.delta_r(good_jets)>0.01])
         third_jet = ak.firsts(good_jets[(lead_jet.delta_r(good_jets)>0.01) & (subl_jet.delta_r(good_jets)>0.01)])
-
-
+        zjets = ak.where(ngood_jets >=3, lead_jet + subl_jet+third_jet+dilep_p4, lead_jet + subl_jet+dilep_p4) 
+        
         dijet_mass = (lead_jet + subl_jet).mass
         dijet_deta = np.abs(lead_jet.eta - subl_jet.eta)
         event['dijet_mass'] = dijet_mass
         event['dijet_deta'] = dijet_deta 
         #dijet_zep1 = np.abs(2*lead_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
         #dijet_zep2 = np.abs(2*subl_lep.eta - (lead_jet.eta + subl_jet.eta))/dijet_deta
+        #hhotspot
+        if is_data:
+           hotspot = ~((dilep_eta>=1.48) & (dilep_eta<=1.58) & (dilep_phi>= -0.78) & (dilep_phi <= -0.55))
+           endcap_ph_beamhalo = ~((np.abs(dilep_eta)>1.58) & ( (np.abs(dilep_phi) > 2.87979083333) |  (np.abs(dilep_phi) < 0.26179916666 )) )
+        else:
+           hotspot = np.ones(len(event), dtype='bool') 
+           endcap_ph_beamhalo = np.ones(len(event), dtype='bool')
+        if '2018' in self._era :
+            hem_veto = ((good_jets.phi > -1.57) & (good_jets.phi < -0.87) & (good_jets.eta > -3.00) & (good_jets.eta < -1.40))
+            if is_data:
+                _runid = ((event.run >= 319077) & (event.run <= 325175))
+                jet_mask_hm = (ak.any(hem_veto,axis=-1)) & (_runid) 
+            else :
+                jet_mask_hm = ((ak.any(hem_veto,axis=-1)) & (np.random.uniform(size=len(event)) <= 0.647 ))
+
+        else :    
+            jet_mask_hm = np.zeros(len(event), dtype='bool') 
+            
         
+                 
+        selection.add("jet_mask_hm", ~jet_mask_hm)        
+        selection.add("ph_hsbh",ak.fill_none((hotspot & endcap_ph_beamhalo),False))
+        
+        delta_phi_Zjets_met  = np.abs(zjets.delta_phi(p4_met))
+
         min_dphi_met_j = ak.min(np.abs(
             ak.where(
                 ntight_lep==3, 
-                jets.delta_phi(emu_met), 
-                jets.delta_phi(p4_met)
+                good_jets.delta_phi(emu_met), 
+                good_jets.delta_phi(p4_met)
             )
         ), axis=1)
 
+
         event['min_dphi_met_j'] = min_dphi_met_j
+        event['delta_phi_Zjets_met'] = delta_phi_Zjets_met
+
+        
         
         # define basic selection
         selection.add(
@@ -520,6 +635,7 @@ class zzinc_processor(processor.ProcessorABC):
         selection.add('low_met_pt', ak.fill_none((reco_met_pt < 100) & (reco_met_pt > 50), False))
         selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
+        selection.add('dilep_eta', ak.fill_none(np.abs(dilep_eta)<2.5, False))
         selection.add(
             'dilep_pt',
             ak.where(
@@ -537,16 +653,25 @@ class zzinc_processor(processor.ProcessorABC):
                 ak.fill_none(np.abs(min_dphi_met_j)>0.5, False), 
             )
         )
+        selection.add("delta_phi_Zjets_met", ak.fill_none(delta_phi_Zjets_met > 2.5 ,False))
+
+        selection.add('0lep_inph', (nextra_lep_inph ==0))
+        selection.add('0lep', (ntight_lep==0))
+        selection.add('1pho', ak.fill_none((ntight_pho==1) & (nloose_pho==0) & (ak.firsts(tight_photons).pt>55),False))
+        selection.add('met_0'        , ak.fill_none(p4_met.pt > 0, False))
+        selection.add('met_0_100'        , ak.fill_none((p4_met.pt > 0 )  & (p4_met.pt <=  100) , False))
+        selection.add('met_100'        , ak.fill_none(p4_met.pt > 100., False))        
         # jet demography
         selection.add('1njets' , ngood_jets  >= 1 )
         selection.add('2njets' , ngood_jets  >= 2 )
         selection.add('1nbjets', ngood_bjets >= 1 )
+        selection.add('0bjets', ngood_bjets == 0 )
         selection.add('0nhtaus', nhtaus_lep  == 0 )
-        
+        selection.add('0nhtausph', nhtaus_ph  == 0 )
         selection.add('dijet_deta', ak.fill_none(dijet_deta > 2.5, False))
         selection.add('dijet_mass_400' , ak.fill_none(dijet_mass >  400, False))
-        selection.add('dijet_mass_800' , ak.fill_none(dijet_mass >  800, False))
-        selection.add('dijet_mass_1200', ak.fill_none(dijet_mass > 1200, False))
+        #selection.add('dijet_mass_800' , ak.fill_none(dijet_mass >  800, False))
+        #selection.add('dijet_mass_1200', ak.fill_none(dijet_mass > 1200, False))
 
         # Define all variables for the GNN
         event['met_pt'  ] = reco_met_pt
@@ -554,6 +679,7 @@ class zzinc_processor(processor.ProcessorABC):
         event['dilep_mt'] = dilep_mt
         event['dilep_m'] = dilep_m
         event['dilep_pt'] = dilep_pt
+        event['dilep_eta'] = dilep_eta
         event['njets'   ] = ngood_jets
         event['bjets'   ] = ngood_bjets
         event['dphi_met_ll'] = dilep_dphi_met
@@ -587,17 +713,18 @@ class zzinc_processor(processor.ProcessorABC):
             weights.add('genweight', event.genWeight)
             self._btag.append_btag_sf(jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
-            self._add_trigger_sf(weights, lead_lep, subl_lep)
+            if self._isnotpho: 
+               self._add_trigger_sf(weights, lead_lep, subl_lep)
             
-            weights.add (
-                    'LeptonSF', 
-                    lead_lep.SF*subl_lep.SF, 
-                    lead_lep.SF_up*subl_lep.SF_up, 
-                    lead_lep.SF_down*subl_lep.SF_down
-            )
+               weights.add (
+                   'LeptonSF', 
+                   lead_lep.SF*subl_lep.SF, 
+                   lead_lep.SF_up*subl_lep.SF_up, 
+                   lead_lep.SF_down*subl_lep.SF_down
+               )
             _ones = np.ones(len(weights.weight()))
             
-            if self.ewk_process_name:
+            if ((self.ewk_process_name) and (self.ewk_process_name != "GJets")) :
                 self.ewk_corr.get_weight(
                         event.GenPart,
                         event.Generator.x1,
@@ -640,10 +767,21 @@ class zzinc_processor(processor.ProcessorABC):
             # 2017 Prefiring correction weight
             if 'L1PreFiringWeight' in event.fields:
                 weights.add("prefiring_weight", event.L1PreFiringWeight.Nom, event.L1PreFiringWeight.Dn, event.L1PreFiringWeight.Up)
+        if not self._isnotpho:
+            if is_data:
+                weights.add('prescaleweight', event.prescaleweight)
+            else :
+                weights.add('PhotonSF',self._phSF,self._phSF+self._phSFerr,self._phSF-self._phSFerr)
+                if self.ewk_process_name == "GJets" :
+                    gjets_wt = ak.where(gjetsnnlo > 1, gjetsnnlo,1)
+                    # weights.add("gnnlo",gjets_wt)
+                else :
+                    weights.add("gnnlo", _ones, _ones, _ones)
 
         # selections
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
+            '''
             # inclusive regions
             "cat-SR0J": common_sel + [
 		    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
@@ -722,6 +860,61 @@ class zzinc_processor(processor.ProcessorABC):
 		    'dilep_dphi_met', #'min_dphi_met_j',
 		    'met_pt', '1nbjets', "2njets"
 	    ],
+            '''
+
+            #new region
+            "vbs-DY": common_sel + [                   
+                'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
+                'dilep_dphi_met', 'min_dphi_met_j', 
+                'low_met_pt', '~1nbjets', '0nhtaus',
+                "2njets","dijet_mass_400"],
+            "vbs-DY_lowmet": common_sel + [                   
+                'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
+                'dilep_dphi_met', 'min_dphi_met_j', 
+                'met_0_100', '~1nbjets', '0nhtaus',
+                "2njets", "dijet_mass_400"],
+            "vbs-DY_highmet": common_sel + [                   
+                'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
+                'dilep_dphi_met', 'min_dphi_met_j', 
+                'met_100', '~1nbjets', '0nhtaus',
+                "2njets", "dijet_mass_400"],
+            "photon_VBS_hv":common_sel + [
+               '1pho','2njets','~1nbjets',
+               '0nhtausph','0lep_inph','dilep_pt','dilep_eta',
+               'met_0','dilep_dphi_met','ph_hsbh',
+               #'jet_mask_hm',
+               'min_dphi_met_j',#'delta_phi_Zjets_met',
+               'dijet_deta','dijet_mass_400'],
+            "photon_VBS_del":common_sel + [
+               '1pho','2njets','~1nbjets',
+               '0nhtausph','0lep_inph','dilep_pt','dilep_eta',
+               'met_0','dilep_dphi_met','ph_hsbh',
+               #'jet_mask_hm',
+               'min_dphi_met_j','delta_phi_Zjets_met',
+               'dijet_deta','dijet_mass_400'],
+            "photon_VBS":common_sel + [
+               '1pho','2njets','~1nbjets',
+               '0nhtausph','0lep_inph','dilep_pt','dilep_eta',
+               'met_0','dilep_dphi_met','ph_hsbh',
+               #'jet_mask_hm',
+               'min_dphi_met_j',#'delta_phi_Zjets_met',
+               'dijet_deta','dijet_mass_400'],
+            "photon_VBS_lowmet":common_sel + [
+               '1pho','2njets','~1nbjets',
+               '0nhtausph','0lep_inph','dilep_pt','dilep_eta',
+               'met_0_100','dilep_dphi_met','ph_hsbh',
+               #'jet_mask_hm',
+               'min_dphi_met_j',#'delta_phi_Zjets_met',
+               'dijet_deta','dijet_mass_400'],
+            "photon_VBS_highmet":common_sel + [
+               '1pho','2njets','~1nbjets',
+               '0nhtausph','0lep_inph','dilep_pt','dilep_eta',
+               'met_100','dilep_dphi_met','ph_hsbh',
+               #'jet_mask_hm',
+               'min_dphi_met_j',#'delta_phi_Zjets_met',
+               'dijet_deta','dijet_mass_400'],
+
+
         }
 
         if shift_name is None:
@@ -797,6 +990,7 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'dilep_mt')
                 _histogram_filler(ch, sys, 'dilep_pt')
+                _histogram_filler(ch, sys, 'dilep_eta')
                 _histogram_filler(ch, sys, 'dilep_m')
                 _histogram_filler(ch, sys, 'njets')
                 _histogram_filler(ch, sys, 'bjets')
@@ -808,6 +1002,7 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'lead_jet_eta')
                 _histogram_filler(ch, sys, 'trail_jet_eta')
                 _histogram_filler(ch, sys, 'min_dphi_met_j')
+                _histogram_filler(ch, sys, 'delta_phi_Zjets_met')
                 _histogram_filler(ch, sys, 'dijet_mass')
                 _histogram_filler(ch, sys, 'gnn_score')
                 _histogram_filler(ch, sys, 'gnn_flat')

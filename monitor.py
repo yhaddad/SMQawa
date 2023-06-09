@@ -6,8 +6,8 @@ import subprocess
 from pandas.core.internals.array_manager import new_block
 from termcolor import colored
 import importlib.metadata
-qawa_version = importlib.metadata.version('qawa')
-
+#qawa_version = importlib.metadata.version('qawa')
+qawa_version = '0.0.7'
 logging.basicConfig(level=logging.INFO)
 
 rerun_script_header = f"""#!/bin/bash

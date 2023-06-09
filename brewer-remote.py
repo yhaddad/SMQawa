@@ -110,7 +110,8 @@ def main():
                 ewk_flag= 'ZZ'
             if "WZTo" in options.infile and "GluGluTo" not in options.infile:
                 ewk_flag = 'WZ'
-
+            if "GJets" in options.infile:
+                ewk_flag = 'GJets'    
             # extarct the run period
             if is_data:
                 if 'Run20' in options.infile:
@@ -130,7 +131,7 @@ def main():
                 ---------------------------"""
             )
 
-            print(" --- zz2l2nu_vbs processor ... ")
+            print(" --- zz2l2nu_vbs processor ... ", type(options.era))
             vbs_out = processor.run_uproot_job(
                 samples,
                 processor_instance=zzinc_processor(
@@ -148,6 +149,7 @@ def main():
                 },
                 #chunksize=50000,
             )
+            print(" --- zz2l2nu_vbs processor ...out ")
             bh_output = {}
             for key, content in vbs_out.items():
                 bh_output[key] = {
@@ -157,9 +159,11 @@ def main():
             with gzip.open("histogram_%s.pkl.gz" % str(options.jobNum), "wb") as f:
                 pickle.dump(bh_output, f)
             failed=False
-        except Exception as err:
+        except Exception as err: 
             print(f"[WARNING] {aliases[ixrd]} failed with the following error : ")
-            print(f"Unexpected {err=}, {type(err)=}")
+            print(f"Unexpected error:{err}", sys.exc_info()[0])
+            #print(f"Unexpected {err=}, {type(err)=}")
+            #print(sys.exc_info()[0])
             print("-------------------------------------------")
             failed=True
             ixrd += 1

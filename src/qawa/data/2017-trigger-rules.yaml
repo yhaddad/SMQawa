@@ -101,3 +101,12 @@ Run2017.SingleElectron:
         - IsoMu27
         - IsoMu30
         - Mu50
+Run2017.SinglePhoton:
+    pass:
+        - Photon50_R9Id90_HE10_IsoM
+        - Photon75_R9Id90_HE10_IsoM
+        - Photon90_R9Id90_HE10_IsoM     
+        - Photon120_R9Id90_HE10_IsoM
+        - Photon165_R9Id90_HE10_IsoM
+        - Photon200
+    veto: []

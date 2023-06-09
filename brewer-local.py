@@ -104,12 +104,14 @@ def main():
         ewk_flag= 'ZZ'
     if "WZTo" in options.infile and "GluGluTo" not in options.infile:
         ewk_flag = 'WZ'
-        
+    if "GJets" in options.infile:
+        ewk_flag = 'GJets'    
     # extarct the run period
     run_period = '' 
     if 'Run20' in options.infile and is_data:
         run_period = options.infile.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
     
+        
     print(" --------------------------- ")
     vbs_out = processor.run_uproot_job(
         samples,
