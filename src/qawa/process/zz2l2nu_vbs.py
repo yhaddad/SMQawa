@@ -381,7 +381,8 @@ class zzinc_processor(processor.ProcessorABC):
             ~overlap_leptons & 
             (jets.pt>30.0) & 
             (np.abs(jets.eta) < 4.7) & 
-            (jets.jetId >= 6) # tight JetID 7(2016) and 6(2017/8)
+            (jets.jetId >= 6) & # tight JetID 7(2016) and 6(2017/8)
+            (jets.puId >= 6)  # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL
         )
         
         jet_btag = (
