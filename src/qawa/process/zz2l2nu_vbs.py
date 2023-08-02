@@ -18,6 +18,7 @@ from coffea.lumi_tools import LumiMask
 from qawa.roccor import rochester_correction
 from qawa.applyGNN import applyGNN
 from qawa.leptonsSF import LeptonScaleFactors
+from qawa.jetPU import jetPUScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
@@ -130,11 +131,13 @@ class zzinc_processor(processor.ProcessorABC):
                 print('error')
         
         self.btag_wp = 'M'
+        self.jetPU_wp = 'M'
         self.zmass = 91.1873 # GeV 
         self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
         self._jmeu = JMEUncertainty(jec_tag, jer_tag, era=self._era, is_mc=(len(run_period)==0))
         self._purw = pileup_weights(era=self._era)
         self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
+        self._jpSF = jetPUScaleFactors(era=self._era, wp=self.jetPU_wp, isAPV=self._isAPV)
         
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
@@ -587,6 +590,7 @@ class zzinc_processor(processor.ProcessorABC):
         if not is_data:
             weights.add('genweight', event.genWeight)
             self._btag.append_btag_sf(jets, weights)
+            self._jpSF.append_jetPU_sf(jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
             self._add_trigger_sf(weights, lead_lep, subl_lep)
             
@@ -809,15 +813,8 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'lead_jet_eta')
                 _histogram_filler(ch, sys, 'trail_jet_eta')
                 _histogram_filler(ch, sys, 'min_dphi_met_j')
-                _histogram_filler(ch, sys, 'dijet_mass')
                 _histogram_filler(ch, sys, 'gnn_score')
                 _histogram_filler(ch, sys, 'gnn_flat')
-                _histogram_filler(ch, sys, 'dijet_deta')
-                _histogram_filler(ch, sys, 'lead_jet_pt')
-                _histogram_filler(ch, sys, 'trail_jet_pt')
-                _histogram_filler(ch, sys, 'lead_jet_eta')
-                _histogram_filler(ch, sys, 'trail_jet_eta')
-                _histogram_filler(ch, sys, 'min_dphi_met_j')
                 
         return {dataset: histos}
         
