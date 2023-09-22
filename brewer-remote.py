@@ -106,7 +106,7 @@ def main():
             )
             
             ewk_flag = None
-            if "ZZTo" in options.infile and "GluGluTo" not in options.infile and "ZZJJ" not in options.infile:
+            if "ZZTo2L2Nu" in options.infile and "GluGluTo" not in options.infile and "ZZJJ" not in options.infile:
                 ewk_flag= 'ZZ'
             if "WZTo" in options.infile and "GluGluTo" not in options.infile:
                 ewk_flag = 'WZ'

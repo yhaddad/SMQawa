@@ -19,6 +19,7 @@ from qawa.roccor import rochester_correction
 from qawa.applyGNN import applyGNN
 from qawa.leptonsSF import LeptonScaleFactors
 from qawa.jetPU import jetPUScaleFactors
+from qawa.tauSF import tauIDScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
@@ -62,10 +63,13 @@ def build_leptons(muons, electrons):
 
 def build_htaus(tau, lepton):
     base = (
-        (tau.pt         > 18. ) & 
+        (tau.pt         > 20 ) & 
         (np.abs(tau.eta)< 2.3 ) & 
         (tau.decayMode != 5   ) & 
-        (tau.decayMode != 6   )
+        (tau.decayMode != 6   ) &
+        (tau.idDeepTau2017v2p1VSe >= 2) &
+        (tau.idDeepTau2017v2p1VSmu >= 1) &
+        (tau.idDeepTau2017v2p1VSjet >= 16)
     )
     overlap_leptons = ak.any(
         tau.metric_table(lepton) <= 0.4,
@@ -132,12 +136,16 @@ class zzinc_processor(processor.ProcessorABC):
         
         self.btag_wp = 'M'
         self.jetPU_wp = 'M'
+        self.tauIDvsjet_wp = 'Medium'
+        self.tauIDvse_wp = 'VVLoose'
+        self.tauIDvsmu_wp = 'VLoose'
         self.zmass = 91.1873 # GeV 
         self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
         self._jmeu = JMEUncertainty(jec_tag, jer_tag, era=self._era, is_mc=(len(run_period)==0))
         self._purw = pileup_weights(era=self._era)
         self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
         self._jpSF = jetPUScaleFactors(era=self._era, wp=self.jetPU_wp, isAPV=self._isAPV)
+        self._tauID= tauIDScaleFactors(era=self._era, vsjet_wp=self.tauIDvsjet_wp,vse_wp=self.tauIDvse_wp, vsmu_wp=self.tauIDvsmu_wp, isAPV=self._isAPV)
         
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
@@ -592,6 +600,7 @@ class zzinc_processor(processor.ProcessorABC):
             self._btag.append_btag_sf(jets, weights)
             self._jpSF.append_jetPU_sf(jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
+            self._tauID.append_tauID_sf(had_taus, weights)
             self._add_trigger_sf(weights, lead_lep, subl_lep)
             
             weights.add (
