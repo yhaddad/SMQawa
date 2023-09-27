@@ -1,0 +1,14 @@
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_1.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_2.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_3.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_4.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_5.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_6.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_7.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_8.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_9.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_10.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_11.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_12.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_13.root
+/eos/cms/store/user/biwang/aQGC/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8/NanoAODv9_UL2018_v2/220728_132906/0000/tree_14.root

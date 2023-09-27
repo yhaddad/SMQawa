@@ -10,8 +10,8 @@ class applyGNN:
     def __init__(self, event: processor.LazyDataFrame):
         
         _data_path = os.path.join(os.path.dirname(__file__), 'data/')
-        model_2j = f'{_data_path}/GNNmodel/exactly2JetsNoBjets.onnx'
-        model_3j = f'{_data_path}/GNNmodel/atLeast3JetsNoBjets.onnx'
+        model_2j = f'{_data_path}/GNNmodel/2JetsModel.onnx'
+        model_3j = f'{_data_path}/GNNmodel/3JetsModel.onnx'
         
         self.event = event
         self.feature_2j = [
@@ -111,8 +111,8 @@ class applyGNN:
         
         nn2j_score = sess_2j.run([sess_2j.get_outputs()[0].name], {
             sess_2j.get_inputs()[0].name: nn2j_inputs.astype(np.float32), 
-            sess_2j.get_inputs()[1].name: -np.ones(len(nn2j_inputs)).astype(np.float32),
-            sess_2j.get_inputs()[2].name: -np.ones(len(nn2j_inputs)).astype(np.float32),
+            sess_2j.get_inputs()[1].name: np.expand_dims(np.ones(len(nn2j_inputs)).astype(np.float32),axis=1),
+            sess_2j.get_inputs()[2].name: np.expand_dims(np.ones(len(nn2j_inputs)).astype(np.float32),axis=1),
         })[0].flatten()
         
         
@@ -123,8 +123,8 @@ class applyGNN:
         
         nn3j_score = sess_3j.run([sess_3j.get_outputs()[0].name], {
             sess_3j.get_inputs()[0].name: nn3j_inputs.astype(np.float32), 
-            sess_3j.get_inputs()[1].name: -np.ones(len(nn3j_inputs)).astype(np.float32),
-            sess_3j.get_inputs()[2].name: -np.ones(len(nn3j_inputs)).astype(np.float32),
+            sess_3j.get_inputs()[1].name: np.expand_dims(np.ones(len(nn3j_inputs)).astype(np.float32),axis=1),
+            sess_3j.get_inputs()[2].name: np.expand_dims(np.ones(len(nn3j_inputs)).astype(np.float32),axis=1),
         })[0].flatten()
         
         del sess_2j
