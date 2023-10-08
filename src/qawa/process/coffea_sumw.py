@@ -14,8 +14,10 @@ class coffea_sumw(processor.ProcessorABC):
         if is_data:
             sumw = -1.0
         else:
-            sumw = ak.sum(event.genEventSumw)
-
+            if 'LHEReweightingSumw' in event.fields and 'aQGC' in dataset_name:
+                sumw = ak.sum(event.LHEReweightingSumw[:, 0])
+            else:
+                sumw = ak.sum(event.genEventSumw)
         return {dataset_name: sumw}
 
     def postprocess(self, accumulator):
