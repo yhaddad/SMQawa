@@ -65,7 +65,7 @@ on_exit_remove        = (ExitBySignal == False) && (ExitCode == 0)
 max_retries           = 2
 requirements          = Machine =!= LastRemoteHost
 # MY.XRDCP_CREATE_DIR   = True
-+SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest"
++SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:0.7.21-fastjet-3.4.0.1-g6238ea8"
 +JobFlavour           = "{queue}"
 
 queue jobfn from {jobdir}/inputfiles.dat
@@ -76,7 +76,7 @@ def main():
     parser.add_argument("-i"   , "--input" , type=str, default="data.txt" , help="input datasets", required=True)
     parser.add_argument("-t"   , "--tag"   , type=str, default="aQGC"  , help="production tag", required=True)
     parser.add_argument("-isMC", "--isMC"  , type=int, default=1          , help="")
-    parser.add_argument("-q"   , "--queue" , type=str, default="longlunch", help="")
+    parser.add_argument("-q"   , "--queue" , type=str, default="workday", help="")
     parser.add_argument("-e"   , "--era"   , type=str, default="2018"     , help="")
     parser.add_argument("-f"   , "--force" , action="store_true"          , help="recreate files and jobs")
     parser.add_argument("-s"   , "--submit", action="store_true"          , help="submit only")

@@ -195,8 +195,8 @@ def main():
                     with open(os.path.join(jobs_dir, f"rerun-script.sh"), "w") as _stream:
                         _stream.writelines(local_rerun_lines)
 
-                    coffea_image = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest" 
-                    os.system(f"cp dist/Qawa-0.0.5-py2.py3-none-any.whl {jobs_dir}")   
+                    coffea_image = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:0.7.21-fastjet-3.4.0.1-g6238ea8" 
+                    os.system(f"cp dist/Qawa-0.0.7-py2.py3-none-any.whl {jobs_dir}")   
                     if not options.dryrun:
                         htc = os.popen(f"singularity exec -B {jobs_dir}:/srv/ {coffea_image} bash /srv/rerun-script.sh").read()
                         print(htc)
