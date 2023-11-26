@@ -1,0 +1,2 @@
+/ZZTo2E2Nu_TuneCP5_DipoleRecoil_13TeV_powheg_pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM
+/ZZTo2Mu2Nu_TuneCP5_DipoleRecoil_13TeV_powheg_pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v1/NANOAODSIM

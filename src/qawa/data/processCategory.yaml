@@ -1,0 +1,132 @@
+DYJetsToLL_0J_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToLL_1J_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToLL_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToLL_M-50_HT-70to100_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_M-50_HT-100to200_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_M-50_HT-200to400_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_M-50_HT-400to600_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_M-50_HT-600to800_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_M-50_HT-800to1200_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_M-50_HT-1200to2500_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_M-50_HT-2500toInf_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_LHEFilterPtZ-0To50_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToLL_LHEFilterPtZ-250To400_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToLL_LHEFilterPtZ-50To100_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToLL_LHEFilterPtZ-650ToInf_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+DYJetsToTauTau_M-50_AtLeastOneEorMuDecay_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos:
+  - DY
+DYJetsToTauTau_M-50_AtLeastOneEorMuDecay_massWgtFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos:
+  - DY
+DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8:
+  - DY
+DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - DY
+WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8:
+  - WW
+GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8:
+  - WW
+GluGluToWWToENMN_TuneCP5_13TeV_MCFM701_pythia8:
+  - WW
+GluGluToWWToENTN_TuneCP5_13TeV_MCFM701_pythia8:
+  - WW
+GluGluToWWToMNEN_TuneCP5_13TeV_MCFM701_pythia8:
+  - WW
+GluGluToWWToMNMN_TuneCP5_13TeV_MCFM701_pythia8:
+  - WW
+GluGluToWWToMNTN_TuneCP5_13TeV_MCFM701_pythia8:
+  - WW
+GluGluToWWToTNMN_TuneCP5_13TeV_MCFM701_pythia8:
+  - WW
+GluGluToWWToTNTN_TuneCP5_13TeV_MCFM701_pythia8:
+  - WW
+VBS_OSWW_LL_TuneCP5_13TeV-madgraph-pythia8:
+  - WW
+VBS_OSWW_LT_TuneCP5_13TeV-madgraph-pythia8:
+  - WW
+VBS_OSWW_TL_TuneCP5_13TeV-madgraph-pythia8:
+  - WW
+VBS_OSWW_TT_TuneCP5_13TeV-madgraph-pythia8:
+  - WW
+WZJJ_EWK_InclusivePolarization_TuneCP5_13TeV_madgraph-madspin-pythia8:
+  - WZ
+WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  - WZ
+ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8:
+  - Top
+ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8:
+  - Top
+ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8:
+  - Top
+ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8:
+  - Top
+ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8:
+  - Top
+TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8:
+  - Top
+TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8:
+  - Top
+TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8:
+  - Top
+TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8:
+  - Top
+TTZToQQ_TuneCP5_13TeV-amcatnlo-pythia8:
+  - Top
+tZq_ll_4f_ckm_NLO_TuneCP5_13TeV-amcatnlo-pythia8:
+  - Top
+WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8:
+  - VVV
+WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8:
+  - VVV
+WZZ_TuneCP5_13TeV-amcatnlo-pythia8:
+  - VVV
+ZZZ_TuneCP5_13TeV-amcatnlo-pythia8:
+  - VVV
+GluGluToContinToZZTo2e2mu_TuneCP5_13TeV-mcfm701-pythia8:
+  - ZZ
+GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8:
+  - ZZ
+GluGluToContinToZZTo2e2tau_TuneCP5_13TeV-mcfm701-pythia8:
+  - ZZ
+GluGluToContinToZZTo2mu2nu_TuneCP5_13TeV-mcfm701-pythia8:
+  - ZZ
+GluGluToContinToZZTo2mu2tau_TuneCP5_13TeV-mcfm701-pythia8:
+  - ZZ
+GluGluToContinToZZTo4e_TuneCP5_13TeV-mcfm701-pythia8:
+  - ZZ
+GluGluToContinToZZTo4mu_TuneCP5_13TeV-mcfm701-pythia8:
+  - ZZ
+GluGluToContinToZZTo4tau_TuneCP5_13TeV-mcfm701-pythia8:
+  - ZZ
+ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8:
+  - ZZ
+ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8:
+  - ZZ_EWK_LO
+EWKZ2Jets_ZToLL_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8:
+  - bk_EWK
+EWKWMinus2Jets_WToLNu_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8:
+  - bk_EWK
+EWKWPlus2Jets_WToLNu_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8:
+  - bk_EWK
+ZZTo2E2Nu_TuneCP5_DipoleRecoil_13TeV_powheg_pythia8:
+  - ZZ_EWK_NLO_EE
+ZZTo2Mu2Nu_TuneCP5_DipoleRecoil_13TeV_powheg_pythia8:
+  - ZZ_EWK_NLO_MuMu
