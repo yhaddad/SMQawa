@@ -105,7 +105,7 @@ def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
         ycor = ak.where((run >= 320394) & (run <= 325273), -(0.0884639*npv -1.570890), ycor)
         
     metx_ = met.pt * np.cos(met.phi)+xcor
-    mety_ = met.pt * np.sin(met.phi)+xcor
+    mety_ = met.pt * np.sin(met.phi)+ycor
 
     pt_ = np.sqrt((metx_**2)+(mety_**2))
     phi_ = np.arctan2(mety_,metx_)
