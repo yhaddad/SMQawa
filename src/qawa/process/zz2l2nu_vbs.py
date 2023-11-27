@@ -485,8 +485,8 @@ class zzinc_processor(processor.ProcessorABC):
         min_dphi_met_j = ak.min(np.abs(
             ak.where(
                 ntight_lep==3, 
-                jets.delta_phi(emu_met), 
-                jets.delta_phi(p4_met)
+                good_jets.delta_phi(emu_met), 
+                good_jets.delta_phi(p4_met)
             )
         ), axis=1)
 
@@ -716,6 +716,12 @@ class zzinc_processor(processor.ProcessorABC):
 		    'low_met_pt', '~1nbjets', '0nhtaus', 
 		    "2njets", "~dijet_mass_400"
         ],
+            "vbs-DYRD": common_sel + [
+            'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
+            '~dilep_dphi_met', 'min_dphi_met_j', 
+            'low_met_pt', '~1nbjets', '0nhtaus', 
+            "2njets", "~dijet_mass_400"
+        ],
             "vbs-3L": common_sel + [
 		    'require-3lep', 'dilep_m', 'dilep_pt',
 		    'dilep_dphi_met', #'min_dphi_met_j',
@@ -831,6 +837,21 @@ class zzinc_processor(processor.ProcessorABC):
         dataset_name = event.metadata['dataset']
         is_data = event.metadata.get("is_data")
         
+        # x-y met shit corrections
+        # for the moment I am replacing the met with the corrected met 
+        # before doing the JES/JER corrections
+        
+        run = event.run 
+        npv = event.PV.npvs
+        met = event.MET
+        
+        met = met_phi_xy_correction(
+            event.MET, run, npv, 
+            is_mc=not is_data, 
+            era=self._era
+        )
+        event = ak.with_field(event, met, 'MET')
+
         if is_data:
             jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
             met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
@@ -855,20 +876,6 @@ class zzinc_processor(processor.ProcessorABC):
                 
             return self.process_shift(event, None)
         
-        # x-y met shit corrections
-        # for the moment I am replacing the met with the corrected met 
-        # before doing the JES/JER corrections
-        
-        run = event.run 
-        npv = event.PV.npvs
-        met = event.MET
-        
-        met = met_phi_xy_correction(
-            event.MET, run, npv, 
-            is_mc=not is_data, 
-            era=self._era
-        )
-        event = ak.with_field(event, met, 'MET')
 		
         # Adding scale factors to Muon and Electron fields
         muon = event.Muon 
