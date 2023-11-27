@@ -831,6 +831,21 @@ class zzinc_processor(processor.ProcessorABC):
         dataset_name = event.metadata['dataset']
         is_data = event.metadata.get("is_data")
         
+	# x-y met shit corrections
+        # for the moment I am replacing the met with the corrected met 
+        # before doing the JES/JER corrections
+        
+        run = event.run 
+        npv = event.PV.npvs
+        met = event.MET
+        
+        met = met_phi_xy_correction(
+            event.MET, run, npv, 
+            is_mc=not is_data, 
+            era=self._era
+        )
+        event = ak.with_field(event, met, 'MET')
+	
         if is_data:
             jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
             met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
@@ -854,21 +869,6 @@ class zzinc_processor(processor.ProcessorABC):
                 event = ak.with_field(event, jets, 'Jet')
                 
             return self.process_shift(event, None)
-        
-        # x-y met shit corrections
-        # for the moment I am replacing the met with the corrected met 
-        # before doing the JES/JER corrections
-        
-        run = event.run 
-        npv = event.PV.npvs
-        met = event.MET
-        
-        met = met_phi_xy_correction(
-            event.MET, run, npv, 
-            is_mc=not is_data, 
-            era=self._era
-        )
-        event = ak.with_field(event, met, 'MET')
 		
         # Adding scale factors to Muon and Electron fields
         muon = event.Muon 
