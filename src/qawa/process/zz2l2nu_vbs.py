@@ -58,12 +58,10 @@ def build_leptons(muons, electrons):
     # contruct a lepton object
     tight_leptons = ak.with_name(ak.concatenate([tight_muons, tight_electrons], axis=1), 'PtEtaPhiMCandidate')
     loose_leptons = ak.with_name(ak.concatenate([loose_muons, loose_electrons], axis=1), 'PtEtaPhiMCandidate')
-    #print(tight_leptons.pt,'before')
     tight_sorted_index = ak.argsort(tight_leptons.pt,ascending=False)
     loose_sorted_index = ak.argsort(loose_leptons.pt,ascending=False)
     tight_leptons = tight_leptons[tight_sorted_index]
     loose_leptons = loose_leptons[loose_sorted_index]
-    print(tight_leptons.pt,'after')
 
     return tight_leptons, loose_leptons
 
