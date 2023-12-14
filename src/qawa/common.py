@@ -95,14 +95,14 @@ def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
         xcor = ak.where((run >= 304911) & (run <= 316995), -( 0.198626*npv +1.028000), ycor)
 
         # UL2018
-        xcor = ak.where((run >= 315252) & (run <= 316995), -(0.3628650*npv -1.945050), xcor)
-        ycor = ak.where((run >= 315252) & (run <= 316995), -(0.0709085*npv -0.307365), ycor)
-        xcor = ak.where((run >= 316998) & (run <= 319312), -(0.4920830*npv -2.935520), xcor)
-        ycor = ak.where((run >= 316998) & (run <= 319312), -(0.1787400*npv -0.786844), ycor)
-        xcor = ak.where((run >= 319313) & (run <= 320393), -(0.5213490*npv -1.445440), xcor)
-        ycor = ak.where((run >= 319313) & (run <= 320393), -(0.1189560*npv -1.964340), ycor)
-        xcor = ak.where((run >= 320394) & (run <= 325273), -(0.5311510*npv -1.375680), xcor)
-        ycor = ak.where((run >= 320394) & (run <= 325273), -(0.0884639*npv -1.570890), ycor)
+        xcor = ak.where((run >= 315252) & (run <= 316995), -(0.263733*npv -1.91115), xcor)
+        ycor = ak.where((run >= 315252) & (run <= 316995), -(0.0431304*npv -0.112043), ycor)
+        xcor = ak.where((run >= 316998) & (run <= 319312), -(0.400466*npv -3.05914), xcor)
+        ycor = ak.where((run >= 316998) & (run <= 319312), -(0.146125*npv -0.533233), ycor)
+        xcor = ak.where((run >= 319313) & (run <= 320393), -(0.430911*npv -1.42865), xcor)
+        ycor = ak.where((run >= 319313) & (run <= 320393), -(0.0620083*npv -1.46021), ycor)
+        xcor = ak.where((run >= 320394) & (run <= 325273), -(0.457327*npv -1.56856), xcor)
+        ycor = ak.where((run >= 320394) & (run <= 325273), -(0.0684071*npv -0.928372), ycor)
         
     metx_ = met.pt * np.cos(met.phi)+xcor
     mety_ = met.pt * np.sin(met.phi)+ycor

@@ -132,7 +132,7 @@ class coffea_gnn_input(processor.ProcessorABC):
 		self.tauIDvsmu_wp = 'VLoose'
 		self.zmass = 91.1873 # GeV 
 		self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
-		self._jmeu = JMEUncertainty(jec_tag, jer_tag, era)
+		self._jmeu = JMEUncertainty(jec_tag, jer_tag, self._era)
 		self._purw = pileup_weights(era=self._era)
 		self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
 		self._jpSF = jetPUScaleFactors(era=self._era, wp=self.jetPU_wp, isAPV=self._isAPV)

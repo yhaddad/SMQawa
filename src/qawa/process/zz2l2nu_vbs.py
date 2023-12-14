@@ -58,6 +58,10 @@ def build_leptons(muons, electrons):
     # contruct a lepton object
     tight_leptons = ak.with_name(ak.concatenate([tight_muons, tight_electrons], axis=1), 'PtEtaPhiMCandidate')
     loose_leptons = ak.with_name(ak.concatenate([loose_muons, loose_electrons], axis=1), 'PtEtaPhiMCandidate')
+    tight_sorted_index = ak.argsort(tight_leptons.pt,ascending=False)
+    loose_sorted_index = ak.argsort(loose_leptons.pt,ascending=False)
+    tight_leptons = tight_leptons[tight_sorted_index]
+    loose_leptons = loose_leptons[loose_sorted_index]
 
     return tight_leptons, loose_leptons
 
@@ -716,6 +720,12 @@ class zzinc_processor(processor.ProcessorABC):
 		    'low_met_pt', '~1nbjets', '0nhtaus', 
 		    "2njets", "~dijet_mass_400"
         ],
+            "vbs-DYRD": common_sel + [
+            'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
+            '~dilep_dphi_met', 'min_dphi_met_j', 
+            'low_met_pt', '~1nbjets', '0nhtaus', 
+            "2njets", "~dijet_mass_400"
+        ],
             "vbs-3L": common_sel + [
 		    'require-3lep', 'dilep_m', 'dilep_pt',
 		    'dilep_dphi_met', #'min_dphi_met_j',
@@ -831,7 +841,7 @@ class zzinc_processor(processor.ProcessorABC):
         dataset_name = event.metadata['dataset']
         is_data = event.metadata.get("is_data")
         
-	# x-y met shit corrections
+        # x-y met shit corrections
         # for the moment I am replacing the met with the corrected met 
         # before doing the JES/JER corrections
         
@@ -845,7 +855,7 @@ class zzinc_processor(processor.ProcessorABC):
             era=self._era
         )
         event = ak.with_field(event, met, 'MET')
-	
+
         if is_data:
             jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
             met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
