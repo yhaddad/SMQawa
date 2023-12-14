@@ -879,7 +879,6 @@ class zzinc_processor(processor.ProcessorABC):
                 event = ak.with_field(event, jets, 'Jet')
                 
             return self.process_shift(event, None)
-        
 		
         # Adding scale factors to Muon and Electron fields
         muon = event.Muon 
