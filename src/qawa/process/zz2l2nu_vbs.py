@@ -32,7 +32,8 @@ def build_leptons(muons, electrons):
         (np.abs(muons.dxy)    <  0.02) &
         (np.abs(muons.dz )    <  0.1 ) &
         (muons.pfRelIso04_all <= 0.15) & 
-        muons.tightId
+        muons.tightId &
+        muons.softId
     )
     tight_muons = muons[tight_muons_mask]
     loose_muons = muons[
@@ -46,7 +47,8 @@ def build_leptons(muons, electrons):
     tight_electrons_mask = (
         (electrons.pt           > 20.) &
         (np.abs(electrons.eta)  < 2.5) &
-        electrons.mvaFall17V2Iso_WP90
+        electrons.mvaFall17V2Iso_WP90 &
+        electrons.mvaFall17V2Iso_WPL
     )
     tight_electrons = electrons[tight_electrons_mask]
     loose_electrons = electrons[
@@ -355,9 +357,11 @@ class zzinc_processor(processor.ProcessorABC):
                 event.Flag.EcalDeadCellTriggerPrimitiveFilter &
                 event.Flag.goodVertices &
                 event.Flag.eeBadScFilter &
-                event.Flag.globalTightHalo2016Filter &
-                event.Flag.BadChargedCandidateFilter & 
-                event.Flag.BadPFMuonFilter
+                #event.Flag.globalTightHalo2016Filter &
+                #event.Flag.BadChargedCandidateFilter & 
+                event.Flag.BadPFMuonFilter &
+                event.Flag.BadPFMuonDzFilter &
+                event.Flag.ecalBadCalibFilter
             )
         else:
             selection.add(
@@ -397,18 +401,19 @@ class zzinc_processor(processor.ProcessorABC):
             (jets.pt>30.0) & 
             (np.abs(jets.eta) < 4.7) & 
             (jets.jetId >= 6) & # tight JetID 7(2016) and 6(2017/8)
-            (jets.puId >= 6)  # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL
+            ((jets.puId >= 6) | (jets.pt >= 50))  # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL
         )
         
         jet_btag = (
-                event.Jet.btagDeepFlavB > btag_id(
+                (event.Jet.btagDeepFlavB > btag_id(
                     self.btag_wp, 
                     self._era + 'APV' if self._isAPV else self._era
-                )
+                )) &
+                (np.abs(jets.eta)<2.5)
         )
         
         good_jets = jets[~jet_btag & jet_mask]
-        good_bjet = jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.4)]
+        good_bjet = jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.5)]
         
         ngood_jets  = ak.num(good_jets)
         ngood_bjets = ak.num(good_bjet)
@@ -508,7 +513,7 @@ class zzinc_processor(processor.ProcessorABC):
             "require-osof",
             (ntight_lep==2) & (nloose_lep==0) &
             (ak.firsts(tight_lep).pt>25) &
-           ak.fill_none(np.abs(lead_lep.pdgId) != np.abs(subl_lep.pdgId), False)
+           ((lead_lep.pdgId)*(subl_lep.pdgId) == -143)
         )
         
         selection.add(
@@ -857,6 +862,17 @@ class zzinc_processor(processor.ProcessorABC):
         event = ak.with_field(event, met, 'MET')
 
         if is_data:
+            # Apply rochester_correction
+            muon=event.Muon
+            muonEnUp=event.Muon
+            muonEnDown=event.Muon
+            muon_pt,muon_pt_roccorUp,muon_pt_roccorDown=rochester_correction(is_data).apply_rochester_correction (muon)
+
+            muon['pt'] = muon_pt
+            muonEnUp['pt'] = muon_pt_roccorUp
+            muonEnDown['pt'] = muon_pt_roccorDown
+            event = ak.with_field(event, muon, 'Muon')
+            
             jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
             met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
 
