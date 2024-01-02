@@ -145,7 +145,7 @@ class zzinc_processor(processor.ProcessorABC):
         self.tauIDvsjet_wp = 'Medium'
         self.tauIDvse_wp = 'VVLoose'
         self.tauIDvsmu_wp = 'VLoose'
-        self.zmass = 91.1873 # GeV 
+        self.zmass = 91.1876 # GeV 
         self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
         self._jmeu = JMEUncertainty(jec_tag, jer_tag, era=self._era, is_mc=(len(run_period)==0))
         self._purw = pileup_weights(era=self._era)
