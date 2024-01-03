@@ -12,7 +12,7 @@ qawa_version = importlib.metadata.version('qawa')
 #qawa_version = '0.0.5'
 
 
-script_TEMPLATE = """#!/bin/bash
+script_TEMPLATE_data = """#!/bin/bash
 export X509_USER_PROXY={proxy}
 export XRD_REQUESTTIMEOUT=6400
 export XRD_REDIRECTLIMIT=64
@@ -31,10 +31,13 @@ echo "----- XRD_REDIRECTLIMIT  : $XRD_REDIRECTLIMIT"
 echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
 echo "----- download the file locally"
-
+xrdcp root://xrootd-cms.infn.it/$2 ./
 echo "----- processing the files : "
-python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2
-
+filepath=$2
+dataset=$(echo "$filepath" | awk -F'/' '{{print $5}}')
+runperiod=$(echo "$filepath" | awk -F'/' '{{print $4}}' | awk '{{print substr($0, length, 1)}}')
+python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$(basename "$filepath") --dataset=$dataset --runperiod=$runperiod
+rm $(basename "$filepath")
 echo "----- directory after running :"
 ls -lthr
 if [ ! -f "histogram_$1.pkl.gz" ]; then
@@ -43,6 +46,37 @@ fi
 echo " ------ THE END (everyone dies !) ----- "
 """
 
+script_TEMPLATE_MC = """#!/bin/bash
+export X509_USER_PROXY={proxy}
+export XRD_REQUESTTIMEOUT=6400
+export XRD_REDIRECTLIMIT=64
+
+voms-proxy-info -all
+voms-proxy-info -all -file {proxy}
+
+python -m venv --without-pip --system-site-packages jobenv
+source jobenv/bin/activate
+python -m pip install scipy --upgrade --no-cache-dir
+python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-{qawa_version}-py2.py3-none-any.whl
+
+echo "----- JOB STARTS @" `date "+%Y-%m-%d %H:%M:%S"`
+echo "----- X509_USER_PROXY    : $X509_USER_PROXY"
+echo "----- XRD_REDIRECTLIMIT  : $XRD_REDIRECTLIMIT"
+echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
+ls -lthr
+echo "----- download the file locally"
+xrdcp root://xrootd-cms.infn.it/$2 ./
+echo "----- processing the files : "
+filepath=$2
+python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$(basename "$filepath") --dataset=$(echo "$filepath" | awk -F'/' '{{print $5}}') --runperiod=
+rm $(basename "$filepath")
+echo "----- directory after running :"
+ls -lthr
+if [ ! -f "histogram_$1.pkl.gz" ]; then
+  exit 1;
+fi
+echo " ------ THE END (everyone dies !) ----- "
+"""
 
 condor_TEMPLATE = """
 universe              = vanilla
@@ -168,13 +202,22 @@ def main():
             os.system("mkdir -p {}".format(eosoutdir))
 
             with open(os.path.join(jobs_dir, "script.sh"), "w") as scriptfile:
-                script = script_TEMPLATE.format(
-                    proxy=proxy_copy,
-                    ismc=options.isMC,
-                    era=options.era,
-                    eosdir=eosoutdir, 
-                    qawa_version=qawa_version
-                )
+                if options.isMC:
+                    script = script_TEMPLATE_MC.format(
+                        proxy=proxy_copy,
+                        ismc=options.isMC,
+                        era=options.era,
+                        eosdir=eosoutdir, 
+                        qawa_version=qawa_version
+                    )
+                else:
+                    script = script_TEMPLATE_data.format(
+                        proxy=proxy_copy,
+                        ismc=options.isMC,
+                        era=options.era,
+                        eosdir=eosoutdir, 
+                        qawa_version=qawa_version
+                    )                    
                 scriptfile.write(script)
                 scriptfile.close()
 
