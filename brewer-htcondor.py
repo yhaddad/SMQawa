@@ -31,7 +31,18 @@ echo "----- XRD_REDIRECTLIMIT  : $XRD_REDIRECTLIMIT"
 echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
 echo "----- download the file locally"
-xrdcp root://xrootd-cms.infn.it/$2 ./
+aliases=("root://llrxrd-redir.in2p3.fr/" "root://xrootd-cms.infn.it/" "root://cms-xrd-global01.cern.ch/" "root://cms-xrd-global02.cern.ch/" "root://cmsxrootd.fnal.gov/" "root://xrootd-cms-redir-int.cr.cnaf.infn.it/" "root://xrootd-redic.pi.infn.it/")
+while [ ! -e "$(basename "$2")" ]; do
+    for aliase in "${{aliases[@]}}"; do
+        echo $aliase/$2
+        xrdcp $aliase/$2 ./
+        if [ $? -eq 0 ]; then
+            break
+        else
+            continue
+        fi
+    done
+done
 echo "----- processing the files : "
 filepath=$2
 dataset=$(echo "$filepath" | awk -F'/' '{{print $5}}')
@@ -65,7 +76,18 @@ echo "----- XRD_REDIRECTLIMIT  : $XRD_REDIRECTLIMIT"
 echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
 echo "----- download the file locally"
-xrdcp root://xrootd-cms.infn.it/$2 ./
+aliases=("root://llrxrd-redir.in2p3.fr/" "root://xrootd-cms.infn.it/" "root://cms-xrd-global01.cern.ch/" "root://cms-xrd-global02.cern.ch/" "root://cmsxrootd.fnal.gov/" "root://xrootd-cms-redir-int.cr.cnaf.infn.it/" "root://xrootd-redic.pi.infn.it/")
+while [ ! -e "$(basename "$2")" ]; do
+    for aliase in "${{aliases[@]}}"; do
+        echo $aliase/$2
+        xrdcp $aliase/$2 ./
+        if [ $? -eq 0 ]; then
+            break
+        else
+            continue
+        fi
+    done
+done
 echo "----- processing the files : "
 filepath=$2
 python brewer-remote.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$(basename "$filepath") --dataset=$(echo "$filepath" | awk -F'/' '{{print $5}}') --runperiod=

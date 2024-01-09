@@ -111,6 +111,10 @@ def main():
             if "WZTo" in options.infile and "GluGluTo" not in options.infile:
                 ewk_flag = 'WZ'
 
+            DY_flag = False
+            if "DY" in options.infile:
+                DY_flag = True
+
             # extarct the run period
             if is_data:
                 if 'Run20' in options.infile:
@@ -135,6 +139,7 @@ def main():
                 samples,
                 processor_instance=zzinc_processor(
                     era=options.era,
+                    isDY=DY_flag,
                     ewk_process_name=ewk_flag,
                     dump_gnn_array=options.dumpgnn, 
                     run_period=options.runperiod if is_data else ''
