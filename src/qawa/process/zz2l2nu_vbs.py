@@ -145,7 +145,7 @@ class zzinc_processor(processor.ProcessorABC):
         self.tauIDvsjet_wp = 'Medium'
         self.tauIDvse_wp = 'VVLoose'
         self.tauIDvsmu_wp = 'VLoose'
-        self.zmass = 91.1873 # GeV 
+        self.zmass = 91.1876 # GeV 
         self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
         self._jmeu = JMEUncertainty(jec_tag, jer_tag, era=self._era, is_mc=(len(run_period)==0))
         self._purw = pileup_weights(era=self._era)
@@ -505,28 +505,28 @@ class zzinc_processor(processor.ProcessorABC):
         selection.add(
             "require-ossf",
             (ntight_lep==2) & (nloose_lep==0) &
-            (ak.firsts(tight_lep).pt>25) &
+            (ak.any(tight_lep.pt > 25)) &
             ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
         )
         
         selection.add(
             "require-osof",
             (ntight_lep==2) & (nloose_lep==0) &
-            (ak.firsts(tight_lep).pt>25) &
+            (ak.any(tight_lep.pt > 25)) &
            ((lead_lep.pdgId)*(subl_lep.pdgId) == -143)
         )
         
         selection.add(
             "require-3lep",
             (ntight_lep==3) & (nloose_lep==0) &
-            (ak.firsts(tight_lep).pt>25) &
+            (ak.any(tight_lep.pt > 25)) &
             ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
         )
         
         selection.add(
             "require-4lep",
             (ntight_lep>=2) & (nloose_lep + ntight_lep)==4 &
-            (ak.firsts(tight_lep).pt>25) &
+            (ak.any(tight_lep.pt > 25)) &
             ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
         )
         selection.add(
@@ -541,6 +541,8 @@ class zzinc_processor(processor.ProcessorABC):
         selection.add('low_met_pt', ak.fill_none((reco_met_pt < 100) & (reco_met_pt > 50), False))
         selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
+	selection.add('dilep_pt_45',ak.fill_none(dilep_pt > 45, False))
+	selection.add('met_70', ak.fill_none(reco_met_pt >70, False))
         selection.add(
             'dilep_pt',
             ak.where(
@@ -698,9 +700,9 @@ class zzinc_processor(processor.ProcessorABC):
 		    'met_pt', '~1nbjets', "~2njets" 
 	    ],
             "cat-EM": common_sel + [
-		    'require-osof', 'dilep_m', 'dilep_pt',
+		    'require-osof', 'dilep_m', 'dilep_pt_45',
 		    'dilep_dphi_met', 'min_dphi_met_j', 
-		    'met_pt', '~1nbjets', "~2njets"],
+		    'met_70', '~1nbjets', "~2njets"],
             "cat-TT": common_sel + [
 		    'require-osof', 'dilep_m', 'dilep_pt', 
 		    'dilep_dphi_met', 
@@ -737,9 +739,9 @@ class zzinc_processor(processor.ProcessorABC):
 		    'met_pt', '~1nbjets', "2njets"
 	    ],
             "vbs-EM": common_sel + [
-		    'require-osof', 'dilep_m', 'dilep_pt', 
+		    'require-osof', 'dilep_m', 'dilep_pt_45', 
 		    'dilep_dphi_met', #'min_dphi_met_j',
-		    'met_pt', '~1nbjets',"2njets"
+		    'met_70', '~1nbjets',"2njets"
         ],
             "vbs-TT": common_sel + [
 		    'require-osof', 'dilep_m', 'dilep_pt', 
