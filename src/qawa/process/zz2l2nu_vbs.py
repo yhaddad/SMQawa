@@ -22,6 +22,7 @@ from qawa.jetPU import jetPUScaleFactors
 from qawa.tauSF import tauIDScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
+from qawa.ddr import dataDrivenDYRatio
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
 
 def build_leptons(muons, electrons):
@@ -96,8 +97,9 @@ def build_photons(photon):
 
 class zzinc_processor(processor.ProcessorABC):
     # EWK corrections process has to be define before hand, it has to change when we move to dask
-    def __init__(self, era: str ='2018', dump_gnn_array=False, ewk_process_name=None, run_period: str = ''): 
+    def __init__(self, era: str ='2018', isDY=False, dump_gnn_array=False, ewk_process_name=None, run_period: str = ''): 
         self._era = era
+        self._isDY = isDY
         if 'APV' in self._era:
             self._isAPV = True
             self._era = re.findall(r'\d+', self._era)[0] 
@@ -597,6 +599,9 @@ class zzinc_processor(processor.ProcessorABC):
         # Apply GNN
         event['gnn_score'] = applyGNN(event).get_nnscore()
         event['gnn_flat'] = self.gnn_flat_fnc(event['gnn_score'])
+
+        #Apply DataDriven Ratio
+        dataDrivenDYRatio(dilep_pt,reco_met_pt,self._isDY, self._era).ddr_add_weight(weights)
 
         # Now adding weights
         if not is_data:
