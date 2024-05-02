@@ -399,7 +399,7 @@ class zzinc_processor(processor.ProcessorABC):
             (jets.pt>30.0) & 
             (np.abs(jets.eta) < 4.7) & 
             (jets.jetId >= 6) & # tight JetID 7(2016) and 6(2017/8)
-            (jets.puId >= 6)  # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL
+            ((jets.puId >= 6) or (jets.puId == 3)) # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL 3,7 for 16and 16APV; 6,7 for 17,18
         )
         
         jet_btag = (
@@ -600,12 +600,11 @@ class zzinc_processor(processor.ProcessorABC):
         event['gnn_score'] = applyGNN(event).get_nnscore()
         event['gnn_flat'] = self.gnn_flat_fnc(event['gnn_score'])
 
-        #Apply DataDriven Ratio
-        dataDrivenDYRatio(dilep_pt,reco_met_pt,self._isDY, self._era).ddr_add_weight(weights)
 
         # Now adding weights
         if not is_data:
             weights.add('genweight', event.genWeight)
+            dataDrivenDYRatio(dilep_pt,reco_met_pt,self._isDY, self._era).ddr_add_weight(weights) #Apply DataDriven Ratio
             self._btag.append_btag_sf(jets, weights)
             self._jpSF.append_jetPU_sf(jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
