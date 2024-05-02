@@ -204,6 +204,12 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(60, 0, 600, name="met_pt", label=r"$p_{T}^{miss}$ (GeV)"),
                 hist.storage.Weight()
             ),
+            'met_phi': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -np.pi, np.pi, name="met_phi", label=r"$\phi^{miss}$"),
+                hist.storage.Weight()
+            ),
             'njets': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
@@ -258,6 +264,12 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 30, 530, name="trail_jet_pt", label=r"$p_T^{j_2}$ (GeV)"),
                 hist.storage.Weight()
             ),
+            "third_jet_pt": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="third_jet_pt", label=r"$p_T^{j_2}$ (GeV)"),
+                hist.storage.Weight()
+            ),
             "lead_jet_eta": hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
@@ -268,6 +280,85 @@ class zzinc_processor(processor.ProcessorABC):
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(50, -5, 5, name="trail_jet_eta", label=r"$\eta(j_2)$"),
+                hist.storage.Weight()
+            ),
+            "third_jet_eta": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="third_jet_eta", label=r"$\eta(j_3)$"),
+                hist.storage.Weight()
+            ),
+            "lead_jet_phi": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -np.pi, np.pi, name="lead_jet_phi", label=r"$\phi^(j_1)$"),
+                hist.storage.Weight()
+            ), 
+            "trail_jet_phi": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -np.pi, np.pi, name="trail_jet_phi", label=r"$\phi^(j_2)$"),
+                hist.storage.Weight()
+            ),
+            "third_jet_phi": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50,-np.pi, np.pi, name="third_jet_phi", label=r"$\phi^(j_3)$"),
+                hist.storage.Weight()
+            ),
+
+            "leading_lep_pt": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="leading_lep_pt", label="$p_T^{l_1}$ (GeV)"),
+                hist.storage.Weight()
+            ), 
+            "trailing_lep_pt": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="trailing_lep_pt", label=r"$p_T^{l_2}$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            "third_lep_pt": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="third_lep_pt", label=r"$p_T^{l_2}$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            "leading_lep_eta": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="leading_lep_eta", label=r"$\eta(l_1)$"),
+                hist.storage.Weight()
+            ), 
+            "trailing_lep_eta": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="trailing_lep_eta", label=r"$\eta(l_2)$"),
+                hist.storage.Weight()
+            ),
+            "third_lep_eta": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="third_lep_eta", label=r"$\eta(l_3)$"),
+                hist.storage.Weight()
+            ),
+            "leading_lep_phi": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -np.pi, np.pi, name="leading_lep_phi", label=r"$\phi^(l_1)$"),
+                hist.storage.Weight()
+            ), 
+            "trailing_lep_phi": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -np.pi, np.pi, name="trailing_lep_phi", label=r"$\phi^(l_2)$"),
+                hist.storage.Weight()
+            ),
+            "third_lep_phi": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -np.pi, np.pi, name="third_lep_phi", label=r"$\phi^(l_3)$"),
                 hist.storage.Weight()
             ),
             "min_dphi_met_j": hist.Hist( 
@@ -399,7 +490,7 @@ class zzinc_processor(processor.ProcessorABC):
             (jets.pt>30.0) & 
             (np.abs(jets.eta) < 4.7) & 
             (jets.jetId >= 6) & # tight JetID 7(2016) and 6(2017/8)
-            (jets.puId >= 6)  # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL
+            (jets.puId >= 6) or (jets.puId == 3) # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL 3,7 for 16and 16APV; 6,7 for 17,18
         )
         
         jet_btag = (
@@ -439,6 +530,8 @@ class zzinc_processor(processor.ProcessorABC):
         dilep_m  = dilep_p4.mass
         dilep_pt = dilep_p4.pt
         
+        third_lep = ak.firsts(extra_lep, axis=1)
+
         # high level observables
         p4_met = ak.zip(
             {
@@ -536,6 +629,7 @@ class zzinc_processor(processor.ProcessorABC):
         )
 
         selection.add('low_met_pt', ak.fill_none((reco_met_pt < 100) & (reco_met_pt > 50), False))
+        selection.add('medium_met_pt', ak.fill_none((reco_met_pt > 70), False))
         selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
         selection.add(
@@ -585,7 +679,10 @@ class zzinc_processor(processor.ProcessorABC):
         event['trailing_lep_pt' ] = subl_lep.pt
         event['trailing_lep_eta'] = subl_lep.eta
         event['trailing_lep_phi'] = subl_lep.phi
-                
+        event['third_lep_pt'  ] = third_lep.pt
+        event['third_lep_eta' ] = third_lep.eta
+        event['third_lep_phi' ] = third_lep.phi
+
         event['lead_jet_pt'  ] = lead_jet.pt
         event['lead_jet_eta' ] = lead_jet.eta
         event['lead_jet_phi' ] = lead_jet.phi
@@ -600,18 +697,16 @@ class zzinc_processor(processor.ProcessorABC):
         event['gnn_score'] = applyGNN(event).get_nnscore()
         event['gnn_flat'] = self.gnn_flat_fnc(event['gnn_score'])
 
-        #Apply DataDriven Ratio
-        dataDrivenDYRatio(dilep_pt,reco_met_pt,self._isDY, self._era).ddr_add_weight(weights)
-
         # Now adding weights
         if not is_data:
             weights.add('genweight', event.genWeight)
+            dataDrivenDYRatio(dilep_pt,reco_met_pt,self._isDY, self._era).ddr_add_weight(weights)
             self._btag.append_btag_sf(jets, weights)
             self._jpSF.append_jetPU_sf(jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
             self._tauID.append_tauID_sf(had_taus, weights)
             self._add_trigger_sf(weights, lead_lep, subl_lep)
-            
+
             weights.add (
                     'LeptonSF', 
                     lead_lep.SF*subl_lep.SF, 
@@ -719,27 +814,26 @@ class zzinc_processor(processor.ProcessorABC):
 		    'met_pt', '~1nbjets', 
 		    "2njets", "dijet_deta", "dijet_mass_400"
 	    ],
+        #     "vbs-DY": common_sel + [
+		#     'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
+		#     'dilep_dphi_met', 'min_dphi_met_j', 
+		#     'low_met_pt', '~1nbjets', '0nhtaus', 
+		#     "2njets", "~dijet_mass_400"
+        # ],
             "vbs-DY": common_sel + [
-		    'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
-		    'dilep_dphi_met', 'min_dphi_met_j', 
-		    'low_met_pt', '~1nbjets', '0nhtaus', 
-		    "2njets", "~dijet_mass_400"
-        ],
-            "vbs-DYRD": common_sel + [
-            'dijet_deta','require-ossf', 'dilep_m', 'dilep_pt',
-            '~dilep_dphi_met', 'min_dphi_met_j', 
-            'low_met_pt', '~1nbjets', '0nhtaus', 
-            "2njets", "~dijet_mass_400"
+            'require-ossf', 'dilep_m', 'dilep_pt',
+            'dilep_dphi_met', 'min_dphi_met_j', 
+            'low_met_pt',"2njets"
         ],
             "vbs-3L": common_sel + [
 		    'require-3lep', 'dilep_m', 'dilep_pt',
 		    'dilep_dphi_met', #'min_dphi_met_j',
-		    'met_pt', '~1nbjets', "2njets"
+		    'medium_met_pt', '~1nbjets', "2njets"
 	    ],
             "vbs-EM": common_sel + [
 		    'require-osof', 'dilep_m', 'dilep_pt', 
 		    'dilep_dphi_met', #'min_dphi_met_j',
-		    'met_pt', '~1nbjets',"2njets"
+		    'medium_met_pt', '~1nbjets',"2njets"
         ],
             "vbs-TT": common_sel + [
 		    'require-osof', 'dilep_m', 'dilep_pt', 
@@ -824,6 +918,7 @@ class zzinc_processor(processor.ProcessorABC):
                 _gnn_dumper(ch)
             for sys in systematics:
                 _histogram_filler(ch, sys, 'met_pt')
+                _histogram_filler(ch, sys, 'met_phi')
                 _histogram_filler(ch, sys, 'dilep_mt')
                 _histogram_filler(ch, sys, 'dilep_pt')
                 _histogram_filler(ch, sys, 'dilep_m')
@@ -834,11 +929,27 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'dijet_deta')
                 _histogram_filler(ch, sys, 'lead_jet_pt')
                 _histogram_filler(ch, sys, 'trail_jet_pt')
+                _histogram_filler(ch, sys, 'third_jet_pt')
                 _histogram_filler(ch, sys, 'lead_jet_eta')
                 _histogram_filler(ch, sys, 'trail_jet_eta')
+                _histogram_filler(ch, sys, 'third_jet_eta')
+                _histogram_filler(ch, sys, 'lead_jet_phi')
+                _histogram_filler(ch, sys, 'trail_jet_phi')
+                _histogram_filler(ch, sys, 'third_jet_phi')
+                _histogram_filler(ch, sys, 'leading_lep_pt')
+                _histogram_filler(ch, sys, 'trailing_lep_pt')
+                _histogram_filler(ch, sys, 'third_lep_pt')
+                _histogram_filler(ch, sys, 'leading_lep_eta')
+                _histogram_filler(ch, sys, 'trailing_lep_eta')
+                _histogram_filler(ch, sys, 'third_lep_eta')
+                _histogram_filler(ch, sys, 'leading_lep_phi')
+                _histogram_filler(ch, sys, 'trailing_lep_phi')
+                _histogram_filler(ch, sys, 'third_lep_phi')
                 _histogram_filler(ch, sys, 'min_dphi_met_j')
                 _histogram_filler(ch, sys, 'gnn_score')
                 _histogram_filler(ch, sys, 'gnn_flat')
+
+
                 
         return {dataset: histos}
         
