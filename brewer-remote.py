@@ -19,6 +19,7 @@ def validate_input_file(nanofile):
     pfn = nanofile
     pfn=re.sub("\n","",pfn)
     aliases = [
+        "",
         "root://eoscms.cern.ch/",
         "root://xrootd-cms.infn.it/",
         "root://cmsxrootd.fnal.gov/"
@@ -66,6 +67,7 @@ def main():
     failed = True
     ixrd = 0
     aliases = [
+        "",
         "root://llrxrd-redir.in2p3.fr/",
         "root://xrootd-cms.infn.it/",
         "root://cms-xrd-global01.cern.ch/", 
@@ -112,11 +114,11 @@ def main():
                 ewk_flag = 'WZ'
 
             # extarct the run period
-            if is_data:
-                if 'Run20' in options.infile:
-                    options.runperiod = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
-            else:
-                options.runperiod = ''
+            #if is_data:
+            #    if 'Run20' in options.infile:
+            #        options.runperiod = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
+            #else:
+            #    options.runperiod = ''
 
             print(
                 f"""---------------------------
