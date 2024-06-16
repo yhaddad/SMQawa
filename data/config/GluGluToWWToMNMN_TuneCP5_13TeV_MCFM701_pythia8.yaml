@@ -1,0 +1,8 @@
+GluGluToWWToMNMN_TuneCP5_13TeV_MCFM701_pythia8:
+  files:
+    - /tmp/hgao/GluGluToWWToMNMN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToMNMN_p0_Dilepton-MC_1.root 
+    - /tmp/hgao/GluGluToWWToMNMN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToMNMN_p0_Dilepton-MC_1.root 
+  metadata:
+    era: "2018"
+    is_data: False
+

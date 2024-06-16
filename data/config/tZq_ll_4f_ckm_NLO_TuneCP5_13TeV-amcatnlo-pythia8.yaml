@@ -1,0 +1,8 @@
+tZq_ll_4f_ckm_NLO_TuneCP5_13TeV-amcatnlo-pythia8:
+  files:
+    - /tmp/hgao/tZq_ll_4f_ckm_NLO_TuneCP5_13TeV-amcatnlo-pythia8/tZq_ll_p0_Dilepton-MC_1.root
+    - /tmp/hgao/tZq_ll_4f_ckm_NLO_TuneCP5_13TeV-amcatnlo-pythia8/tZq_ll_p0_Dilepton-MC_2.root
+  metadata:
+    era: "2018"
+    is_data: False
+

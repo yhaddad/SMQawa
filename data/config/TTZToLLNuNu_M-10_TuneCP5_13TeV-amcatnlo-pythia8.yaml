@@ -1,0 +1,9 @@
+TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8:
+  files:
+    - /tmp/hgao/TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/TTZToLLNuNu_M-10_p0_Dilepton-MC_1.root 
+    - /tmp/hgao/TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/TTZToLLNuNu_M-10_p0_Dilepton-MC_2.root 
+    - /tmp/hgao/TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/TTZToLLNuNu_M-10_p0_Dilepton-MC_3.root 
+  metadata:
+    era: "2018"
+    is_data: False
+

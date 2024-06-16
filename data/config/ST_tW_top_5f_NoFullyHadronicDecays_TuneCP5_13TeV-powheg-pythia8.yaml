@@ -1,0 +1,12 @@
+ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8:
+  files:
+    - /tmp/hgao/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/ST_tW_top_p0_Dilepton-MC_1.root
+    - /tmp/hgao/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/ST_tW_top_p0_Dilepton-MC_2.root
+    - /tmp/hgao/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/ST_tW_top_p0_Dilepton-MC_3.root
+    - /tmp/hgao/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/ST_tW_top_p0_Dilepton-MC_4.root
+    - /tmp/hgao/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/ST_tW_top_p0_Dilepton-MC_5.root
+    - /tmp/hgao/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/ST_tW_top_p0_Dilepton-MC_6.root
+  metadata:
+    era: "2018"
+    is_data: False
+

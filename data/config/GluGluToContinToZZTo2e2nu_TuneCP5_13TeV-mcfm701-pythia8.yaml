@@ -1,0 +1,10 @@
+GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8:
+  files:
+    - /tmp/hgao/GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/GluGluToContinToZZTo2e2nu_p0_Dilepton-MC_1.root
+    - /tmp/hgao/GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/GluGluToContinToZZTo2e2nu_p0_Dilepton-MC_2.root
+    - /tmp/hgao/GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/GluGluToContinToZZTo2e2nu_p0_Dilepton-MC_3.root
+    - /tmp/hgao/GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/GluGluToContinToZZTo2e2nu_p0_Dilepton-MC_4.root
+  metadata:
+    era: "2018"
+    is_data: False
+

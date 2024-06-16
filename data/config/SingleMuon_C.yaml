@@ -1,0 +1,24 @@
+SingleMuon:
+  files:
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_1.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_2.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_3.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_4.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_5.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_6.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_7.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_8.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_9.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_10.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_11.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_12.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_13.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_14.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_15.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_16.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_17.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_18.root
+    - /tmp/hgao/SingleMuon/crab_SingleMuon_p2_Dilepton-SingleMuon/SingleMuon_p2_Dilepton-SingleMuon_19.root
+  metadata:
+    era: "2018"
+    is_data: True

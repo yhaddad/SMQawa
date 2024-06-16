@@ -1,0 +1,10 @@
+DoubleMuon:
+  files:
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p2_Dilepton-DoubleMuon/DoubleMuon_p2_Dilepton-DoubleMuon_1.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p2_Dilepton-DoubleMuon/DoubleMuon_p2_Dilepton-DoubleMuon_2.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p2_Dilepton-DoubleMuon/DoubleMuon_p2_Dilepton-DoubleMuon_3.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p2_Dilepton-DoubleMuon/DoubleMuon_p2_Dilepton-DoubleMuon_4.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p2_Dilepton-DoubleMuon/DoubleMuon_p2_Dilepton-DoubleMuon_5.root
+  metadata:
+    era: "2018"
+    is_data: True

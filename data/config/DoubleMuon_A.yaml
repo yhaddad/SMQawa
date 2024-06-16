@@ -1,0 +1,18 @@
+DoubleMuon:
+  files:
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_1.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_2.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_3.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_4.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_5.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_6.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_7.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_8.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_9.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_10.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_11.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_12.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p0_Dilepton-DoubleMuon/DoubleMuon_p0_Dilepton-DoubleMuon_13.root
+  metadata:
+    era: "2018"
+    is_data: True

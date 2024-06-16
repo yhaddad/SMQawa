@@ -1,0 +1,20 @@
+WZZ_TuneCP5_13TeV-amcatnlo-pythia8:
+  files:
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_1.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_2.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_3.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_4.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_5.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_6.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_7.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_8.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_9.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_10.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_11.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_12.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_13.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_14.root
+  metadata:
+    era: "2018"
+    is_data: False
+
