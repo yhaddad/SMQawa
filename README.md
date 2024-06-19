@@ -29,20 +29,6 @@ class CorrT1METJet(vector.PtEtaPhiMLorentzVector, base.NanoCollection, base.Syst
 
 _set_repr_name("CorrT1METJet")
 
-@awkward.mixin_class(behavior)
-class GenJet(vector.PtEtaPhiMLorentzVector, base.NanoCollection, base.Systematic):
-    """NanoAOD narrow radius jet object"""
-    @property
-    def pt(self):
-        return self["pt"]
-    @property
-    def phi(self):
-        return self["phi"]
-    @property
-    def eta(self):
-        return self["eta"]
-
-_set_repr_name("GenJet")
 
 
 
