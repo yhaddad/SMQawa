@@ -1,4 +1,4 @@
-Fix the /coffea/nanoevents/methods/nanoaod.py, add these code for CorrT1METJet and GenJet:
+Fix the /coffea/nanoevents/methods/nanoaod.py, add these code for CorrT1METJet:
 @awkward.mixin_class(behavior)
 class CorrT1METJet(vector.PtEtaPhiMLorentzVector, base.NanoCollection, base.Systematic):
     """NanoAOD narrow radius jet object"""
