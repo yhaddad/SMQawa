@@ -821,13 +821,50 @@ class zzinc_processor(processor.ProcessorABC):
     def process(self, event: processor.LazyDataFrame):
         dataset_name = event.metadata['dataset']
         is_data = event.metadata.get("is_data")
+	# x-y met shit corrections
+        # for the moment I am replacing the met with the corrected met 
+        # before doing the JES/JER corrections
         
-        if is_data:
-            jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
-            met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
+        run = event.run 
+        npv = event.PV.npvs
+        met = event.MET
+        
+        met = met_phi_xy_correction(
+            event.MET, run, npv, 
+            is_mc=not is_data, 
+            era=self._era
+        )
+        event = ak.with_field(event, met, 'MET')
+	    
+	# JES/JER corrections
+	rho = event.fixedGridRhoFastjetAll
+        cache = event.caches[0]
+        if is_data: 
+            softjet_gen_pt = None
+        else:
+            softjet_gen_pt = find_best_match(event.CorrT1METJet,event.GenJet)
+        
+        softjets_shift_L123 = self._jmeu.corrected_jets_L123(event.CorrT1METJet, rho, cache, softjet_gen_pt)
+        softjets_shift_L1 = self._jmeu.corrected_jets_L1(event.CorrT1METJet, rho, cache, softjet_gen_pt)
+        
+        jets_shift_L123 = self._jmeu.corrected_jets_L123(event.Jet, rho, cache)
+        jets_shift_L1 = self._jmeu.corrected_jets_L1(event.Jet, rho, cache)
 
-            event = ak.with_field(event, jets, 'Jet')
-            event = ak.with_field(event, met, 'MET')
+        jets_col_shift_L123 = ak.concatenate([jets_shift_L123, softjets_shift_L123],axis=1)
+        jets_col_shift_L1 = ak.concatenate([jets_shift_L1, softjets_shift_L1],axis=1)
+        
+        raw_met = event.RawMET
+        met_to_correct = event.MET
+        met_to_correct["pt"] = raw_met.pt
+        met_to_correct["phi"] = raw_met.phi
+        jets = self._jmeu.corrected_jets_jer(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
+        met = self._jmeu.corrected_met(met_to_correct, jets_col_shift_L123, jets_col_shift_L1, event.fixedGridRhoFastjetAll, event.caches[0])
+        
+        event = ak.with_field(event, jets, 'Jet')
+        event = ak.with_field(event, met, 'MET')
+
+	
+        if is_data:
             
             # HEM15/16 issue
             if self._era == "2018":
@@ -845,21 +882,6 @@ class zzinc_processor(processor.ProcessorABC):
                 event = ak.with_field(event, jets, 'Jet')
                 
             return self.process_shift(event, None)
-        
-        # x-y met shit corrections
-        # for the moment I am replacing the met with the corrected met 
-        # before doing the JES/JER corrections
-        
-        run = event.run 
-        npv = event.PV.npvs
-        met = event.MET
-        
-        met = met_phi_xy_correction(
-            event.MET, run, npv, 
-            is_mc=not is_data, 
-            era=self._era
-        )
-        event = ak.with_field(event, met, 'MET')
 		
         # Adding scale factors to Muon and Electron fields
         muon = event.Muon 
@@ -877,10 +899,6 @@ class zzinc_processor(processor.ProcessorABC):
 
         event = ak.with_field(event, muon, 'Muon')
         event = ak.with_field(event, electron, 'Electron')
-
-        # JES/JER corrections
-        jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
-        met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
 
         # Apply rochester_correction
         muon=event.Muon
