@@ -47,4 +47,5 @@ _set_repr_name("GenJet")
 
 
 Fix the /coffea/nanoevents/schemas/nanoaod.py, add this key in 'mixins' dictionary:
-  "CorrT1METJet":"CorrT1METJet",
+
+"CorrT1METJet":"CorrT1METJet",
