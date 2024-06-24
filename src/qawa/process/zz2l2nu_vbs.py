@@ -21,6 +21,7 @@ from qawa.leptonsSF import LeptonScaleFactors
 from qawa.jetPU import jetPUScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
+from qawa.gen_match import find_best_match
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
 
 def build_leptons(muons, electrons):
