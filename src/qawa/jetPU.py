@@ -46,7 +46,7 @@ class jetPUScaleFactors:
             )
         
         if   self._wp == 'M':
-            tagged = (jet_puid>=6) or (jet_puid == 3)
+            tagged = (jet_puid>=6) | (jet_puid == 3)
         elif self._wp == 'T':
             tagged = jet_puid>=7
         elif self._wp == 'L':

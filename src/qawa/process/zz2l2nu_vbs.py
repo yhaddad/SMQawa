@@ -22,6 +22,7 @@ from qawa.jetPU import jetPUScaleFactors
 from qawa.tauSF import tauIDScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
+from qawa.gen_match import find_best_match
 from qawa.ddr import dataDrivenDYRatio
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
 
@@ -490,7 +491,7 @@ class zzinc_processor(processor.ProcessorABC):
             (jets.pt>30.0) & 
             (np.abs(jets.eta) < 4.7) & 
             (jets.jetId >= 6) & # tight JetID 7(2016) and 6(2017/8)
-            (jets.puId >= 6) or (jets.puId == 3) # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL 3,7 for 16and 16APV; 6,7 for 17,18
+            ((jets.puId >= 6) | (jets.puId == 3)) # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL 3,7 for 16and 16APV; 6,7 for 17,18
         )
         
         jet_btag = (
@@ -972,12 +973,36 @@ class zzinc_processor(processor.ProcessorABC):
         )
         event = ak.with_field(event, met, 'MET')
 
-        if is_data:
-            jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
-            met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
+        #JES/JER corrections
+        rho = event.fixedGridRhoFastjetAll
+        cache = event.caches[0]
 
-            event = ak.with_field(event, jets, 'Jet')
-            event = ak.with_field(event, met, 'MET')
+        if is_data: 
+            softjet_gen_pt = None
+        else:
+            softjet_gen_pt = find_best_match(event.CorrT1METJet,event.GenJet)
+        
+        softjets_shift_L123 = self._jmeu.corrected_jets_L123(event.CorrT1METJet, rho, cache, softjet_gen_pt)
+        softjets_shift_L1 = self._jmeu.corrected_jets_L1(event.CorrT1METJet, rho, cache, softjet_gen_pt)
+        
+        jets_shift_L123 = self._jmeu.corrected_jets_L123(event.Jet, rho, cache)
+        jets_shift_L1 = self._jmeu.corrected_jets_L1(event.Jet, rho, cache)
+
+        jets_col_shift_L123 = ak.concatenate([jets_shift_L123, softjets_shift_L123],axis=1)
+        jets_col_shift_L1 = ak.concatenate([jets_shift_L1, softjets_shift_L1],axis=1)
+        
+        raw_met = event.RawMET
+        met_to_correct = event.MET
+        met_to_correct["pt"] = raw_met.pt
+        met_to_correct["phi"] = raw_met.phi
+        jets = self._jmeu.corrected_jets_jer(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
+        met = self._jmeu.corrected_met(met_to_correct, jets_col_shift_L123, jets_col_shift_L1, event.fixedGridRhoFastjetAll, event.caches[0])
+        
+        event = ak.with_field(event, jets, 'Jet')
+        event = ak.with_field(event, met, 'MET')
+
+
+        if is_data:
             
             # HEM15/16 issue
             if self._era == "2018":
@@ -1013,10 +1038,6 @@ class zzinc_processor(processor.ProcessorABC):
 
         event = ak.with_field(event, muon, 'Muon')
         event = ak.with_field(event, electron, 'Electron')
-
-        # JES/JER corrections
-        jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
-        met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
 
         # Apply rochester_correction
         muon=event.Muon
