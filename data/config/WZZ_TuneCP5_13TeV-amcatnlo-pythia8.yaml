@@ -14,6 +14,12 @@ WZZ_TuneCP5_13TeV-amcatnlo-pythia8:
     - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_12.root
     - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_13.root
     - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p0_Dilepton-MC_14.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p1_Dilepton-MC_1.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p1_Dilepton-MC_2.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p1_Dilepton-MC_3.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p1_Dilepton-MC_4.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p1_Dilepton-MC_5.root
+    - /tmp/hgao/WZZ_TuneCP5_13TeV-amcatnlo-pythia8/WZZ_p1_Dilepton-MC_6.root
   metadata:
     era: "2018"
     is_data: False
