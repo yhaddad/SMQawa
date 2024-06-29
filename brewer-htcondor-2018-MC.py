@@ -17,7 +17,13 @@ export X509_USER_PROXY={proxy}
 export XRD_REQUESTTIMEOUT=6400
 export XRD_REDIRECTLIMIT=64
 mkdir -p /tmp/hgao/{sample_name}
-cp /eos/user/h/hgao/ZZTo2L2Nu/HZZsample/{sample_name}/*_$(expr $1 + 1).root /tmp/hgao/{sample_name}/
+if [ "{sample_name}" = "ZZZ_TuneCP5_13TeV-amcatnlo-pythia8" ] || \
+   [ "{sample_name}" = "WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8" ] || \
+   [ "{sample_name}" = "WZZ_TuneCP5_13TeV-amcatnlo-pythia8" ]; then
+    cp /eos/user/h/hgao/ZZTo2L2Nu/HZZsample/{sample_name}/*.root /tmp/hgao/{sample_name}/
+else
+    cp /eos/user/h/hgao/ZZTo2L2Nu/HZZsample/{sample_name}/*_$(expr $1 + 1).root /tmp/hgao/{sample_name}/
+fi
 voms-proxy-info -all
 voms-proxy-info -all -file {proxy}
 
