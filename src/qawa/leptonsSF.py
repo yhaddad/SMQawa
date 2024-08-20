@@ -51,17 +51,25 @@ class LeptonScaleFactors:
 
 
         if electronSelectionTag=="GPMVA90_2016":
-            el_f = ["egammaEffi_txt_Ele_wp90iso_postVFP_EGM2D.root"]
-            el_h = ["EGamma_SF2D"]
+            el_f = ["egammaEffi_txt_Ele_wp90iso_postVFP_EGM2D.root",
+                    "electron_RecoSF_UL2016.root"]
+            el_h = ["EGamma_SF2D",
+                    "EGamma_SF2D"]
         if electronSelectionTag=="GPMVA90_2016APV":
-            el_f = ["egammaEffi_txt_Ele_wp90iso_preVFP_EGM2D.root"]
-            el_h = ["EGamma_SF2D"]
+            el_f = ["egammaEffi_txt_Ele_wp90iso_preVFP_EGM2D.root",
+                    "electron_RecoSF_UL2016APV.root"]
+            el_h = ["EGamma_SF2D",
+                    "EGamma_SF2D"]
         elif electronSelectionTag=="GPMVA90_2017":
-            el_f = ["egammaEffi_txt_EGM2D_MVA90iso_UL17.root"]
-            el_h = ["EGamma_SF2D"]
+            el_f = ["egammaEffi_txt_EGM2D_MVA90iso_UL17.root",
+                    "electron_RecoSF_UL2017.root"]
+            el_h = ["EGamma_SF2D",
+                    "EGamma_SF2D"]
         elif electronSelectionTag=="GPMVA90_2018":
-            el_f = ["egammaEffi_txt_Ele_wp90iso_EGM2D.root"]
-            el_h = ["EGamma_SF2D"]
+            el_f = ["egammaEffi_txt_Ele_wp90iso_EGM2D.root",
+                    "electron_RecoSF_UL2018.root"]
+            el_h = ["EGamma_SF2D",
+                    "EGamma_SF2D"]
         else:
             print (f'wrong era: {electronSelectionTag}')
             
@@ -85,6 +93,7 @@ class LeptonScaleFactors:
                 _hnom = _hist.values()
                 _herr = np.sqrt(_hist.variances())
                 tag = f"ElectronSF{era}" if "Ele" in _fname else ""
+                tag = f"ElectronRecoSF{era}" if "Reco" in _fname else ""
                 
                 self.maps_nom[tag] = dense_lookup.dense_lookup(_hnom,[ax.edges for ax in _hist.axes])
                 self.maps_err[tag] = dense_lookup.dense_lookup(_herr,[ax.edges for ax in _hist.axes])

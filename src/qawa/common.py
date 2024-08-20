@@ -261,11 +261,20 @@ class pileup_weights:
     
     
     def append_pileup_weight(self, weights, pu):
+        
+        pu_nom  = np.array(self.corrections['puWeight'    ](pu))
+        pu_up   = np.array(self.corrections['puWeightUp'    ](pu))
+        pu_down = np.array(self.corrections['puWeightDown'    ](pu))
+
+        pu_nom[pu_nom>1000]=1
+        pu_up[pu_up>1000]=1
+        pu_down[pu_down>1000]=1
+
         weights.add(
             'pileup_weight',
-            self.corrections['puWeight'    ](pu),
-            self.corrections['puWeightUp'  ](pu),
-            self.corrections['puWeightDown'](pu),
+            pu_nom,
+            pu_up,
+            pu_down,
         )
         return weights
     
