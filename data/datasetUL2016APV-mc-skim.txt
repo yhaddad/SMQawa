@@ -67,3 +67,4 @@
 /VBS_OSWW_LT_TuneCP5_13TeV-madgraph-pythia8
 /ZZTo2E2Nu_TuneCP5_DipoleRecoil_13TeV_powheg_pythia8
 /ZZTo2Mu2Nu_TuneCP5_DipoleRecoil_13TeV_powheg_pythia8
+/ZZ2JTo2L2Nu2J_EWK_aQGC_TuneCP5_13TeV-madgraph-pythia8

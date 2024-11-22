@@ -506,7 +506,7 @@ class zzinc_processor(processor.ProcessorABC):
                 (event.Jet.btagDeepFlavB > btag_id(
                     self.btag_wp, 
                     self._era + 'APV' if self._isAPV else self._era
-                ) )&
+                )) &
                 (np.abs(jets.eta)<2.5)
         )
         
@@ -610,6 +610,7 @@ class zzinc_processor(processor.ProcessorABC):
             "require-ossf",
             (ntight_lep==2) & (nloose_lep==0) &
             (ak.firsts(tight_lep).pt>25) &
+            (ak.any(tight_lep.pt > 20)) &
             ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
         )
         
@@ -617,6 +618,7 @@ class zzinc_processor(processor.ProcessorABC):
             "require-osof",
             (ntight_lep==2) & (nloose_lep==0) &
             (ak.firsts(tight_lep).pt>25) &
+            (ak.any(tight_lep.pt > 20)) &
             ((lead_lep.pdgId)*(subl_lep.pdgId) == -143)
         )
         
@@ -624,6 +626,7 @@ class zzinc_processor(processor.ProcessorABC):
             "require-3lep",
             (ntight_lep==3) & (nloose_lep==0) &
             (ak.firsts(tight_lep).pt>25) &
+            (ak.any(tight_lep.pt > 20)) &
             ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
         )
         
@@ -631,6 +634,7 @@ class zzinc_processor(processor.ProcessorABC):
             "require-4lep",
             (ntight_lep>=2) & (nloose_lep + ntight_lep)==4 &
             (ak.firsts(tight_lep).pt>25) &
+            (ak.any(tight_lep.pt > 20)) &
             ak.fill_none((lead_lep.pdgId + subl_lep.pdgId)==0, False)
         )
         selection.add(
@@ -678,37 +682,37 @@ class zzinc_processor(processor.ProcessorABC):
         selection.add('dijet_mass_1200', ak.fill_none(dijet_mass > 1200, False))
 
         # Define all variables for the GNN
-        event['met_pt'  ] = reco_met_pt
-        event['met_phi' ] = reco_met_phi
-        event['dilep_mt'] = dilep_mt
-        event['dilep_m'] = dilep_m
-        event['dilep_pt'] = dilep_pt
-        event['njets'   ] = ngood_jets
-        event['bjets'   ] = ngood_bjets
-        event['dphi_met_ll'] = dilep_dphi_met
-        event['dijet_mass'] = dijet_mass
-        event['dijet_deta'] = dijet_deta
-        event['min_dphi_met_j'] = min_dphi_met_j
+        event['met_pt'  ] = ak.fill_none(reco_met_pt,-99)
+        event['met_phi' ] = ak.fill_none(reco_met_phi,-99)
+        event['dilep_mt'] = ak.fill_none(dilep_mt,-99)
+        event['dilep_m'] = ak.fill_none(dilep_m,-99)
+        event['dilep_pt'] = ak.fill_none(dilep_pt,-99)
+        event['njets'   ] = ak.fill_none(ngood_jets,-99)
+        event['bjets'   ] = ak.fill_none(ngood_bjets,-99)
+        event['dphi_met_ll'] = ak.fill_none(dilep_dphi_met,-99)
+        event['dijet_mass'] = ak.fill_none(dijet_mass,-99)
+        event['dijet_deta'] = ak.fill_none(dijet_deta,-99)
+        event['min_dphi_met_j'] = ak.fill_none(min_dphi_met_j,-99)
 
-        event['leading_lep_pt'  ] = lead_lep.pt
-        event['leading_lep_eta' ] = lead_lep.eta
-        event['leading_lep_phi' ] = lead_lep.phi
-        event['trailing_lep_pt' ] = subl_lep.pt
-        event['trailing_lep_eta'] = subl_lep.eta
-        event['trailing_lep_phi'] = subl_lep.phi
-        event['third_lep_pt'  ] = third_lep.pt
-        event['third_lep_eta' ] = third_lep.eta
-        event['third_lep_phi' ] = third_lep.phi
+        event['leading_lep_pt'  ] = ak.fill_none(lead_lep.pt,-99)
+        event['leading_lep_eta' ] = ak.fill_none(lead_lep.eta,-99)
+        event['leading_lep_phi' ] = ak.fill_none(lead_lep.phi,-99)
+        event['trailing_lep_pt' ] = ak.fill_none(subl_lep.pt,-99)
+        event['trailing_lep_eta'] = ak.fill_none(subl_lep.eta,-99)
+        event['trailing_lep_phi'] = ak.fill_none(subl_lep.phi,-99)
+        event['third_lep_pt'  ] = ak.fill_none(third_lep.pt,-99)
+        event['third_lep_eta' ] = ak.fill_none(third_lep.eta,-99)
+        event['third_lep_phi' ] = ak.fill_none(third_lep.phi,99)
 
-        event['lead_jet_pt'  ] = lead_jet.pt
-        event['lead_jet_eta' ] = lead_jet.eta
-        event['lead_jet_phi' ] = lead_jet.phi
-        event['trail_jet_pt' ] = subl_jet.pt
-        event['trail_jet_eta'] = subl_jet.eta
-        event['trail_jet_phi'] = subl_jet.phi
-        event['third_jet_pt' ] = third_jet.pt
-        event['third_jet_eta'] = third_jet.eta
-        event['third_jet_phi'] = third_jet.phi
+        event['lead_jet_pt'  ] = ak.fill_none(lead_jet.pt,-99)
+        event['lead_jet_eta' ] = ak.fill_none(lead_jet.eta,-99)
+        event['lead_jet_phi' ] = ak.fill_none(lead_jet.phi,-99)
+        event['trail_jet_pt' ] = ak.fill_none(subl_jet.pt,-99)
+        event['trail_jet_eta'] = ak.fill_none(subl_jet.eta,-99)
+        event['trail_jet_phi'] = ak.fill_none(subl_jet.phi,-99)
+        event['third_jet_pt' ] = ak.fill_none(third_jet.pt,-99)
+        event['third_jet_eta'] = ak.fill_none(third_jet.eta,-99)
+        event['third_jet_phi'] = ak.fill_none(third_jet.phi,-99)
         
         # Apply GNN
         event['gnn_score'] = applyGNN(event).get_nnscore()
@@ -779,53 +783,53 @@ class zzinc_processor(processor.ProcessorABC):
         # selections
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
-            # inclusive regions
-            "cat-SR0J": common_sel + [
-            'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
-            'dilep_dphi_met', 'min_dphi_met_j', 
-            'met_pt', '~1nbjets', 
-            "~1njets" # 0 jets
-        ], 
-            "cat-SR1J": common_sel + [
-            'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
-            'dilep_dphi_met', 'min_dphi_met_j', 
-            'met_pt', '~1nbjets', 
-            "1njets", "~2njets" # 1 jet selection
-        ],
-            "cat-SR2J": common_sel + [
-            'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
-            'dilep_dphi_met', 'min_dphi_met_j', 
-            'met_pt', '~1nbjets', 
-            "2njets" # more that 2 jets
-        ], 
-            "cat-DY": common_sel + [
-            'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
-            'dilep_dphi_met', 'min_dphi_met_j', 
-            'low_met_pt', # between 50 to 100 GeV
-            '~1nbjets', "~2njets" # low jet mutiplicity below 2 jets 
-        ], 
-            "cat-3L": common_sel + [
-            'require-3lep', 'dilep_m', 'dilep_pt',
-            'dilep_dphi_met', 'min_dphi_met_j', 
-            'met_pt', '~1nbjets', "~2njets" 
-        ],
-            "cat-EM": common_sel + [
-            'require-osof', 'dilep_m', 'dilep_pt',
-            'dilep_dphi_met', 'min_dphi_met_j', 
-            'met_pt', '~1nbjets', "~2njets"
-        ],
-            
-            "cat-TT": common_sel + [
-            'require-osof', 'dilep_m', 'dilep_pt', 
-            'dilep_dphi_met', 
-            # 'min_dphi_met_j',
-            'met_pt', '1nbjets', "~2njets"
-        ],
-            "cat-NR": common_sel + [
-            'require-osof', '~dilep_m', 'dilep_pt',
-            'dilep_dphi_met', 'min_dphi_met_j',  
-            'met_pt', '1nbjets', "~2njets"
-        ],
+        #    # inclusive regions
+        #    "cat-SR0J": common_sel + [
+        #    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
+        #    'dilep_dphi_met', 'min_dphi_met_j', 
+        #    'met_pt', '~1nbjets', 
+        #    "~1njets" # 0 jets
+        #], 
+        #    "cat-SR1J": common_sel + [
+        #    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
+        #    'dilep_dphi_met', 'min_dphi_met_j', 
+        #    'met_pt', '~1nbjets', 
+        #    "1njets", "~2njets" # 1 jet selection
+        #],
+        #    "cat-SR2J": common_sel + [
+        #    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
+        #    'dilep_dphi_met', 'min_dphi_met_j', 
+        #    'met_pt', '~1nbjets', 
+        #    "2njets" # more that 2 jets
+        #], 
+        #    "cat-DY": common_sel + [
+        #    'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus', 
+        #   'dilep_dphi_met', 'min_dphi_met_j', 
+        #    'low_met_pt', # between 50 to 100 GeV
+        #    '~1nbjets', "~2njets" # low jet mutiplicity below 2 jets 
+        #], 
+        #    "cat-3L": common_sel + [
+        #    'require-3lep', 'dilep_m', 'dilep_pt',
+        #    'dilep_dphi_met', 'min_dphi_met_j', 
+        #    'met_pt', '~1nbjets', "~2njets" 
+        #],
+        #    "cat-EM": common_sel + [
+        #    'require-osof', 'dilep_m', 'dilep_pt',
+        #    'dilep_dphi_met', 'min_dphi_met_j', 
+        #    'met_pt', '~1nbjets', "~2njets"
+        #],
+        #    
+        #    "cat-TT": common_sel + [
+        #    'require-osof', 'dilep_m', 'dilep_pt', 
+        #    'dilep_dphi_met', 
+        #    # 'min_dphi_met_j',
+        #    'met_pt', '1nbjets', "~2njets"
+        #],
+        #    "cat-NR": common_sel + [
+        #    'require-osof', '~dilep_m', 'dilep_pt',
+        #    'dilep_dphi_met', 'min_dphi_met_j',  
+        #    'met_pt', '1nbjets', "~2njets"
+        #],
             # vector boson scattering
             "vbs-SR": common_sel + [
             'require-ossf', 'dilep_m', 'dilep_pt', '0nhtaus',
@@ -847,12 +851,12 @@ class zzinc_processor(processor.ProcessorABC):
             "vbs-DDDY150300": common_sel + [
             'require-ossf', 'dilep_m', 'dilep_pt_150_300',
             'dilep_dphi_met', 'min_dphi_met_j', 
-            'low_met_pt',"2njets"
+            'low_met_pt',"2njets",'~1nbjets', '0nhtaus', 
         ],
             "vbs-DDDY300inf": common_sel + [
             'require-ossf', 'dilep_m', 'dilep_pt_300_inf',
             'dilep_dphi_met', 'min_dphi_met_j', 
-            'low_met_pt',"2njets"
+            'low_met_pt',"2njets",'~1nbjets', '0nhtaus', 
         ],
             "vbs-DDSR60150": common_sel + [
             'require-ossf', 'dilep_m', 'dilep_pt_60_150', '0nhtaus',
@@ -974,24 +978,24 @@ class zzinc_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'dphi_met_ll')
                 _histogram_filler(ch, sys, 'dijet_mass')
                 _histogram_filler(ch, sys, 'dijet_deta')
-                _histogram_filler(ch, sys, 'lead_jet_pt')
-                _histogram_filler(ch, sys, 'trail_jet_pt')
-                _histogram_filler(ch, sys, 'third_jet_pt')
-                _histogram_filler(ch, sys, 'lead_jet_eta')
-                _histogram_filler(ch, sys, 'trail_jet_eta')
-                _histogram_filler(ch, sys, 'third_jet_eta')
-                _histogram_filler(ch, sys, 'lead_jet_phi')
-                _histogram_filler(ch, sys, 'trail_jet_phi')
-                _histogram_filler(ch, sys, 'third_jet_phi')
-                _histogram_filler(ch, sys, 'leading_lep_pt')
-                _histogram_filler(ch, sys, 'trailing_lep_pt')
-                _histogram_filler(ch, sys, 'third_lep_pt')
-                _histogram_filler(ch, sys, 'leading_lep_eta')
-                _histogram_filler(ch, sys, 'trailing_lep_eta')
-                _histogram_filler(ch, sys, 'third_lep_eta')
-                _histogram_filler(ch, sys, 'leading_lep_phi')
-                _histogram_filler(ch, sys, 'trailing_lep_phi')
-                _histogram_filler(ch, sys, 'third_lep_phi')
+                #_histogram_filler(ch, sys, 'lead_jet_pt')
+                #_histogram_filler(ch, sys, 'trail_jet_pt')
+                #_histogram_filler(ch, sys, 'third_jet_pt')
+                #_histogram_filler(ch, sys, 'lead_jet_eta')
+                #_histogram_filler(ch, sys, 'trail_jet_eta')
+                #_histogram_filler(ch, sys, 'third_jet_eta')
+                #_histogram_filler(ch, sys, 'lead_jet_phi')
+                #_histogram_filler(ch, sys, 'trail_jet_phi')
+                #_histogram_filler(ch, sys, 'third_jet_phi')
+                #_histogram_filler(ch, sys, 'leading_lep_pt')
+                #_histogram_filler(ch, sys, 'trailing_lep_pt')
+                #_histogram_filler(ch, sys, 'third_lep_pt')
+                #_histogram_filler(ch, sys, 'leading_lep_eta')
+                #_histogram_filler(ch, sys, 'trailing_lep_eta')
+                #_histogram_filler(ch, sys, 'third_lep_eta')
+                #_histogram_filler(ch, sys, 'leading_lep_phi')
+                #_histogram_filler(ch, sys, 'trailing_lep_phi')
+               # _histogram_filler(ch, sys, 'third_lep_phi')
                 _histogram_filler(ch, sys, 'min_dphi_met_j')
                 _histogram_filler(ch, sys, 'gnn_score')
                 _histogram_filler(ch, sys, 'gnn_flat')

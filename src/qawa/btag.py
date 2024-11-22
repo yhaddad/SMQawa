@@ -18,6 +18,7 @@ import uproot
 def btag_id(wp:str='L', era:str='2018'):
     # using deepjet
     # ref : https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation
+    # https://btv-wiki.docs.cern.ch/ScaleFactors/UL2016preVFP/
     dict_wp = {
             "2016"   : {"L": 0.0480, "M": 0.2489, "T": 0.6377},
             "2016APV": {"L": 0.0508, "M": 0.2598, "T": 0.6502},

@@ -97,7 +97,7 @@ max_retries           = 2
 request_memory        = 4000M
 requirements          = Machine =!= LastRemoteHost
 # MY.XRDCP_CREATE_DIR   = True
-+SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:0.7.21-fastjet-3.4.0.1-g6238ea8"
++SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:0.7.21-py3.9-gaab39"
 #+SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest"
 +JobFlavour           = "{queue}"
 

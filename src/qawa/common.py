@@ -58,41 +58,37 @@ def met_phi_xy_correction(met, run, npv, is_mc:bool=False, era:str='2016'):
     else:
         # UL2016
         xcor = ak.where((run >= 272007) & (run <= 275376), -(-0.0214894*npv -0.188255), xcor) # UL2016B
-        xcor = ak.where((run >= 272007) & (run <= 275376), -( 0.0876624*npv +0.812885), ycor) # UL2016B
+        ycor = ak.where((run >= 272007) & (run <= 275376), -( 0.0876624*npv +0.812885), ycor) # UL2016B
         xcor = ak.where((run >= 275657) & (run <= 276283), -(-0.0322090*npv +0.067288), xcor) # UL2016C
-        xcor = ak.where((run >= 275657) & (run <= 276283), -( 0.1139170*npv +0.743906), ycor) # UL2016C
+        ycor = ak.where((run >= 275657) & (run <= 276283), -( 0.1139170*npv +0.743906), ycor) # UL2016C
         xcor = ak.where((run >= 276315) & (run <= 276811), -(-0.0293663*npv +0.211060), xcor) # UL2016D
-        xcor = ak.where((run >= 276315) & (run <= 276811), -( 0.1133100*npv +0.815787), ycor) # UL2016D
+        ycor = ak.where((run >= 276315) & (run <= 276811), -( 0.1133100*npv +0.815787), ycor) # UL2016D
         xcor = ak.where((run >= 276831) & (run <= 277420), -(-0.0132046*npv +0.200730), xcor) # UL2016E
-        xcor = ak.where((run >= 276831) & (run <= 277420), -( 0.1348090*npv +0.679068), ycor) # UL2016E
-        xcor = ak.where(
-            (run >= 277772) & (run <= 278768) & (run==278770), 
-            -(-0.0543566*npv +0.816597), xcor) # UL2016F
-        xcor = ak.where(
-            (run >= 277772) & (run <= 278768) & (run==278770),
-            -( 0.1142250*npv +1.172660), ycor) # UL2016F
+        ycor = ak.where((run >= 276831) & (run <= 277420), -( 0.1348090*npv +0.679068), ycor) # UL2016E
+        xcor = ak.where((run >= 277772) & (run <= 278768) & (run==278770), -(-0.0543566*npv +0.816597), xcor) # UL2016F
+        ycor = ak.where((run >= 277772) & (run <= 278768) & (run==278770), -( 0.1142250*npv +1.172660), ycor) # UL2016F
         xcor = ak.where(
             (run >= 278801) & (run <= 278808) & (run==278769),
             -( 0.1346160*npv -0.899650), xcor) # UL2016Flate
-        xcor = ak.where(
+        ycor = ak.where(
             (run >= 278801) & (run <= 278808) & (run==278769),
             -( 0.0397736*npv +1.038500), ycor) # UL2016Flate
         xcor = ak.where((run >= 278820) & (run <= 280385), -( 0.1218090*npv -0.584893), xcor) #UL2016G
-        xcor = ak.where((run >= 278820) & (run <= 280385), -( 0.0558974*npv +0.891234), ycor) #UL2016G
+        ycor = ak.where((run >= 278820) & (run <= 280385), -( 0.0558974*npv +0.891234), ycor) #UL2016G
         xcor = ak.where((run >= 280919) & (run <= 284044), -( 0.0868828*npv -0.703489), xcor) #UL2016H
-        xcor = ak.where((run >= 280919) & (run <= 284044), -( 0.0888774*npv +0.902632), ycor) #UL2016H
+        ycor = ak.where((run >= 280919) & (run <= 284044), -( 0.0888774*npv +0.902632), ycor) #UL2016H
 
         # UL2017
         xcor = ak.where((run >= 297020) & (run <= 299329), -(-0.211161*npv +0.419333), xcor)
-        xcor = ak.where((run >= 297020) & (run <= 299329), -( 0.251789*npv -1.280890), ycor)
+        ycor = ak.where((run >= 297020) & (run <= 299329), -( 0.251789*npv -1.280890), ycor)
         xcor = ak.where((run >= 299337) & (run <= 302029), -(-0.185184*npv -0.164009), xcor)
-        xcor = ak.where((run >= 299337) & (run <= 302029), -( 0.200941*npv -0.568530), ycor)
+        ycor = ak.where((run >= 299337) & (run <= 302029), -( 0.200941*npv -0.568530), ycor)
         xcor = ak.where((run >= 302030) & (run <= 303434), -(-0.201606*npv +0.426502), xcor)
-        xcor = ak.where((run >= 302030) & (run <= 303434), -( 0.188208*npv -0.583130), ycor)
+        ycor = ak.where((run >= 302030) & (run <= 303434), -( 0.188208*npv -0.583130), ycor)
         xcor = ak.where((run >= 303435) & (run <= 316995), -(-0.162472*npv +0.176329), xcor)
-        xcor = ak.where((run >= 303435) & (run <= 316995), -( 0.138076*npv -0.250239), ycor)
+        ycor = ak.where((run >= 303435) & (run <= 316995), -( 0.138076*npv -0.250239), ycor)
         xcor = ak.where((run >= 304911) & (run <= 316995), -(-0.210639*npv +0.729340), xcor)
-        xcor = ak.where((run >= 304911) & (run <= 316995), -( 0.198626*npv +1.028000), ycor)
+        ycor = ak.where((run >= 304911) & (run <= 316995), -( 0.198626*npv +1.028000), ycor)
 
         # UL2018
         xcor = ak.where((run >= 315252) & (run <= 316995), -(0.263733*npv -1.91115), xcor)
