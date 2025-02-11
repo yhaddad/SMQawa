@@ -255,7 +255,7 @@ class pileup_weights:
                 data_pu = hist_norm(ifile["pileup"].values())
                 edges = ifile["pileup"].axis().edges()
 
-                corr = np.divide(data_pu, self.simu_pu, where=mask)
+                corr = np.divide(data_pu, self.simu_pu, out=np.ones_like(data_pu),where=mask)
                 pileup_corr = dense_lookup.dense_lookup(corr, edges)
                 self.corrections['puWeight' if 'Nom' in var else f'puWeight{var}'] = pileup_corr
     
