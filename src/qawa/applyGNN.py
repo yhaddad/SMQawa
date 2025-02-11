@@ -1,4 +1,5 @@
 from coffea import processor
+from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 import onnxruntime as rt
 import numpy.lib.recfunctions as rf
 import awkward as ak
@@ -97,8 +98,6 @@ class applyGNN:
                 atLeast3Jets[:,j,4] = df_allEta.iloc[:,len(df_allEta.columns)-2]
 
         return exactly2Jets, atLeast3Jets
-    
-    
     def get_nnscore(self):
         if len(self.event) == 0:
             return -1
