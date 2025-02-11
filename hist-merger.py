@@ -52,7 +52,7 @@ def merger():
         sumw_ = sum(combined_sumw[s])
         combined_dict[s] = {"hist": hist_, "sumw": sumw_}
 
-    with gzip.open(f"merged-histogram-{options.tag}-{options.era}.pkl.gz", "wb") as f:
+    with gzip.open(f"merged-histogram-{options.tag}-{options.era}-Inc_WZ_latest_rawdeeptau.pkl.gz", "wb") as f:
         pickle.dump(combined_dict, f)
         f.close()
 
