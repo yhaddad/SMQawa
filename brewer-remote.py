@@ -1,6 +1,6 @@
 from coffea import processor
 from coffea import nanoevents
-from qawa.process.zz2l2nu_vbs import zzinc_processor
+from qawa.process.wztau2lnu import wzinc_processor
 from qawa.process.coffea_sumw import coffea_sumw
 import argparse
 import pickle
@@ -12,7 +12,7 @@ import numpy as np
 np.seterr(all='ignore')
 
 uproot.open.defaults["xrootd_handler"] = uproot.source.xrootd.MultithreadedXRootDSource
-uproot.open.defaults["timeout"] = 60 * 5 # wait more
+uproot.open.defaults["timeout"] = 60 * 10 # wait more
 
 
 def validate_input_file(nanofile):
@@ -38,7 +38,7 @@ def validate_input_file(nanofile):
             valid = True
             break
         else:
-            print(f'--> {alias} FAILD')
+            print(f'--> {alias} FAILED')
 
         if valid==False:
             # all faild force AAA anyways
@@ -53,7 +53,6 @@ def main():
     parser.add_argument('--infile' ,   type=str, default=None  , help="input root file")
     parser.add_argument('--dataset',   type=str, default=None  , help="dataset name. need to specify if file is not in EOS")
     parser.add_argument('--runperiod', type=str, default=None)
-    parser.add_argument('--dumpgnn', action='store_true', help='dump the GNN output into outputfiles')
 
     options = parser.parse_args()
 
@@ -66,6 +65,7 @@ def main():
     failed = True
     ixrd = 0
     aliases = [
+        "root://eoscms.cern.ch/",
         "root://llrxrd-redir.in2p3.fr/",
         "root://xrootd-cms.infn.it/",
         "root://cms-xrd-global01.cern.ch/", 
@@ -130,13 +130,12 @@ def main():
                 ---------------------------"""
             )
 
-            print(" --- zz2l2nu_vbs processor ... ")
+            print(" --- wztau2lnu processor ... ")
             vbs_out = processor.run_uproot_job(
                 samples,
-                processor_instance=zzinc_processor(
+                processor_instance=wzinc_processor(
                     era=options.era,
                     ewk_process_name=ewk_flag,
-                    dump_gnn_array=options.dumpgnn, 
                     run_period=options.runperiod if is_data else ''
                 ),
                 treename='Events',
@@ -144,7 +143,7 @@ def main():
                 executor_args={
                     "schema" : nanoevents.NanoAODSchema,
                     "workers": 8,
-                    "desc": "ZZinC"
+                    "desc": "WZinC"
                 },
                 #chunksize=50000,
             )
@@ -157,9 +156,10 @@ def main():
             with gzip.open("histogram_%s.pkl.gz" % str(options.jobNum), "wb") as f:
                 pickle.dump(bh_output, f)
             failed=False
-        except Exception as err:
+        except:
             print(f"[WARNING] {aliases[ixrd]} failed with the following error : ")
-            print(f"Unexpected {err=}, {type(err)=}")
+            print(sys.exc_info()[0])
+            #print(f"Unexpected {err=}, {type(err)=}")
             print("-------------------------------------------")
             failed=True
             ixrd += 1
