@@ -8,8 +8,8 @@ import importlib.metadata
 
 logging.basicConfig(level=logging.DEBUG)
 
-qawa_version = importlib.metadata.version('qawa')
-#qawa_version = '0.0.5'
+#qawa_version = importlib.metadata.version('qawa')
+qawa_version = '0.0.7'
 
 
 script_TEMPLATE = """#!/bin/bash
@@ -55,7 +55,7 @@ transfer_input_files  = {transfer_file}
 should_transfer_files = YES
 WhenToTransferOutput  = ON_EXIT_OR_EVICT
 initialdir            = {jobdir}
-# output_destination    = root://eosuser.cern.ch//eos/user/y/yhaddad/condor_jobs/{jobdir}/
+#output_destination    = root://eosuser.cern.ch//eos/user/i/iisrar
 
 output                = $(ClusterId).$(ProcId).out
 error                 = $(ClusterId).$(ProcId).err
@@ -89,7 +89,7 @@ def main():
     home_base  = os.environ['HOME']
     user_name  = os.environ['USER']
     proxy_copy = os.path.join(home_base,proxy_base)
-    eosbase = f"/eos/user/{user_name[0]}/{user_name}/ZZTo2L2Nu/" + "{tag}/{sample}/"
+    eosbase = f"/eos/user/{user_name[0]}/{user_name}/WZtotau2lnu/" + "{tag}/{sample}/"
 
     regenerate_proxy = False
     if not os.path.isfile(proxy_copy):
@@ -137,7 +137,7 @@ def main():
                 os.mkdir(jobs_dir)
 
             if not options.submit:
-                sample_files = []
+                sample_file = []
                 if '*' in sample:
                     sample_with_ext = subprocess.check_output(
                         ['dasgoclient', '--query', f"dataset={sample}"]
