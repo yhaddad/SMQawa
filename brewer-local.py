@@ -1,6 +1,6 @@
 from coffea import processor
 from coffea import nanoevents
-from qawa.process.zz2l2nu_vbs import zzinc_processor
+from qawa.process.wztau2lnu import wzinc_processor
 from qawa.process.coffea_sumw import coffea_sumw
 import argparse
 import pickle
@@ -104,19 +104,19 @@ def main():
         ewk_flag= 'ZZ'
     if "WZTo" in options.infile and "GluGluTo" not in options.infile:
         ewk_flag = 'WZ'
-        
+
     # extarct the run period
     run_period = '' 
     if 'Run20' in options.infile and is_data:
         run_period = options.infile.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
-    
+
     print(" --------------------------- ")
     vbs_out = processor.run_uproot_job(
         samples,
-        processor_instance=zzinc_processor(
+        processor_instance=wzinc_processor(
             era=options.era,
             ewk_process_name=ewk_flag,
-            dump_gnn_array=True,
+            dump_gnn_array=True
             run_period=run_period if is_data else ''
         ),
         treename='Events',
