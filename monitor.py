@@ -6,7 +6,7 @@ import subprocess
 from pandas.core.internals.array_manager import new_block
 from termcolor import colored
 import importlib.metadata
-qawa_version = importlib.metadata.version('qawa')
+qawa_version = "0.0.7"
 
 logging.basicConfig(level=logging.INFO)
 
@@ -121,7 +121,7 @@ def main():
                     logging.debug(colored(f'failed  : {rfn}', 'red'))
             
             if options.resubmit and len(job_failed)>0: 
-                shutil.copyfile('brewer-remote.py', jobs_dir+'/brewer-remote.py')
+                shutil.copyfile('brewer-remote-inclusive.py', jobs_dir+'/brewer-remote-inclusive.py')
                 local_rerun_lines = [rerun_script_header]
                 for jid,infile in resubmit_list.items():
                     infile_name = infile 
@@ -139,14 +139,14 @@ def main():
                             )
                             infile_name = infile.split('/')[-1]
                         local_rerun_lines.append(
-                            f"python brewer-remote.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name}\n"
+                            f"python brewer-remote-inclusive.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name}\n"
                         )
                     else:
                         if options.copyfile:
                             assert options.era != "", f'please specify the era of the dataset you are running. ex: --era=2018'
                             script_command = f"xrdcp root://cms-xrd-global.cern.ch/$2 . \n"
                             infile_name = infile.split('/')[-1]
-                            script_command += f"python brewer-remote.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period}\n"
+                            script_command += f"python brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period}\n"
                             script_command += f"rm {infile_name}\n"
                             script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
@@ -160,7 +160,7 @@ def main():
                                 _stream.close()
                         else: 
                             assert options.era != "", f'please specify the era of the dataset you are running. ex: --era=2018'
-                            script_command = f"python brewer-remote.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile=$2\n"
+                            script_command = f"python brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile=$2\n"
                             script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
                                 script_file_ = resub_script_header.format(
@@ -196,7 +196,7 @@ def main():
                         _stream.writelines(local_rerun_lines)
 
                     coffea_image = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest" 
-                    os.system(f"cp dist/Qawa-0.0.5-py2.py3-none-any.whl {jobs_dir}")   
+                    os.system(f"cp dist/Qawa-0.0.7-py2.py3-none-any.whl {jobs_dir}")   
                     if not options.dryrun:
                         htc = os.popen(f"singularity exec -B {jobs_dir}:/srv/ {coffea_image} bash /srv/rerun-script.sh").read()
                         print(htc)
