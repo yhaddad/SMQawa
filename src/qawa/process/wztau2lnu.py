@@ -2,12 +2,20 @@ import awkward as ak
 import numpy as np
 import scipy.interpolate as interp
 from scipy import stats as st
+from scipy.special import expit
 import uproot
 import pickle
 import hist
 import yaml
 import os
 import re
+import onnxruntime as rt
+import numpy.lib.recfunctions as rf
+import uproot
+import pickle
+import numpy as np
+import pandas as pd
+import math
 
 from coffea import processor
 from coffea.nanoevents.methods import candidate
@@ -16,12 +24,17 @@ from coffea.analysis_tools import Weights, PackedSelection
 from coffea.lumi_tools import LumiMask
 
 from qawa.roccor import rochester_correction
-from qawa.applyGNN import applyGNN
+from qawa.applyBDT import applyBDT
 from qawa.leptonsSF import LeptonScaleFactors
 from qawa.jetPU import jetPUScaleFactors
+from qawa.tauSF import tauIDScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
+from qawa.gen_match import find_best_match
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
+
+
+
 
 def build_leptons(muons, electrons):
     # select tight/loose muons
@@ -70,8 +83,8 @@ def build_htaus(tau, lepton, is_data):
         (tau.decayMode != 5   ) & 
         (tau.decayMode != 6   ) &
         (tau.idDeepTau2017v2p1VSe >= 4) &
-        (tau.idDeepTau2017v2p1VSmu >= 1) &
-        (tau.idDeepTau2017v2p1VSjet >= 16)
+        (tau.idDeepTau2017v2p1VSmu >= 2) &
+        (tau.idDeepTau2017v2p1VSjet >= 128)
     )
 
     overlap_leptons = ak.any(
@@ -83,6 +96,30 @@ def build_htaus(tau, lepton, is_data):
     else :
         #return tau[base_selection &  (tau.genPartFlav = 5) & ~overlap_leptons]
         return tau[base_selection & ~overlap_leptons]
+
+
+def build_htaus_loose(tau, lepton):
+    #print(dir(tau))
+    #print(tau.__dict__)
+    
+    base_selection = (
+        (tau.pt         > 20. ) & 
+        (np.abs(tau.eta)< 2.3 ) & 
+        (tau.decayMode != 5   ) & 
+        (tau.decayMode != 6   ) &
+        (tau.idDeepTau2017v2p1VSe >= 2) &
+        (tau.idDeepTau2017v2p1VSmu >= 1) &
+        (tau.idDeepTau2017v2p1VSjet >= 1)
+    )
+
+    overlap_leptons = ak.any(
+        tau.metric_table(lepton) <= 0.4,
+        axis=2
+    )
+    
+    return tau[base_selection & ~overlap_leptons]
+    
+
 def build_photons(photon):
     base = (
         (photon.pt          > 20. ) & 
@@ -98,7 +135,7 @@ def build_photons(photon):
 
 class wzinc_processor(processor.ProcessorABC):
     # EWK corrections process has to be define before hand, it has to change when we move to dask
-    def __init__(self, era: str ='2018', dump_gnn_array=False, ewk_process_name=None, run_period: str = ''): 
+    def __init__(self, era: str ='2018', ewk_process_name=None, run_period: str = ''): 
         self._era = era
         if 'APV' in self._era:
             self._isAPV = True
@@ -106,6 +143,9 @@ class wzinc_processor(processor.ProcessorABC):
             #print(f"[YACINE DEBUG] era={self._era} APV={self._isAPV}")
         else:
             self._isAPV = False
+
+        
+        
         
         jec_tag = ''
         jer_tag = ''
@@ -143,14 +183,17 @@ class wzinc_processor(processor.ProcessorABC):
         
         self.btag_wp = 'M'
         self.jetPU_wp = 'M'
+        self.tauIDvsjet_wp = 'Medium'
+        self.tauIDvse_wp = 'VVLoose'
+        self.tauIDvsmu_wp = 'VLoose'
         self.zmass = 91.1873 # GeV 
         self._btag = BTVCorrector(era=self._era, wp=self.btag_wp, isAPV=self._isAPV)
-        #print(len(run_period))
         self._jmeu = JMEUncertainty(jec_tag, jer_tag, era=self._era, is_mc=(len(run_period)==0))
         self._purw = pileup_weights(era=self._era)
         self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
         self._jpSF = jetPUScaleFactors(era=self._era, wp=self.jetPU_wp, isAPV=self._isAPV)
-        
+        self._tauID= tauIDScaleFactors(era=self._era, vsjet_wp=self.tauIDvsjet_wp,vse_wp=self.tauIDvse_wp, vsmu_wp=self.tauIDvsmu_wp, isAPV=self._isAPV)
+
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
         self._json = {
@@ -168,14 +211,15 @@ class wzinc_processor(processor.ProcessorABC):
             _hvalue = np.dstack([_fn[_hn].values() for _hn in _fn.keys()] + [np.ones((7,7))])
             _herror = np.dstack([np.sqrt(_fn[_hn].variances()) for _hn in _fn.keys()] + [np.zeros((7,7))])
             self.trig_sf_map = np.stack([_hvalue, _herror], axis=-1)
-        self.dump_gnn_array  = dump_gnn_array
-        
-        with open(f'{_data_path}/GNNmodel/gnn_flattening_fnc_{era}.pkl', 'rb') as _fn:
-            self.gnn_flat_fnc = pickle.load(_fn)
 
         self.ewk_process_name = ewk_process_name
         if self.ewk_process_name is not None:
             self.ewk_corr = ewk_corrector(process=ewk_process_name)
+        model_bdt = f'{_data_path}/BDTmodel/bdtmodel_vbs_uW.onnx'
+        self.model_bdt = model_bdt
+        #self.model = xgb.Booster()
+        #self.model.load_model(f'{_data_path}/model_bdt.json')
+        #print("model loaded")
 
         self.build_histos = lambda: {
             'dilep_mt': hist.Hist(
@@ -202,6 +246,36 @@ class wzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(60, 0, 600, name="met_pt", label=r"$p_{T}^{miss}$ (GeV)"),
                 hist.storage.Weight()
             ),
+            'm_T': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="m_T", label=r"$m_{T}$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            'tau_pt': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            'nhtaus_phi': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="nhtaus_phi", label=r"$nhtaus_phi$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            'delta_tau_met_phi': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="delta_tau_met_phi", label=r"$delta_tau_met_phi$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            'tau_pt_loose': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
+                hist.storage.Weight()
+            ),
             'njets': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
@@ -220,16 +294,10 @@ class wzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label=r"$\Delta \phi(\ell\ell,p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
-            'gnn_score': hist.Hist(
+            'bdt_score': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1, name="gnn_score", label=r"$O_{GNN}$"),
-                hist.storage.Weight()
-            ),
-            'gnn_flat': hist.Hist(
-                hist.axis.StrCategory([], name="channel"   , growth=True),
-                hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, 1, name="gnn_flat", label=r"$O_{GNN}$"),
+                hist.axis.Regular(50, 0, 1, name="bdt_score", label=r"$O_{BDT}$"),
                 hist.storage.Weight()
             ),
             'dijet_mass': hist.Hist(
@@ -256,6 +324,12 @@ class wzinc_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 30, 530, name="trail_jet_pt", label=r"$p_T^{j_2}$ (GeV)"),
                 hist.storage.Weight()
             ),
+            "third_jet_pt": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="third_jet_pt", label=r"$p_T^{j_3}$ (GeV)"),
+                hist.storage.Weight()
+            ),
             "lead_jet_eta": hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
@@ -266,6 +340,12 @@ class wzinc_processor(processor.ProcessorABC):
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(50, -5, 5, name="trail_jet_eta", label=r"$\eta(j_2)$"),
+                hist.storage.Weight()
+            ),
+            "third_jet_eta": hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="third_jet_eta", label=r"$\eta(j_3)$"),
                 hist.storage.Weight()
             ),
             "min_dphi_met_j": hist.Hist( 
@@ -330,6 +410,7 @@ class wzinc_processor(processor.ProcessorABC):
 
 
     def process_shift(self, event, shift_name:str=''):
+        _data_path = os.path.join(os.path.dirname(__file__), 'data/')
         dataset = event.metadata['dataset']
         is_data = event.metadata.get("is_data")
         selection = PackedSelection()
@@ -381,10 +462,15 @@ class wzinc_processor(processor.ProcessorABC):
         )
         
         had_taus = build_htaus(event.Tau, tight_lep, is_data)
-       
+        had_taus_loose = build_htaus_loose(event.Tau, tight_lep)
+
         ntight_lep = ak.num(tight_lep)
         nloose_lep = ak.num(loose_lep)
         nhtaus_lep = ak.num(had_taus)
+        lead_tau = ak.firsts(had_taus)
+        tau_pt = lead_tau.pt
+        nhtaus_lep_loose = ak.num(had_taus_loose)
+        nhtaus_phi = lead_tau.phi
         
         jets = event.Jet
         overlap_leptons = ak.any(
@@ -438,7 +524,15 @@ class wzinc_processor(processor.ProcessorABC):
         dilep_p4 = (lead_lep + subl_lep)
         dilep_m  = dilep_p4.mass
         dilep_pt = dilep_p4.pt
-        
+        #pair_tau = ak.combinations(had_taus, 2, axis=1, fields=['t1', 't2'])
+        #lead_tau = ak.firsts(ak.where(pair_tau.t1.pt >  pair_tau.t2.pt, pair_tau.t1, pair_tau.t2),axis=1)
+        lead_tau = ak.firsts(had_taus)
+        tau_pt = lead_tau.pt
+        #pair_tau_loose = ak.combinations(had_taus_loose, 2, axis=1, fields=['tl1', 'tl2'])
+        #lead_tau_loose = ak.firsts(ak.where(pair_tau_loose.tl1.pt >  pair_tau_loose.tl2.pt, pair_tau_loose.tl1, pair_tau_loose.tl2),axis=1)
+        lead_tau_loose = ak.firsts(had_taus_loose)
+        tau_pt_loose = lead_tau_loose.pt
+
         # high level observables
         p4_met = ak.zip(
             {
@@ -455,6 +549,8 @@ class wzinc_processor(processor.ProcessorABC):
         emu_met = ak.firsts(extra_lep, axis=1) + p4_met
         reco_met_pt = ak.where(ntight_lep==2, p4_met.pt, emu_met.pt)
         reco_met_phi = ak.where(ntight_lep==2, p4_met.phi, emu_met.phi)
+        #print("reco_met = ", reco_met_pt)
+        #print("reco_phi", reco_met_phi)
 
 	
 	    # this definition is not correct as it doesn't include the mass of the second Z
@@ -466,12 +562,14 @@ class wzinc_processor(processor.ProcessorABC):
                 np.sqrt((dilep_et_ll + dilep_et_met)**2 - (dilep_p4.pvec +  p4_met.pvec).p2)
 	    )
 	
-        # dilep_dphi = lead_lep.delta_phi(subl_lep)
-        # dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
-        # dilep_dR   = lead_lep.delta_r(subl_lep)
+        dilep_dphi = lead_lep.delta_phi(subl_lep)
+        dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
+        dilep_dR   = lead_lep.delta_r(subl_lep)
         dilep_dphi_met  = ak.where(ntight_lep==2, dilep_p4.delta_phi(p4_met), dilep_p4.delta_phi(emu_met))
         #scalar_balance = ak.where(ntight_lep==3, emu_met.pt/dilep_p4.pt, p4_met.pt/dilep_p4.pt)
-        
+        delta_tau_met_phi = ak.where(ntight_lep==2, lead_tau.delta_phi(p4_met), lead_tau.delta_phi(emu_met))
+        m_T = np.sqrt((2*tau_pt*reco_met_pt)*(1-np.cos(delta_tau_met_phi)))
+
 
         
         # 2jet and vbs related variables
@@ -489,8 +587,8 @@ class wzinc_processor(processor.ProcessorABC):
         min_dphi_met_j = ak.min(np.abs(
             ak.where(
                 ntight_lep==3, 
-                jets.delta_phi(emu_met), 
-                jets.delta_phi(p4_met)
+                good_jets.delta_phi(emu_met), 
+                good_jets.delta_phi(p4_met)
             )
         ), axis=1)
 
@@ -540,17 +638,18 @@ class wzinc_processor(processor.ProcessorABC):
             )
         )
         #selection.add('newmet_pt' ,ak.fill_none((ngood_jets==3) & (reco_met_pt < 25),False))
-        selection.add('low_met_pt', ak.fill_none((reco_met_pt < 100) & (reco_met_pt > 50), False))
+        selection.add('low_met_pt', ak.fill_none((reco_met_pt < 20) & (reco_met_pt > 0), False))
         selection.add('dilep_m'   , ak.fill_none(np.abs(dilep_m - self.zmass) < 15, False))
         selection.add('dilep_m_50', ak.fill_none(dilep_m > 50, False))
-        selection.add(
-            'dilep_pt',
-            ak.where(
-                selection.require(**{"require-3lep":True}),
-                ak.fill_none(dilep_pt>30, False),
-                ak.fill_none(dilep_pt>30, False)
-            )
-        )
+        # selection.add(
+        #     'dilep_pt',
+        #     ak.where(
+        #         selection.require(**{"require-3lep":True}),
+        #         ak.fill_none(dilep_pt>30, False),
+        #         ak.fill_none(dilep_pt>0, False)
+        #     )
+        # )
+        selection.add('dilep_pt', ak.fill_none((dilep_pt > 0), False))
         selection.add("dilep_dphi_met", ak.fill_none(np.abs(dilep_dphi_met)>1.0, False))
         selection.add(
             "min_dphi_met_j",
@@ -566,14 +665,16 @@ class wzinc_processor(processor.ProcessorABC):
         selection.add('3njets' , ngood_jets  >= 3 )
         selection.add('1nbjets', ngood_bjets >= 1 )
         selection.add('1nhtaus', nhtaus_lep  == 1 )
+        selection.add('1nhtaus_loose', nhtaus_lep_loose  == 1 )
         
         selection.add('dijet_deta', ak.fill_none(dijet_deta > 2.5, False))
         selection.add('dijet_mass_400' , ak.fill_none(dijet_mass >  400, False))
         selection.add('dijet_mass_800' , ak.fill_none(dijet_mass >  800, False))
         selection.add('dijet_mass_1200', ak.fill_none(dijet_mass > 1200, False))
 
-        # Define all variables for the GNN
+        # Define all variables for the BDT
         event['met_pt'  ] = reco_met_pt
+        event['m_T'  ] = m_T
         event['met_phi' ] = reco_met_phi
         event['dilep_mt'] = dilep_mt
         event['dilep_m'] = dilep_m
@@ -584,6 +685,11 @@ class wzinc_processor(processor.ProcessorABC):
         event['dijet_mass'] = dijet_mass
         event['dijet_deta'] = dijet_deta
         event['min_dphi_met_j'] = min_dphi_met_j
+        event['tau_pt'] = tau_pt
+        event['nhtaus_phi'] = nhtaus_phi
+        event['delta_tau_met_phi'] = delta_tau_met_phi
+        event['tau_pt_loose'] = tau_pt_loose
+
 
         event['leading_lep_pt'  ] = lead_lep.pt
         event['leading_lep_eta' ] = lead_lep.eta
@@ -602,9 +708,93 @@ class wzinc_processor(processor.ProcessorABC):
         event['third_jet_eta'] = third_jet.eta
         event['third_jet_phi'] = third_jet.phi
         
-        # Apply GNN
-        event['gnn_score'] = applyGNN(event).get_nnscore()
-        event['gnn_flat'] = self.gnn_flat_fnc(event['gnn_score'])
+        # Apply BDT
+        # event['gnn_score'] = applyGNN(event).get_nnscore()
+        # event['gnn_flat'] = self.gnn_flat_fnc(event['gnn_score'])
+        # model_bdt = f'{_data_path}/BDTmodel/bdtmodel_vbs_uW.onnx'
+        #Variables = ['met_pt', 'dilep_pt', 'dijet_mass', 'dijet_deta', 'lead_jet_pt', 'trail_jet_pt']
+
+
+        # Len = []
+        # Met_pt = event['met_pt']
+        # Met_pt = ak.to_pandas(Met_pt)
+        # Met_pt = Met_pt.dropna()
+        # Len.append(len(Met_pt))
+        # Met_phi = event['met_phi']
+        # Met_phi = ak.to_pandas(Met_phi)
+        # Met_phi = Met_phi.dropna()
+        # Len.append(len(Met_phi))
+        # Dilep_pt = event['dilep_pt']
+        # Dilep_pt = ak.to_pandas(Dilep_pt)
+        # Dilep_pt = Dilep_pt.dropna()
+        # Len.append(len(Dilep_pt))
+        # Dijet_mass = event['dijet_mass']
+        # Dijet_mass = ak.to_pandas(Dijet_mass)
+        # Dijet_mass = Dijet_mass.dropna()
+        # Len.append(len(Dijet_mass))
+        # Dijet_deta = event['dijet_deta']
+        # Dijet_deta = ak.to_pandas(Dijet_deta)
+        # Dijet_deta = Dijet_deta.dropna()
+        # Len.append(len(Dijet_deta))
+        # Lead_jet_pt = event['lead_jet_pt']
+        # Lead_jet_pt = ak.to_pandas(Lead_jet_pt)
+        # Lead_jet_pt = Lead_jet_pt.dropna()
+        # Len.append(len(Lead_jet_pt))
+        # Trail_jet_pt = event['trail_jet_pt']
+        # Trail_jet_pt = ak.to_pandas(Trail_jet_pt)
+        # Trail_jet_pt = Trail_jet_pt.dropna()
+        # Len.append(len(Trail_jet_pt))
+        # #print(Len)
+        # Min_value = np.min(Len)
+        # Column_names = ['met_pt', 'dilep_pt', 'dijet_mass', 'dijet_deta', 'lead_jet_pt', 'trail_jet_pt']
+        # Met_pt = Met_pt.iloc[:Min_value]
+        # Met_phi = Met_phi.iloc[:Min_value]
+        # #Tau_pt = Tau_pt.iloc[:Min_value]
+        # Dilep_pt = Dilep_pt.iloc[:Min_value]
+        # Dijet_mass = Dijet_mass.iloc[:Min_value]
+        # Dijet_deta = Dijet_deta.iloc[:Min_value]
+        # Lead_jet_pt = Lead_jet_pt.iloc[:Min_value]
+        # Trail_jet_pt = Trail_jet_pt.iloc[:Min_value]
+        # Met_pt = Met_pt.to_numpy()
+        # Met_phi = Met_phi.to_numpy()
+        # #Tau_pt = Tau_pt.to_numpy()
+        # Dilep_pt = Dilep_pt.to_numpy()
+        # Dijet_mass = Dijet_mass.to_numpy()
+        # Dijet_deta = Dijet_deta.to_numpy()
+        # Lead_jet_pt = Lead_jet_pt.to_numpy()
+        # Trail_jet_pt = Trail_jet_pt.to_numpy()
+
+        # array = np.column_stack((Met_pt, Dilep_pt, Dijet_mass, Dijet_deta, Lead_jet_pt, Trail_jet_pt))
+
+        # df = pd.DataFrame(array, columns = Column_names)
+        # #print(df)
+
+
+        # bdt_inputs = df.astype(np.float32).values
+        
+        # sess = rt.InferenceSession(self.model_bdt)
+        # input_name = sess.get_inputs()[0].name
+
+        # label_name = sess.get_outputs()[0].name
+        # label_name_1 = sess.get_outputs()[1].name
+        
+        # output_info = sess.get_outputs()
+        # #pred_onx = sess.run(None, {input_name: bdt_inputs})[0].flatten()
+        # pred_onx = sess.run([label_name], {input_name: bdt_inputs})[0].flatten()
+        # # if len(pred_onx) == len(bdt_inputs) :
+
+        # pred_onx_1 = sess.run([label_name_1], {input_name: bdt_inputs})[0].flatten()
+        # #print(len(pred_onx_1))
+        # #print(pred_onx_1)
+        # #print(len(pred_onx))
+        # # array = np.array(pred_onx_1)
+        # # filename = 'array.txt'
+        # # np.savetxt(filename, array, delimiter=',', fmt='%.6f')
+        
+        # # BDT_score = pred_onx_1[::2]
+        # # bdt_score = BDT_score
+
+        event['bdt_score'] = applyBDT(event).get_bdtscore()
 
         # Now adding weights
         if not is_data:
@@ -612,6 +802,7 @@ class wzinc_processor(processor.ProcessorABC):
             self._btag.append_btag_sf(jets, weights)
             self._jpSF.append_jetPU_sf(jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
+            self._tauID.append_tauID_sf(had_taus, weights)
             self._add_trigger_sf(weights, lead_lep, subl_lep)
             
             weights.add (
@@ -671,49 +862,60 @@ class wzinc_processor(processor.ProcessorABC):
         channels = {
             # vector boson scattering
             "vbs-SR": common_sel + [
-		    'require-ossf', 'require-2lep', 'dilep_m', #'dilep_pt',
-		    'dilep_dphi_met', 'min_dphi_met_j', #'met_pt', 
-            '~1nbjets', '1nhtaus',
-		    "2njets", "dijet_deta", "dijet_mass_400"
+		    'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt',
+		    'dilep_dphi_met', 'min_dphi_met_j', 'met_pt', 
+            '~1nbjets', '1nhtaus',"2njets", "dijet_deta", "dijet_mass_400"
 	    ],
             "Non_vbs_WZ": common_sel + [
-            'require-ossf', 'require-2lep', 'dilep_m', #'dilep_pt',
-            'dilep_dphi_met', 'min_dphi_met_j', #'met_pt',
-            '~1nbjets', '1nhtaus',
-            "~dijet_deta", "~dijet_mass_400"
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt',
+            'dilep_dphi_met', 'min_dphi_met_j', 'met_pt',
+            '~1nbjets', '1nhtaus',"~dijet_deta", "~dijet_mass_400"
         ],
             "vbs-DY": common_sel + [
-		    'require-ossf', 'require-2lep', 'dilep_m', #'dilep_pt',
-            'dilep_dphi_met', 'min_dphi_met_j', #'met_pt',
-            '~1nbjets',
-            "3njets", "dijet_deta", "dijet_mass_400"
+		    'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt',
+            'dilep_dphi_met', 'min_dphi_met_j', 'met_pt',
+            '~1nbjets',"2njets", "dijet_deta", "dijet_mass_400"
             
 	    ],
             "vbs-EM": common_sel + [
-		    'require-osof', 'dilep_m', #'dilep_pt', 
-		    'dilep_dphi_met', 'min_dphi_met_j', #'met_pt'
-		    '1nhtaus', "2njets"],
+		    'require-osof', 'dilep_m', 'dilep_pt', 
+		    'dilep_dphi_met', 'min_dphi_met_j', 'met_pt',
+		    '1nhtaus', "2njets"
+        ],
             "vbs-TT": common_sel + [
-		    'require-osof', 'dilep_m', #'dilep_pt', 
-		    'dilep_dphi_met', 'min_dphi_met_j', #'met_pt'
+		    'require-osof', 'dilep_m', 'dilep_pt', 
+		    'dilep_dphi_met', 'min_dphi_met_j', 'met_pt',
 		    '1nbjets', '1nhtaus', "2njets"
 	    ],
             "vbs-NR": common_sel + [
-		    'require-osof', '~dilep_m', #'dilep_pt',
-		    'dilep_dphi_met', 'min_dphi_met_j', #'met_pt'
+		    'require-osof', '~dilep_m', 'dilep_pt',
+		    'dilep_dphi_met', 'min_dphi_met_j', 'met_pt',
 		    '1nbjets', '1nhtaus', "2njets"
 	    ],
-            "vbs-Faketau": common_sel + [
-            'require-ossf', 'require-2lep', 'dilep_m', #'dilep_pt',
-            'dilep_dphi_met', 'min_dphi_met_j', #'~met_pt', 
-            '~1nbjets',
-            "3njets", "dijet_deta", "dijet_mass_400" 
+
+            "vbs-Faketau_B": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt',
+            'dilep_dphi_met', 'min_dphi_met_j', 'met_pt', "1nhtaus_loose",
+            '~1nbjets', "2njets", "dijet_deta", "dijet_mass_400" 
         ],
+
+            "vbs-Faketau_C": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt',
+            'dilep_dphi_met', 'min_dphi_met_j', 'low_met_pt', "1nhtaus_loose",
+            '~1nbjets', "2njets", "dijet_deta", "dijet_mass_400" 
+        ],
+
+            "vbs-Faketau_D": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt',
+            'dilep_dphi_met', 'min_dphi_met_j', 'low_met_pt', "1nhtaus",
+            '~1nbjets', "2njets", "dijet_deta", "dijet_mass_400" 
+        ],
+
+            
             "vbs-3rdjet": common_sel + [
-           'require-ossf', 'require-2lep', 'dilep_m', #'dilep_pt',
-            'dilep_dphi_met', 'min_dphi_met_j', #'~met_pt', 
-            '~1nbjets',
-            "dijet_deta", "dijet_mass_400" , '1nhtaus'
+           'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt',
+            'dilep_dphi_met', 'min_dphi_met_j', '~met_pt', 
+            '~1nbjets', "dijet_deta", "dijet_mass_400" , '1nhtaus'
         ],
         }
 
@@ -754,7 +956,7 @@ class wzinc_processor(processor.ProcessorABC):
             vv = ak.to_numpy(ak.fill_none(weight, np.nan))
             if np.isnan(np.any(vv)):
                 print(f" - {syst} weight nan/inf:", vv[np.isnan(vv)], vv[np.isinf(vv)])
-
+            #print("var " ,var)
             histos[var].fill(
                 **{
                     "channel": ch, 
@@ -764,75 +966,36 @@ class wzinc_processor(processor.ProcessorABC):
                 }
             )
             
-        def _gnn_dumper(ch):
-            sel_ = channels[ch]
-            sel_args_ = {
-                s.replace('~',''): (False if '~' in s else True) for s in sel_
-            }
-            cut =  selection.require(**sel_args_)
-            weight = weights.weight()[cut]
-            
-            _dicv = {
-                ch: {
-                    "gnn": _format_variable(event["gnn_score"], cut).tolist(), 
-                    "weight": weight.tolist()
-                }
-            }
-            if 'gnn_dump' in histos:
-                histos["gnn_dump"].update(_dicv)
-            else:
-                histos["gnn_dump"] = _dicv
-            
         for ch in channels:
-            if self.dump_gnn_array:
-                _gnn_dumper(ch)
             for sys in systematics:
                 _histogram_filler(ch, sys, 'met_pt')
+                _histogram_filler(ch, sys, 'm_T')
                 _histogram_filler(ch, sys, 'dilep_mt')
                 _histogram_filler(ch, sys, 'dilep_pt')
                 _histogram_filler(ch, sys, 'dilep_m')
                 _histogram_filler(ch, sys, 'njets')
                 _histogram_filler(ch, sys, 'bjets')
+                _histogram_filler(ch, sys, 'tau_pt')
+                _histogram_filler(ch, sys, 'nhtaus_phi')
+                _histogram_filler(ch, sys, 'delta_tau_met_phi')
+                _histogram_filler(ch, sys, 'tau_pt_loose')
                 _histogram_filler(ch, sys, 'dphi_met_ll')
                 _histogram_filler(ch, sys, 'dijet_mass')
                 _histogram_filler(ch, sys, 'dijet_deta')
                 _histogram_filler(ch, sys, 'lead_jet_pt')
                 _histogram_filler(ch, sys, 'trail_jet_pt')
+                _histogram_filler(ch, sys, 'third_jet_pt')
                 _histogram_filler(ch, sys, 'lead_jet_eta')
                 _histogram_filler(ch, sys, 'trail_jet_eta')
+                _histogram_filler(ch, sys, 'third_jet_eta')
                 _histogram_filler(ch, sys, 'min_dphi_met_j')
-                _histogram_filler(ch, sys, 'gnn_score')
-                _histogram_filler(ch, sys, 'gnn_flat')
+                _histogram_filler(ch, sys, 'bdt_score')
                 
         return {dataset: histos}
         
     def process(self, event: processor.LazyDataFrame):
         dataset_name = event.metadata['dataset']
         is_data = event.metadata.get("is_data")
-        
-        if is_data:
-            jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
-            met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
-
-            event = ak.with_field(event, jets, 'Jet')
-            event = ak.with_field(event, met, 'MET')
-
-            # HEM15/16 issue
-            if self._era == "2018":
-                _runid = (event.run >= 319077)
-                jets = event.Jet
-                j_mask = ak.where((jets.phi > -1.57) & (jets.phi < -0.87) &
-                                  (jets.eta > -2.50) & (jets.eta <  1.30) & 
-                                  _runid, 0.8, 1)
-                #met = event.MET
-                #event['met_pt'] = met.pt
-                #event['met_phi'] = met.phi            
-                jets['pt']   = j_mask * jets.pt
-                jets['mass'] = j_mask * jets.mass
-                event = ak.with_field(event, jets, 'Jet')
-                
-                
-            return self.process_shift(event, None)
         
         # x-y met shit corrections
         # for the moment I am replacing the met with the corrected met 
@@ -848,6 +1011,54 @@ class wzinc_processor(processor.ProcessorABC):
             era=self._era
         )
         event = ak.with_field(event, met, 'MET')
+
+        # JES/JER corrections
+        rho = event.fixedGridRhoFastjetAll
+        cache = event.caches[0]
+        if is_data: 
+            softjet_gen_pt = None
+        else:
+            softjet_gen_pt = find_best_match(event.CorrT1METJet,event.GenJet)
+        
+        softjets_shift_L123 = self._jmeu.corrected_jets_L123(event.CorrT1METJet, rho, cache, softjet_gen_pt)
+        softjets_shift_L1 = self._jmeu.corrected_jets_L1(event.CorrT1METJet, rho, cache, softjet_gen_pt)
+        
+        jets_shift_L123 = self._jmeu.corrected_jets_L123(event.Jet, rho, cache)
+        jets_shift_L1 = self._jmeu.corrected_jets_L1(event.Jet, rho, cache)
+
+        jets_col_shift_L123 = ak.concatenate([jets_shift_L123, softjets_shift_L123],axis=1)
+        jets_col_shift_L1 = ak.concatenate([jets_shift_L1, softjets_shift_L1],axis=1)
+        
+        raw_met = event.RawMET
+        met_to_correct = event.MET
+        met_to_correct["pt"] = raw_met.pt
+        met_to_correct["phi"] = raw_met.phi
+        jets = self._jmeu.corrected_jets_jer(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
+        met = self._jmeu.corrected_met(met_to_correct, jets_col_shift_L123, jets_col_shift_L1, event.fixedGridRhoFastjetAll, event.caches[0])
+        
+        event = ak.with_field(event, jets, 'Jet')
+        event = ak.with_field(event, met, 'MET')
+
+    
+        if is_data:
+            
+            # HEM15/16 issue
+            if self._era == "2018":
+                _runid = (event.run >= 319077)
+                jets = event.Jet
+                j_mask = ak.where((jets.phi > -1.57) & (jets.phi < -0.87) &
+                                  (jets.eta > -2.50) & (jets.eta <  1.30) & 
+                                  _runid, 0.8, 1)
+                # met = event.MET
+                # event['met_pt'] = met.pt
+                # event['met_phi'] = met.phi            
+                jets['pt']   = j_mask * jets.pt
+                jets['mass'] = j_mask * jets.mass
+
+                event = ak.with_field(event, jets, 'Jet')
+                
+            return self.process_shift(event, None)
+        
 		
         # Adding scale factors to Muon and Electron fields
         muon = event.Muon 
@@ -867,8 +1078,8 @@ class wzinc_processor(processor.ProcessorABC):
         event = ak.with_field(event, electron, 'Electron')
 
         # JES/JER corrections
-        jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
-        met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
+        # jets = self._jmeu.corrected_jets(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
+        # met  = self._jmeu.corrected_met(event.MET, jets, event.fixedGridRhoFastjetAll, event.caches[0])
          
         # Apply rochester_correction
         muon=event.Muon
@@ -938,6 +1149,8 @@ class wzinc_processor(processor.ProcessorABC):
             ) for collections, name in shifts
         ]
         return processor.accumulate(shifts)
+    
+
     
     def postprocess(self, accumulator):
         return accumulator
