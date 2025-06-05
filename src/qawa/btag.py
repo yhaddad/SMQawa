@@ -92,7 +92,7 @@ class BTVCorrector:
 
     def append_btag_sf(self, jets: ak.Array, weights: Weights):
         li_jets = jets[(jets.hadronFlavour==0) & (np.abs(jets.eta) <= 2.4)]
-        bc_jets = jets[(jets.hadronFlavour >0) & (np.abs(jets.eta) <= 2.4)]
+        bc_jets = jets[(jets.hadronFlavour!=0) & (np.abs(jets.eta) <= 2.4)]
 
         wp_era_str = self._era + 'APV' if self.isAPV else self._era
         b_tagged_li = (li_jets.btagDeepFlavB  > btag_id(wp = self._wp, era=wp_era_str))
