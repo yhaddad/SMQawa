@@ -16,6 +16,9 @@ script_TEMPLATE = """#!/bin/bash
 export X509_USER_PROXY={proxy}
 export XRD_REQUESTTIMEOUT=6400
 export XRD_REDIRECTLIMIT=64
+export PYTHONPATH=/afs/cern.ch/user/i/iisrar/.local/lib/python3.10/site-packages:$PYTHONPATH
+# export XRD_LOGLEVEL=Debug
+
 
 voms-proxy-info -all
 voms-proxy-info -all -file {proxy}
@@ -23,7 +26,20 @@ voms-proxy-info -all -file {proxy}
 python -m venv --without-pip --system-site-packages jobenv
 source jobenv/bin/activate
 python -m pip install scipy --upgrade --no-cache-dir
+
+# # Clone the specific Coffea package from GitHub
+# git clone -b smqawa-zz2l2nu https://github.com/NJManganelli/coffea.git
+# cd coffea
+# python -m pip install --no-deps --ignore-installed --no-cache-dir .
+# cd ..
+
 python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-{qawa_version}-py2.py3-none-any.whl
+# python -m pip show coffea
+# python -m pip show uproot
+# python -m pip show awkward
+# python -m pip show numpy
+# python -m pip show hist
+
 
 echo "----- JOB STARTS @" `date "+%Y-%m-%d %H:%M:%S"`
 echo "----- X509_USER_PROXY    : $X509_USER_PROXY"
@@ -62,10 +78,10 @@ error                 = $(ClusterId).$(ProcId).err
 log                   = $(ClusterId).$(ProcId).log
 
 on_exit_remove        = (ExitBySignal == False) && (ExitCode == 0)
-max_retries           = 2
+max_retries           = 3
 requirements          = Machine =!= LastRemoteHost
 # MY.XRDCP_CREATE_DIR   = True
-+SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest"
++SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:0.7.22-py3.10-g7f049"
 +JobFlavour           = "{queue}"
 
 queue jobfn from {jobdir}/inputfiles.dat
@@ -137,7 +153,7 @@ def main():
                 os.mkdir(jobs_dir)
 
             if not options.submit:
-                sample_file = []
+                sample_files = []
                 if '*' in sample:
                     sample_with_ext = subprocess.check_output(
                         ['dasgoclient', '--query', f"dataset={sample}"]
