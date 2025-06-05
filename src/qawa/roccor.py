@@ -48,7 +48,9 @@ class rochester_correction:
             corrections = self.rochester.kScaleDT(muons.charge, muons.pt, muons.eta, muons.phi)
             errors = self.rochester.kScaleDTerror(muons.charge, muons.pt, muons.eta, muons.phi)
     
-        pt_nom = muons.pt * corrections
-        pt_err = muons.pt * errors
+        pt_nom = np.where(muons.pt<=200,muons.pt*corrections,muons.pt)
+        pt_err = np.where(muons.pt<=200,muons.pt*errors,np.zeros_like(muons.pt))
+        # pt_nom = muons.pt * corrections
+        # pt_err = muons.pt * errors
     
         return pt_nom, pt_nom + pt_err, pt_nom - pt_err
