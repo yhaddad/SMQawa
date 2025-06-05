@@ -27,6 +27,7 @@ jec_name_map = {
     'JetPhi': 'phi',
     'UnClusteredEnergyDeltaX': 'MetUnclustEnUpDeltaX',
     'UnClusteredEnergyDeltaY': 'MetUnclustEnUpDeltaY',
+    'ptGenJet' : 'pt_gen'
 }
 
 def update_collection(event, coll):
@@ -82,7 +83,7 @@ class JMEUncertainty:
             ]
             correction_list_L123 += common_files
             correction_list_JER += common_files
-        jec_name_map.update({'ptGenJet': 'pt_gen'})
+        # jec_name_map.update({'ptGenJet': 'pt_gen'})
 
         extract_L1.add_weight_sets(correction_list_L1)
         extract_L1.finalize()
@@ -116,7 +117,7 @@ class JMEUncertainty:
     def corrected_jets_L123(self, jets, event_rho, lazy_cache, pt_gen=None):
         jet_pt_L123 = self.jec_factory_L123.build(
             add_jme_variables(jets, event_rho, pt_gen),
-            lazy_cache 
+            lazy_cache=lazy_cache
         )
         emFraction = jet_pt_L123.chEmEF + jet_pt_L123.neEmEF
         mask_jec = (jet_pt_L123['pt'] > 15) & (emFraction <= 0.9)
@@ -127,7 +128,7 @@ class JMEUncertainty:
     def corrected_jets_L1(self, jets, event_rho, lazy_cache, pt_gen=None):
         jet_pt_L1 = self.jec_factory_L1.build(
             add_jme_variables(jets, event_rho, pt_gen),
-            lazy_cache 
+            lazy_cache=lazy_cache
         )
         jet_pt_L1['pt'] = jet_pt_L1['pt'] * (1 - jets.muonSubtrFactor)
         return jet_pt_L1
@@ -140,14 +141,15 @@ class JMEUncertainty:
             jets,
             lazy_cache 
         )
-        
+      #remove jets_L1  
     def corrected_met(self, met, jets_L123, jets_L1, event_rho, lazy_cache):
-        jets_L123 = add_jme_variables(jets_L123, event_rho)
-        jets_L123['pt'      ] = -jets_L123.pt 
-        jets_L123['pt_raw'  ] = -jets_L1.pt 
+        # jets_L123 = add_jme_variables(jets_L123, event_rho)
+        # jets_L123['pt'      ] = jets_L123.pt 
+        # jets_L123['pt_raw'  ] = jets_L1.pt 
+        # jets_L123['mass_raw'] = jets_L1.mass
         
         return self.met_factory.build(
             met,
             jets_L123,
-            lazy_cache=lazy_cache 
+            lazy_cache=lazy_cache
         )
