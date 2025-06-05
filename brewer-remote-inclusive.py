@@ -8,11 +8,12 @@ import gzip
 import re, sys
 import uproot
 import numpy as np
+import traceback
 
 np.seterr(all='ignore')
 
 uproot.open.defaults["xrootd_handler"] = uproot.source.xrootd.MultithreadedXRootDSource
-uproot.open.defaults["timeout"] = 60*10 # wait more
+uproot.open.defaults["timeout"] = 650 # wait more
 
 
 def validate_input_file(nanofile):
@@ -21,8 +22,8 @@ def validate_input_file(nanofile):
     aliases = [
         "root://eoscms.cern.ch/",
         "root://xrootd-cms.infn.it/",
-        "root://cmsxrootd.fnal.gov/",
         "root://cms-xrd-global.cern.ch/",
+        "root://cmsxrootd.fnal.gov/"
     ]
 
     valid = False
@@ -68,6 +69,7 @@ def main():
         "root://eoscms.cern.ch/",
         "root://llrxrd-redir.in2p3.fr/",
         "root://xrootd-cms.infn.it/",
+        "root://cms-xrd-global.cern.ch/",
         "root://cms-xrd-global01.cern.ch/", 
         "root://cms-xrd-global02.cern.ch/",
         "root://cmsxrootd.fnal.gov/",
@@ -145,8 +147,8 @@ def main():
                     "workers": 8,
                     "desc": "WZinC"
                 },
-                chunksize=100000,
-                # maxchunks=5
+                # chunksize=100000,
+                # maxchunks=2
             )
             bh_output = {}
             for key, content in vbs_out.items():
@@ -157,10 +159,11 @@ def main():
             with gzip.open("histogram_%s.pkl.gz" % str(options.jobNum), "wb") as f:
                 pickle.dump(bh_output, f)
             failed=False
-        except:
+        except Exception as err:
             print(f"[WARNING] {aliases[ixrd]} failed with the following error : ")
-            print(sys.exc_info()[0])
-            #print(f"Unexpected {err=}, {type(err)=}")
+            print(f"Unexpected {err=}, {type(err)=}")
+            print(err)
+            print(traceback.format_exc())
             print("-------------------------------------------")
             failed=True
             ixrd += 1
