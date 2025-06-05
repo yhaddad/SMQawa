@@ -25,6 +25,9 @@ class tauIDScaleFactors:
 		with gzip.open(fname,'rt') as file:
 			data = file.read().strip()
 			cset = correctionlib.CorrectionSet.from_string(data)
+			# cset = correctionlib.CorrectionSet.from_file(file)
+
+		
 
 		#Load Correction Objects :
 		self.corr_vsjet = cset["DeepTau2017v2p1VSjet"]
@@ -73,35 +76,84 @@ class tauIDScaleFactors:
 		return  sf_vsjet, sf_vse, sf_vsmu
 
 
-	def tau_energy_scale_correction(self, taus):
-		
-		mask = (taus.decayMode != 5) & (taus.decayMode != 6)
-		taus = taus[mask]
-		
-		ntaus = ak.num(taus)
-		taus  = ak.flatten(taus)
-		tau_eta = taus.eta
-		tau_pt  = taus.pt
-		tau_mass = taus.mass
-		tau_genmatch = taus.genPartFlav
-		tau_dm = taus.decayMode
-		
+	def apply_function_flattened_masked(self,func, *args, flatten_axis=1, valid_where=None):
+	    maybe_flat_args = []
+	    num = None
+	    for arg in args:
+	        if isinstance(arg, ak.Array):
+	            if valid_where is None:
+	                valid_where = ak.ones_like(arg, dtype=bool)
+	            if num is None:
+	                num = ak.num(arg)
+	    maybe_flat_args = [ak.flatten(ak.mask(arg, valid_where), axis=flatten_axis) if isinstance(arg, ak.Array) else arg for arg in args]
+	    return ak.unflatten(
+	        func(*maybe_flat_args), 
+	        num
+	        )
+
+	def tau_energy_scale_correction(self, tau):
+
+		# Usage, lets pretend only the dm 5 and 6 had to be avoided but all other inputs were valid
+		valid_tau_enscale = (tau.decayMode != 5) & (tau.decayMode != 6)
+
+		# ntaus = ak.num(tau)
+		# taus  = ak.flatten(tau)
+		tau_eta = tau.eta
+		tau_pt  = tau.pt
+		tau_mass = tau.mass
+		tau_dm  = tau.decayMode
+		tau_genmatch = tau.genPartFlav
 		tagger = "DeepTau2017v2p1"
 
-		sf_enscale_nom = self.corr_enscale.evaluate(tau_pt,tau_eta,tau_dm,tau_genmatch,tagger,"nom")
-		sf_enscale_up = self.corr_enscale.evaluate(tau_pt,tau_eta,tau_dm,tau_genmatch,tagger,"up")
-		sf_enscale_down = self.corr_enscale.evaluate(tau_pt,tau_eta,tau_dm,tau_genmatch,tagger,"down")
+		enscale_nom_with_none = self.apply_function_flattened_masked(
+		    self.corr_enscale.evaluate,
+		    tau_pt,
+		    tau_eta,
+		    tau_dm,
+		    tau_genmatch,
+		    tagger,
+		    "nom",
+		    valid_where = valid_tau_enscale
+		)
+		enscale_up_with_none = self.apply_function_flattened_masked(
+		    self.corr_enscale.evaluate,
+		    tau_pt,
+		    tau_eta,
+		    tau_dm,
+		    tau_genmatch,
+		    tagger,
+		    "up",
+		    valid_where = valid_tau_enscale
+		)
+		enscale_down_with_none = self.apply_function_flattened_masked(
+		    self.corr_enscale.evaluate,
+		    tau_pt,
+		    tau_eta,
+		    tau_dm,
+		    tau_genmatch,
+		    tagger,
+		    "down",
+		    valid_where = valid_tau_enscale
+		)
+		#now enscale_nom should have a SF where the valid_tau_enscale is true, and "None" elsewhere, so fill_none it with 1.0 to not alter the scale
+		enscale_nom = ak.fill_none(enscale_nom_with_none, 1.0)
+		enscale_up = ak.fill_none(enscale_up_with_none, 1.0)
+		enscale_down = ak.fill_none(enscale_down_with_none, 1.0)
 
+		# ak.num(enscale_nom, axis=1) == ak.num(tau.pt, axis=1)
+		# ak.num(enscale_up, axis=1) == ak.num(tau.pt, axis=1)
+		# ak.num(enscale_down, axis=1) == ak.num(tau.pt, axis=1)
 
-		tau_pt = ak.unflatten(sf_enscale_nom*tau_pt, ntaus)
-		tau_pt_EnUp = ak.unflatten(sf_enscale_up*tau_pt, ntaus)
-		tau_pt_EnDown = ak.unflatten(sf_enscale_down*tau_pt, ntaus)
+		tau_pt = enscale_nom*tau_pt
+		tau_pt_EnUp = enscale_up*tau_pt
+		tau_pt_EnDown = enscale_down*tau_pt
 
-		tau_mass = ak.unflatten(sf_enscale_nom*tau_mass, ntaus)
-		tau_mass_EnUp = ak.unflatten(sf_enscale_up*tau_mass, ntaus)
-		tau_mass_EnDown = ak.unflatten(sf_enscale_down*tau_mass, ntaus)
+		tau_mass = enscale_nom*tau_mass
+		tau_mass_EnUp = enscale_up*tau_mass
+		tau_mass_EnDown = enscale_down*tau_mass
 
 		return tau_pt, tau_pt_EnUp, tau_pt_EnDown, tau_mass, tau_mass_EnUp, tau_mass_EnDown
+
 
 
 	def append_tauID_sf(self, taus: ak.Array, weights: Weights):
