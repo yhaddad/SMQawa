@@ -18,13 +18,16 @@ zsh SMQawa/bootstrap.zsh <shell> <location>
 ```
 
 ## Every-time setup
-Navigate to the installation location (where shell and .*rc files are created, parent folder of SMQawa) and run
+Navigate to the installation location (where shell and .*rc files are created, parent folder of SMQawa) and run for your preferred shell
 ```bash
-./shell
+./bash-shell
+```
+```zsh
+./zsh-shell
 ```
 
 ## Executing SMQawa code locally
 ```bash
 cd SMQawa
-python brewer-remote-inclusive.py --isMC=1 --era=2018 --infile=/store/mc/RunIISummer20UL16NanoAODAPVv9/DYJetsToLL_0J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NANOAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v1/130000/9FBF4AF1-D77E-4648-916B-097401C9544B.root
+python brewer-remote-inclusive.py --isMC=1 --era=2018 --infile=/store/mc/RunIISummer20UL16NanoAODAPVv9/DYJetsToLL_0J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NANOAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v1/130000/9FBF4AF1-D77E-4648-916B-097401C9544B.root --executor=IterativeExecutor --copyInput
 ```
