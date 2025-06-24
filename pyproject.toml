@@ -1,5 +1,5 @@
 [project]
-name = "Qawa"
+name = "qawa"
 description = "Algerian coffee is called qawa"
 readme = "README.md"
 version = "0.0.7"
