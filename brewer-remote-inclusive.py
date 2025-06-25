@@ -131,7 +131,7 @@ def main():
                         deepest_name = local_file_name.split("/")[-1]
                         local_file_nested_dir = local_file_name.replace(deepest_name, "")
                         if not os.path.isdir(local_file_nested_dir):
-                            os.mkdirs(local_file_nested_dir)
+                            os.mkdir(local_file_nested_dir)
                         if not os.path.isfile(local_file_name):
                             os.system(f"xrdcp {file_name} {local_file_name}")
                         if not os.path.isfile(local_file_name):
