@@ -6,7 +6,10 @@ from qawa.process.coffea_sumw import coffea_sumw
 import argparse
 import pickle
 import gzip
-import re, sys
+import re
+import sys
+import os
+import traceback
 import uproot
 import numpy as np
 import traceback
@@ -58,11 +61,32 @@ def main():
     parser.add_argument('--dataset',   type=str, default=None  , help="dataset name. need to specify if file is not in EOS")
     parser.add_argument('--runperiod', type=str, default=None)
     parser.add_argument('--executor' , type=str, default="FuturesExecutor", help="Executor to use, one of IterativeExecutor (good for debugging), FuturesExecutor (multithreaded), or other coffea option")
+    parser.add_argument('--copyInput', action='store_true'     , help="xrdcp a file to the worker node before executing the coffea processor on it")
 
     options = parser.parse_args()
+    split_args = options.infile.split('/')
+    auto_isMC = None  #if neither data or mc tag is found, keep as None
+    auto_dataset = None
+    auto_runperiod = ""
+    if "NANOAODSIM" in split_args:
+        auto_isMC = True
+    elif "NANOAOD" in split_args:
+        auto_isMC = False
+    else:
+        pass
+    if auto_isMC is not None:
+        assert ((options.isMC==1) == auto_isMC), f"auto MC detection is not consistent with isMC command line option: (isMC==1)={options.isMC==1} :: auto_isMC={auto_isMC}"
+        try:
+            tier_index = split_args.index("NANOAODSIM" if auto_isMC else "NANOAOD")
+            auto_dataset = split_args[tier_index - 1]
+            auto_runperiod = split_args[tier_index - 2]
+        except ValueError as ve:
+            print("couldn't auto-parse dataset and runperiod from filename:)")
+            print(ve)
 
-    if options.dataset is None: 
-        options.dataset = options.infile.split('/')[4]
+
+    if options.dataset is None:
+        options.dataset = auto_dataset
     executor = None
     if options.executor == "FuturesExecutor":
         executor = processor.FuturesExecutor(workers=8,)
@@ -78,6 +102,7 @@ def main():
 
     failed = True
     ixrd = 0
+    local_file_name = None
     aliases = [
         "root://eoscms.cern.ch/",
         "root://llrxrd-redir.in2p3.fr/",
@@ -93,20 +118,50 @@ def main():
         try:
             file_name = options.infile
             if '/store/' in options.infile:
+                if options.infile.startswith("root://"):
+                    pass
+                else:
+                    file_name = aliases[ixrd] + options.infile
+
+            if options.copyInput:
+                if local_file_name is None and file_name.startswith("root://"):
+                    try:
+                        split_name = file_name.split("//")
+                        local_file_name = split_name[-1]
+                        deepest_name = local_file_name.split("/")[-1]
+                        local_file_nested_dir = local_file_name.replace(deepest_name, "")
+                        if not os.path.isdir(local_file_nested_dir):
+                            os.mkdirs(local_file_nested_dir)
+                        if not os.path.isfile(local_file_name):
+                            os.system(f"xrdcp {file_name} {local_file_name}")
+                        if not os.path.isfile(local_file_name):
+                            raise RuntimeError(f"Failed to download the file locally for processing: {file_name} -> {local_file_name}")
+                    except Exception as le:
+                        print(le)
+                    finally:
+                        # reset local_file_name trigger so we can try to redownload on the next while loop iteration
+                        local_file_name = None
+                else:
+                    if local_file_name:
+                        print(f"File loaded to local directory: {local_file_name} (existence-test: {os.path.isfile(local_file_name)}")
+                    else:
+                        print(f"local_file_name not set ({local_file_name}), probably due to file_name ({file_name}) not indicating an xrdcp-able path by starting with root://")
+
+
                 file_name = aliases[ixrd] + options.infile
             else:
                 file_name = options.infile 
 
             samples ={
                 options.dataset:{
-                    'files': [file_name],
+                    'files': [local_file_name if local_file_name else file_name],
                     'metadata':{
                         'era': era,
                         'is_data': is_data
                     }
                 }
             }
-
+            print(f"brewer-remote-inclusive.py running with the following samples definition:\n{samples}")
             sumw_runner = processor.Runner(
                 executor=executor,
                 schema=BaseSchema,
@@ -126,20 +181,22 @@ def main():
             # extarct the run period
             if is_data:
                 if 'Run20' in options.infile:
-                    options.runperiod = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
+                    # options.runperiod = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
+                    options.runperiod = auto_runperiod
             else:
                 options.runperiod = ''
 
             print(
                 f"""---------------------------
-                -- options  = {options}
-                -- is MC    = {options.isMC}
-                -- jobNum   = {options.jobNum}
-                -- era      = {options.era}
-                -- in file  = {aliases[ixrd] + options.infile}
-                -- dataset  = {options.dataset}
-                -- period   = {options.runperiod}
-                -- executor = {options.executor}
+                -- options   = {options}
+                -- is MC     = {options.isMC}
+                -- jobNum    = {options.jobNum}
+                -- era       = {options.era}
+                -- in file   = {aliases[ixrd] + options.infile}
+                -- dataset   = {options.dataset}
+                -- period    = {options.runperiod}
+                -- executor  = {options.executor}
+                -- copyInput = {options.copyInput}
                 ---------------------------"""
             )
 
@@ -171,8 +228,11 @@ def main():
         except Exception as err:
             print(f"[WARNING] {aliases[ixrd]} failed with the following error : ")
             print(f"Unexpected {err=}, {type(err)=}")
+            print("printing Exception err:")
             print(err)
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
+            print("printing traceback.print_exc():")
+            traceback.print_exc()
             print("-------------------------------------------")
             failed=True
             ixrd += 1
