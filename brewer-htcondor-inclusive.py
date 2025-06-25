@@ -30,9 +30,9 @@ echo FULL_IMAGE $FULL_IMAGE
 echo "----- Sourcing virtual environment :"
 echo source $INSTALL_LOC_EXTERNAL/.env/bin/activate
 source $INSTALL_LOC_EXTERNAL/.env/bin/activate
-cd $INSTALL_LOC_EXTERNAL/SMQawa
-$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip install -e .
-cd -
+# cd $INSTALL_LOC_EXTERNAL/SMQawa
+# $INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip install -e .
+# cd -
 
 
 echo "----- JOB STARTS @" `date "+%Y-%m-%d %H:%M:%S"`
@@ -42,7 +42,7 @@ echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
 
 echo "----- processing the files : "
-$INSTALL_LOC_EXTERNAL/.env/bin/python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2 --executor={executor}
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2 --executor={executor} --copyInput
 
 echo "----- directory after running :"
 ls -lthr
