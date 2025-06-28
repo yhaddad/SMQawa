@@ -13,6 +13,7 @@ import traceback
 import uproot
 import numpy as np
 import traceback
+import tempfile
 
 NanoAODSchema.warn_missing_crossrefs = False
 
@@ -127,20 +128,20 @@ def main():
                 if local_file_name is None and file_name.startswith("root://"):
                     try:
                         split_name = file_name.split("//")
-                        local_file_name = split_name[-1]
+                        local_file_name = str(tempfile.gettempdir()) + "/" + split_name[-1]
                         deepest_name = local_file_name.split("/")[-1]
                         local_file_nested_dir = local_file_name.replace(deepest_name, "")
                         if not os.path.isdir(local_file_nested_dir):
-                            os.mkdir(local_file_nested_dir)
+                            print(f"making directory... {local_file_nested_dir}")
+                            os.makedirs(local_file_nested_dir, exist_ok=True)
                         if not os.path.isfile(local_file_name):
+                            print(f"xrdcp file {file_name} {local_file_name}")
                             os.system(f"xrdcp {file_name} {local_file_name}")
                         if not os.path.isfile(local_file_name):
                             raise RuntimeError(f"Failed to download the file locally for processing: {file_name} -> {local_file_name}")
                     except Exception as le:
-                        print(le)
-                    finally:
-                        # reset local_file_name trigger so we can try to redownload on the next while loop iteration
                         local_file_name = None
+                        print(le)
                 else:
                     if local_file_name:
                         print(f"File loaded to local directory: {local_file_name} (existence-test: {os.path.isfile(local_file_name)}")
