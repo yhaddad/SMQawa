@@ -30,9 +30,9 @@ echo FULL_IMAGE $FULL_IMAGE
 echo "----- Sourcing virtual environment :"
 echo source $INSTALL_LOC_EXTERNAL/.env/bin/activate
 source $INSTALL_LOC_EXTERNAL/.env/bin/activate
-# cd $INSTALL_LOC_EXTERNAL/SMQawa
-# $INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip install -e .
-# cd -
+cd $INSTALL_LOC_EXTERNAL/SMQawa
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip install -e .
+cd -
 
 
 echo "----- JOB STARTS @" `date "+%Y-%m-%d %H:%M:%S"`
