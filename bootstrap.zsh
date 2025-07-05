@@ -100,7 +100,7 @@ install_env() {
   cd \${INSTALL_LOC}
   if [ ! -d "coffea" ]; then
     echo "Cloning coffea for editable install"
-    git clone -b smqawa-zz2l2nu http://github.com/NJManganelli/coffea.git
+    git clone -b smqawa-wz2ltaunu http://github.com/NJManganelli/coffea.git
   fi
   cd coffea
   \$INSTALL_LOC.env/bin/python -m pip install -e .
@@ -176,7 +176,7 @@ install_env() {
   cd \${INSTALL_LOC}
   if [ ! -d "coffea" ]; then
     echo "Cloning coffea for editable install"
-    git clone -b smqawa-zz2l2nu http://github.com/NJManganelli/coffea.git
+    git clone -b smqawa-wz2ltaunu http://github.com/NJManganelli/coffea.git
   fi
   cd coffea
   \$INSTALL_LOC.env/bin/python -m pip install -e .
