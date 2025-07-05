@@ -39,10 +39,10 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["setuptools>=75.8.2", "wheel"]
-build-backend = "setuptools.build_meta"
-# requires = ["hatchling"]
-# build-backend = "hatchling.build"
+# requires = ["setuptools>=75.8.2", "wheel"]
+# build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 
 [tool.setuptools]
@@ -50,9 +50,12 @@ include-package-data = true
 package-dir = {"" = "src"}
 # version.path = "src/qawa/__init__.py"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["*"]
+# [tool.setuptools.packages.find]
+# where = ["src"]
+# include = ["*"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/qawa"]
 
 [tool.flake8]
 ignore = ["E203", "E231", "E501", "E722", "W503", "B950"]
