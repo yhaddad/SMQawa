@@ -88,6 +88,11 @@ fi
 
 test -e \${ZDOTDIR}/.iterm2_shell_integration.zsh && source \${ZDOTDIR}/.iterm2_shell_integration.zsh
 
+patch_venv_pths() {
+    for x in \$(find \$VIRTUAL_ENV -name "*.pth"); do
+        echo \${x} && sed -i "s@\$INSTALL_LOC@\$INSTALL_LOC_EXTERNAL/@g" \${x};
+    done
+}
 
 install_env() {
   print "INSTALLING ENV"
@@ -137,6 +142,7 @@ unset GREP_OPTIONS
 
 [[ -d \$INSTALL_LOC.env ]] || install_all
 source \$INSTALL_LOC.env/bin/activate
+patch_venv_pths
 alias pip="python -m pip"
 
 EOF
@@ -165,6 +171,12 @@ if [[ -z "\$INSTALL_LOC" ]]; then
 else
   echo "INSTALL_LOC=" \$INSTALL_LOC
 fi
+
+patch_venv_pths() {
+    for x in \$(find \$VIRTUAL_ENV -name "*.pth"); do
+        echo \${x} && sed -i "s@\$INSTALL_LOC@\$INSTALL_LOC_EXTERNAL/@g" \${x};
+    done
+}
 
 install_env() {
   # This will break if the repo isn't cloned first
@@ -213,6 +225,7 @@ unset GREP_OPTIONS
 
 [[ -d .env ]] || install_all
 source \$INSTALL_LOC.env/bin/activate
+patch_venv_pths
 alias pip="python -m pip"
 
 EOF
