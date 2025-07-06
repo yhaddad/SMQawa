@@ -28,15 +28,8 @@ echo COFFEA_IMAGE $COFFEA_IMAGE
 echo FULL_IMAGE $FULL_IMAGE
 
 echo "----- Sourcing virtual environment :"
-echo 'ls $INSTALL_LOC_EXTERNAL/.env/bin/activate'
-ls $INSTALL_LOC_EXTERNAL/.env/bin/activate
-echo cat $INSTALL_LOC_EXTERNAL/.env/bin/activate
-cat $INSTALL_LOC_EXTERNAL/.env/bin/activate
 echo source $INSTALL_LOC_EXTERNAL/.env/bin/activate
 source $INSTALL_LOC_EXTERNAL/.env/bin/activate
-# cd $INSTALL_LOC_EXTERNAL/SMQawa
-# $INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip install -e .
-# cd -
 echo "which python3"
 which python3
 echo '$SHELL'
@@ -49,19 +42,13 @@ echo '$PYTHONHOME'
 echo $PYTHONHOME
 echo '$PATH'
 echo $PATH
-# echo awkward, uproot, coffea, qawa versions:
-# $INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show awkward
-# $INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show uproot
-# $INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show coffea
-# $INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip list freeze
-# $INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show qawa
+echo awkward, uproot, coffea, qawa versions:
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show awkward
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show uproot
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show coffea
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show qawa
 echo import and print __file__ for coffea
 $INSTALL_LOC_EXTERNAL/.env/bin/python3 -c "import coffea; print(coffea.__version__); print(coffea.__file__)"
-echo check qawa .pth
-echo 'ls $INSTALL_LOC_EXTERNAL/.env/lib/python3.10/site-packages/_qawa.pth'
-ls $INSTALL_LOC_EXTERNAL/.env/lib/python3.10/site-packages/_qawa.pth
-echo 'ls $(cat $INSTALL_LOC_EXTERNAL/.env/lib/python3.10/site-packages/_qawa.pth)'
-ls $(cat $INSTALL_LOC_EXTERNAL/.env/lib/python3.10/site-packages/_qawa.pth)
 echo import and print __file__ for qawa
 $INSTALL_LOC_EXTERNAL/.env/bin/python3 -c "import qawa; print(qawa.__file__)"
 
