@@ -89,6 +89,7 @@ fi
 test -e \${ZDOTDIR}/.iterm2_shell_integration.zsh && source \${ZDOTDIR}/.iterm2_shell_integration.zsh
 
 patch_venv_pths() {
+    echo Patching VIRTUAL_ENV .pth files
     for x in \$(find \$VIRTUAL_ENV -name "*.pth"); do
         echo \${x} && sed -i "s@\$INSTALL_LOC@\$INSTALL_LOC_EXTERNAL/@g" \${x};
     done
@@ -173,6 +174,7 @@ else
 fi
 
 patch_venv_pths() {
+    echo Patching VIRTUAL_ENV .pth files
     for x in \$(find \$VIRTUAL_ENV -name "*.pth"); do
         echo \${x} && sed -i "s@\$INSTALL_LOC@\$INSTALL_LOC_EXTERNAL/@g" \${x};
     done
