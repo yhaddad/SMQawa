@@ -30,13 +30,13 @@ export CONDOR_CONFIG=\$INSTALL_LOC.condor_config
 grep -v '^include' /etc/condor/config.d/01_cmslpc_interactive > .condor_config
 
 # Need all our bind addresses
-export APPTAINER_BINDPATH=/uscmst1b_scratch,/cvmfs,/cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security,/eos,/etc/pki/ca-trust,/run/user,/var/run/user
+export APPTAINER_BINDPATH=/uscmst1b_scratch,/cvmfs,/cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security,/eos,/etc/pki/ca-trust,/run/user,/var/run/user,\$(readlink -f \$PWD)
 
 EOF
 else
     cat <<EOF >> shell
 # Need all our bind addresses
-export APPTAINER_BINDPATH=/cvmfs,/cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security,/eos,/etc/pki/ca-trust,/etc/tnsnames.ora,/run/user,/var/run/user
+export APPTAINER_BINDPATH=/cvmfs,/cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security,/eos,/etc/pki/ca-trust,/etc/tnsnames.ora,/run/user,/var/run/user,\$(readlink -f \$PWD)
 
 EOF
 fi
