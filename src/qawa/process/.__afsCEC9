@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# 定义需要遍历的路径列表
+path_list=(
+    "DoubleMuon/"
+    "DYJetsToLL_LHEFilterPtZ-0To50_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/"
+    "DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/"
+    "DYJetsToLL_LHEFilterPtZ-250To400_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/"
+    "DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/"
+    "DYJetsToLL_LHEFilterPtZ-50To100_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/"
+    "DYJetsToLL_LHEFilterPtZ-650ToInf_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/"
+    "EGamma/"
+    "GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/"
+    "GluGluToContinToZZTo2mu2nu_TuneCP5_13TeV-mcfm701-pythia8/"
+    "GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/"
+    "GluGluToWWToMNMN_TuneCP5_13TeV_MCFM701_pythia8/"
+    "MuonEG/"
+    "SingleMuon/"
+    "ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/"
+    "ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/"
+    "ST_t-channel_antitop_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/"
+    "ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/"
+    "ST_t-channel_top_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/"
+    "ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/"
+    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/"
+    "TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/"
+    "TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/"
+    "tZq_ll_4f_ckm_NLO_TuneCP5_13TeV-amcatnlo-pythia8/"
+    "WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/"
+    "WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/"
+    "WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/"
+    "WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/"
+    "WZZ_TuneCP5_13TeV-amcatnlo-pythia8/"
+    "ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/"
+    "ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/"
+    "ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/"
+)
+path_list=(
+	"DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8")
+#!/bin/bash
+
+# 定义变量
+SINGULARITY_IMAGE="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest"
+SCRIPT="test.py"
+YAML_FILE="sample_paths.yaml"
+
+# 循环遍历路径列表
+for path in "${path_list[@]}"; do
+    filename=$(basename "$path").gz
+    #cp /eos/user/h/hgao/ZZTo2L2Nu/HZZsample/$filename/*.root /tmp/hgao/$filename/
+    singularity exec -B ${PWD}:/srv/ "${SINGULARITY_IMAGE}" /bin/bash -c "
+	python test.py config/$path.yaml
+	exit
+    "
+    echo "Entered $path"
+done
+
+#for path in "${path_list[@]}"; do
+#    filename=$(basename "$path").gz
+#    #tar -xvf /eos/user/h/hgao/ZZTo2L2Nu/HZZsample/$filename -C /tmp/hgao
+#    singularity shell -B ${PWD}:/srv/ /cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest
+#    echo "++++++++++"
+#    python test.py sample_paths.yaml
+#    exit
+#    echo "Entered $path"
+#done
+#
