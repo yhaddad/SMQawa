@@ -22,6 +22,7 @@ from qawa.jetPU import jetPUScaleFactors
 from qawa.tauSF import tauIDScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
+from qawa.gen_match import find_best_match
 from qawa.gen_match import delta_r2, find_best_match
 from qawa.ddr import dataDrivenDYRatio
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
@@ -1006,10 +1007,24 @@ class zzinc_processor(processor.ProcessorABC):
     def process(self, event: processor.LazyDataFrame):
         dataset_name = event.metadata['dataset']
         is_data = event.metadata.get("is_data")
+	      
+        # x-y met shit corrections
+        # for the moment I am replacing the met with the corrected met 
+        # before doing the JES/JER corrections
         
-
-        #JES/JER corrections
-        rho = event.fixedGridRhoFastjetAll
+        run = event.run 
+        npv = event.PV.npvs
+        met = event.MET
+        
+        met = met_phi_xy_correction(
+            event.MET, run, npv, 
+            is_mc=not is_data, 
+            era=self._era
+        )
+        event = ak.with_field(event, met, 'MET')
+	    
+	      # JES/JER corrections
+	      rho = event.fixedGridRhoFastjetAll
         cache = event.caches[0]
 
         if is_data: 
@@ -1062,6 +1077,7 @@ class zzinc_processor(processor.ProcessorABC):
             muonEnUp['pt'] = muon_pt_roccorUp
             muonEnDown['pt'] = muon_pt_roccorDown
             event = ak.with_field(event, muon, 'Muon')
+
             
             # HEM15/16 issue
             if self._era == "2018":

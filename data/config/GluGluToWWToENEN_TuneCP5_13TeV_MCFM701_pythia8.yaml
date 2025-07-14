@@ -1,0 +1,29 @@
+GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8:
+  files:
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_1.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_2.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_3.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_4.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_5.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_6.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_7.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_8.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_9.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_10.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_11.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_12.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_13.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_14.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_15.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_16.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_17.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_18.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_19.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_20.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_21.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_22.root
+    - /tmp/hgao/GluGluToWWToENEN_TuneCP5_13TeV_MCFM701_pythia8/GluGluToWWToENEN_p0_Dilepton-MC_23.root
+  metadata:
+    era: "2018"
+    is_data: False
+

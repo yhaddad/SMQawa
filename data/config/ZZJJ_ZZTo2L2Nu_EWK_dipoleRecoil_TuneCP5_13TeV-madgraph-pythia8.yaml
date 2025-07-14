@@ -1,0 +1,20 @@
+ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8:
+  files:
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_1.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_2.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_3.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_4.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_5.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_6.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_7.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_8.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_9.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_10.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_11.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_12.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_13.root
+    - /tmp/hgao/ZZJJ_ZZTo2L2Nu_EWK_dipoleRecoil_TuneCP5_13TeV-madgraph-pythia8/VBS_ZZTo2L2Nu_p0_Dilepton-MC_14.root
+  metadata:
+    era: "2018"
+    is_data: False
+

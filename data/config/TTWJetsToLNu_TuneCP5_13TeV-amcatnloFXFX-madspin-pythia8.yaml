@@ -1,0 +1,8 @@
+TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8:
+  files:
+    - /tmp/hgao/TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/TTWJetsToLNu_p0_Dilepton-MC_1.root
+    - /tmp/hgao/TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/TTWJetsToLNu_p0_Dilepton-MC_2.root
+  metadata:
+    era: "2018"
+    is_data: False
+

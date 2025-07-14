@@ -1,0 +1,22 @@
+MuonEG:
+  files:
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_1.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_2.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_3.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_4.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_5.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_6.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_7.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_8.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_9.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_10.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_11.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_12.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_13.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_14.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_15.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_16.root
+    - /tmp/hgao/MuonEG/crab_MuonEG_p3_Dilepton-MuonEG/MuonEG_p3_Dilepton-MuonEG_17.root
+  metadata:
+    era: "2018"
+    is_data: True

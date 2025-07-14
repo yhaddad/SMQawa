@@ -1,0 +1,25 @@
+DoubleMuon:
+  files:
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_1.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_2.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_3.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_4.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_5.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_6.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_7.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_8.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_9.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_10.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_11.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_12.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_13.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_14.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_15.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_16.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_17.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_18.root
+    - /tmp/hgao/DoubleMuon/crab_DoubleMuon_p3_Dilepton-DoubleMuon/DoubleMuon_p3_Dilepton-DoubleMuon_19.root
+
+  metadata:
+    era: "2018"
+    is_data: True

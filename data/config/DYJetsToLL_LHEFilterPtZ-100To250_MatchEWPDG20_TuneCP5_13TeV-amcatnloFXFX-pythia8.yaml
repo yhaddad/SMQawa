@@ -1,0 +1,44 @@
+DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8:
+  files:
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_1.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_2.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_3.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_4.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_5.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_6.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_7.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_8.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_9.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_10.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_11.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_12.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_13.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_14.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_15.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_16.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_17.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_18.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_19.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_20.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_21.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_22.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_23.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_24.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_25.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_26.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_27.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_28.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_29.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_30.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_31.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_32.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_33.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_34.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_35.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_36.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_37.root
+    - /tmp/hgao/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_PtZ-100To250_p0_Dilepton-MC_38.root
+  metadata:
+    era: "2018"
+    is_data: False
+
