@@ -46,7 +46,7 @@ class jetPUScaleFactors:
             )
         
         if   self._wp == 'M':
-            tagged = (jet_puid>=6) or (jet_puid == 3)
+            tagged = np.where((jet_puid>=6) | (jet_puid == 3),True, False)
         elif self._wp == 'T':
             tagged = jet_puid>=7
         elif self._wp == 'L':
@@ -60,18 +60,14 @@ class jetPUScaleFactors:
         tagged      = ak.unflatten(tagged     , njets)
 
         tagged_sf   = ak.prod(tagged_sf[tagged]  , axis=-1)
-        untagged_sf = ak.prod(untagged_sf[tagged], axis=-1)
+        untagged_sf = ak.prod(untagged_sf[~tagged], axis=-1)
 
         return ak.fill_none(tagged_sf * untagged_sf, 1.)
     
 
 
     def append_jetPU_sf(self, jets: ak.Array, weights: Weights):
-
-        jets = jets[(jets.genJetIdx == -1) & (jets.pt <= 50) & (np.abs(jets.eta) <= 5) & (jets.pt >= 20)]
-
-
-
+        jets = jets[(jets.pt <= 50) & (np.abs(jets.eta) <= 5) & (jets.pt >= 30)]
 
         sf_nom  = self.getSF(jets, 'nom')
         sf_up   = self.getSF(jets, 'up')

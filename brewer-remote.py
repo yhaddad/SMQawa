@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--jobNum' ,   type=int, default=1     , help="")
     parser.add_argument('--era'    ,   type=str, default="2018", help="")
     parser.add_argument('--isMC'   ,   type=int, default=1     , help="")
+    parser.add_argument("-d"   , "--dd"    , type=str, default="onlySR"     , help="onlySR,DYSR,MC", required=True)
     parser.add_argument('--infile' ,   type=str, default=None  , help="input root file")
     parser.add_argument('--dataset',   type=str, default=None  , help="dataset name. need to specify if file is not in EOS")
     parser.add_argument('--runperiod', type=str, default=None)
@@ -57,15 +58,39 @@ def main():
 
     options = parser.parse_args()
 
-    if options.dataset is None: 
-        options.dataset = options.infile.split('/')[4]
+    if options.dataset is None:
+        if options.infile.split('/')[1] == 'eos':
+            if options.infile.split('/')[2] == 'user':
+                if options.isMC:
+                    options.dataset = options.infile.split('/')[7] #for none aQGC it's [4], for aQGC and skimmed tree it's[7]
+                else:
+                    options.dataset = options.infile.split('/')[7].split('_')[0]
+            elif options.infile.split('/')[2] == 'cms':
+                if options.isMC:
+                    options.dataset = options.infile.split('/')[9] #for none aQGC it's [4], for aQGC and skimmed tree it's[7]
+                else:
+                    options.dataset = options.infile.split('/')[9].split('_')[0]
+        else:
+            options.dataset = options.infile.split('/')[4]
 
     era=options.era
     is_data = not options.isMC
 
+    # extarct the run period
+    # skimed tree input example: /eos/user/y/yixiao/HZZsample/2018/DoubleMuon_Run2018A-UL2018_MiniAODv2_NanoAODv9-v1/DoubleMuon_p0_Dilepton-DoubleMuon_1.root
+    if is_data and options.runperiod is None:
+        if 'Run20' in options.infile:
+            if '/store/data/' in options.infile:
+                options.runperiod = options.infile.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
+            elif '/eos/' in options.infile:
+                options.runperiod = options.infile.split(f'/{era}/')[1].split('-')[0].split('_')[1].replace(f'Run{options.era}','')
+        else:
+            options.runperiod = ''
+
     failed = True
     ixrd = 0
     aliases = [
+        "root://eoscms.cern.ch/",
         "root://llrxrd-redir.in2p3.fr/",
         "root://xrootd-cms.infn.it/",
         "root://cms-xrd-global01.cern.ch/", 
@@ -106,21 +131,15 @@ def main():
             )
             
             ewk_flag = None
-            if "ZZTo2L2Nu" in options.infile and "GluGluTo" not in options.infile and "ZZJJ" not in options.infile:
+            if "ZZTo2L2Nu" in options.dataset and "GluGluTo" not in options.dataset and "ZZJJ" not in options.dataset:
                 ewk_flag= 'ZZ'
-            if "WZTo" in options.infile and "GluGluTo" not in options.infile:
+            if "WZTo" in options.dataset and "GluGluTo" not in options.dataset:
                 ewk_flag = 'WZ'
 
             DY_flag = False
-            if "DY" in options.infile:
-                DY_flag = True
-
-            # extarct the run period
-            if is_data:
-                if 'Run20' in options.infile:
-                    options.runperiod = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
-            else:
-                options.runperiod = ''
+            if options.dd != 'MC':
+                if "DYJetsToLL" in options.infile:
+                    DY_flag = True
 
             print(
                 f"""---------------------------
@@ -131,6 +150,8 @@ def main():
                 -- in file  = {aliases[ixrd] + options.infile}
                 -- dataset  = {options.dataset}
                 -- period   = {options.runperiod}
+                -- ewk_flag = {ewk_flag}
+                -- isDY     = {DY_flag}
                 ---------------------------"""
             )
 
@@ -140,6 +161,7 @@ def main():
                 processor_instance=zzinc_processor(
                     era=options.era,
                     isDY=DY_flag,
+                    dd = options.dd,
                     ewk_process_name=ewk_flag,
                     dump_gnn_array=options.dumpgnn, 
                     run_period=options.runperiod if is_data else ''
