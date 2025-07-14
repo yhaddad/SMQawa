@@ -492,8 +492,6 @@ class zzinc_processor(processor.ProcessorABC):
             (jets.pt>30.0) & 
             (np.abs(jets.eta) < 4.7) & 
             (jets.jetId >= 6) & # tight JetID 7(2016) and 6(2017/8)
-            ((jets.puId >= 6) | (jets.puId == 3) | (jets.pt >= 50)) # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL 3,7 for 16and 16APV; 6,7 for 17,18
-        )
 
         jet_mask_PUID = (
             ~overlap_leptons & 
@@ -722,6 +720,7 @@ class zzinc_processor(processor.ProcessorABC):
         if not is_data:
             weights.add('genweight', event.genWeight)
             dataDrivenDYRatio(dilep_pt,reco_met_pt,self._isDY, self._era, self._ddtype).ddr_add_weight(weights)
+
             self._btag.append_btag_sf(jets, weights)
             self._jpSF.append_jetPU_sf(pu_good_jets, weights)
             self._purw.append_pileup_weight(weights, event.Pileup.nPU)
@@ -1080,7 +1079,6 @@ class zzinc_processor(processor.ProcessorABC):
                 event = ak.with_field(event, jets, 'Jet')
                 
             return self.process_shift(event, None)
-        
 		
         # Adding scale factors to Muon and Electron fields
         muon = event.Muon 

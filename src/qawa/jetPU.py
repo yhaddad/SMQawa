@@ -67,7 +67,6 @@ class jetPUScaleFactors:
 
 
     def append_jetPU_sf(self, jets: ak.Array, weights: Weights):
-
         jets = jets[(jets.pt <= 50) & (np.abs(jets.eta) <= 5) & (jets.pt >= 30)]
 
         sf_nom  = self.getSF(jets, 'nom')
