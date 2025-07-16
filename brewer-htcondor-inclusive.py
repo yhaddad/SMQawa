@@ -120,7 +120,7 @@ def main():
     user_name  = os.environ['USER']
     proxy_copy = os.path.join(home_base,proxy_base)
     tag = options.tag
-    eosbase = f"/eos/user/{user_name[0]}/{user_name}/WZtotau2lnu/" + "{tag}/{sample}/"
+    # eosbase = f"/eos/user/{user_name[0]}/{user_name}/WZtotau2lnu/" + "{tag}/{sample}/"
     coffea_image = os.environ['COFFEA_IMAGE']
     full_image = os.environ['FULL_IMAGE']
     install_loc_external = os.environ['INSTALL_LOC_EXTERNAL']
@@ -161,8 +161,11 @@ def main():
             raise NotImplementedError("neither bash or zsh detected in the shell env variable, something has gone wrong; contents=", captured_env['SHELL'])
         for sample in stream.read().split('\n'):
             if '#' in sample: continue
-            if len(sample.split('/')) <= 1: continue
-            sample_name = sample.split("/")[1] if options.isMC else '_'.join(sample.split("/")[1:3])
+            split_sample = sample.split("/")
+            if len(split_sample) <= 1: continue
+            auto_isMC = 1 * (split_sample[-1] == "NANOAODSIM")
+            # sample_name = sample.split("/")[1] if options.isMC else '_'.join(sample.split("/")[1:3])
+            sample_name = sample.split("/")[1] if auto_isMC else '_'.join(sample.split("/")[1:3])
             sample_name = sample_name.replace("*", "")
             jobs_dir = '_'.join(['jobs', options.tag, options.era, sample_name])
             jobs_dir_external = os.path.join(os.environ['INSTALL_LOC_EXTERNAL'], os.path.relpath(os.path.normpath(jobs_dir), os.environ['INSTALL_LOC']))
@@ -207,14 +210,15 @@ def main():
                         infiles.write('\n')
                     infiles.close()
             time.sleep(2)
-            eosoutdir =  eosbase.format(tag=options.tag,sample=sample_name)
-            # crete a directory
-            os.system("mkdir -p {}".format(eosoutdir))
+            # eosoutdir =  eosbase.format(tag=options.tag,sample=sample_name)
+            # # crete a directory
+            # os.system("mkdir -p {}".format(eosoutdir))
 
             with open(os.path.join(jobs_dir, "script.sh"), "w") as scriptfile:
                 script = script_TEMPLATE.format(
                     proxy=proxy_copy,
-                    ismc=options.isMC,
+                    # ismc=options.isMC,
+                    ismc=auto_isMC,
                     era=options.era,
                     qawa_version=qawa_version,
                     coffea_image=coffea_image,
