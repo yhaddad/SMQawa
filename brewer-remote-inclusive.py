@@ -27,6 +27,7 @@ def validate_input_file(nanofile):
     pfn = nanofile
     pfn=re.sub("\n","",pfn)
     aliases = [
+        "root://cms-xrd-global.cern.ch/",
         "root://eoscms.cern.ch/",
         "root://xrootd-cms.infn.it/",
         "root://cms-xrd-global.cern.ch/",
@@ -105,10 +106,10 @@ def main():
     ixrd = 0
     local_file_name = None
     aliases = [
+        "root://cms-xrd-global.cern.ch/",
         "root://eoscms.cern.ch/",
         "root://llrxrd-redir.in2p3.fr/",
         "root://xrootd-cms.infn.it/",
-        "root://cms-xrd-global.cern.ch/",
         "root://cms-xrd-global01.cern.ch/", 
         "root://cms-xrd-global02.cern.ch/",
         "root://cmsxrootd.fnal.gov/",
@@ -183,7 +184,7 @@ def main():
             if is_data:
                 if 'Run20' in options.infile:
                     # options.runperiod = file_name.split('/store/data/')[1].split('/')[0].replace(f'Run{options.era}','')
-                    options.runperiod = auto_runperiod
+                    options.runperiod = auto_runperiod.replace(f'Run{options.era}','')
             else:
                 options.runperiod = ''
 
