@@ -19,12 +19,9 @@ import math
 
 from coffea import processor
 from coffea.nanoevents.methods import candidate
-
 from coffea.analysis_tools import Weights, PackedSelection
 from coffea.lumi_tools import LumiMask
-
 from qawa.roccor import rochester_correction
-
 from qawa.leptonsSF import LeptonScaleFactors
 from qawa.jetPU import jetPUScaleFactors
 from qawa.tauSF import tauIDScaleFactors
@@ -244,7 +241,7 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.Regular(100, 0, 1000, name="dilep_mt", label=r"$M_{T}^{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
-	        'dilep_pt': hist.Hist(
+            'dilep_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(60, 0, 600, name="dilep_pt", label=r"$p_{T}^{\ell\ell}$ (GeV)"),
@@ -262,7 +259,7 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.Regular(60, 0, 600, name="dilep_loose_tau_pt", label=r"$p_{T}^{\ell\ell, \tau}$ (GeV)"),
                 hist.storage.Weight()
             ),
-	        'dilep_m': hist.Hist(
+            'dilep_m': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(60, 0, 120, name="dilep_m", label=r"$M_{\ell\ell}$ (GeV)"),
@@ -610,6 +607,7 @@ class wzinclusive_processor(processor.ProcessorABC):
         good_jets = jets[~jet_btag & jet_mask]
         good_bjet = jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.4)]
         
+        # pu_good_jets = jets[~jet_btag & jet_mask_PUID & ~ak.is_none(jets.pt)]
         pu_good_jets = jets[~jet_btag & jet_mask_PUID]
         ngood_jets  = ak.num(good_jets)
         ngood_bjets = ak.num(good_bjet)
@@ -663,16 +661,16 @@ class wzinclusive_processor(processor.ProcessorABC):
         #print("reco_met = ", reco_met_pt)
         #print("reco_phi", reco_met_phi)
 
-	
-	    # this definition is not correct as it doesn't include the mass of the second Z
+    
+        # this definition is not correct as it doesn't include the mass of the second Z
         dilep_et_ll = np.sqrt(dilep_pt**2 + dilep_m**2)
         dilep_et_met = np.sqrt(reco_met_pt**2 + self.zmass**2)
         dilep_mt = ak.where(
                 ntight_lep==3,
                 np.sqrt((dilep_et_ll + dilep_et_met)**2 - ((dilep_p4.pvec + emu_met.pvec).pt)**2),
                 np.sqrt((dilep_et_ll + dilep_et_met)**2 - ((dilep_p4.pvec +  p4_met.pvec).pt)**2)
-	    )
-	
+        )
+    
         dilep_dphi = lead_lep.delta_phi(subl_lep)
         dilep_deta = np.abs(lead_lep.eta - subl_lep.eta)
         dilep_dR   = lead_lep.delta_r(subl_lep)
@@ -910,7 +908,7 @@ class wzinclusive_processor(processor.ProcessorABC):
         common_sel = ['triggers', 'lumimask', 'metfilter']
         channels = {
             "inc-SR0": common_sel + [
-		    'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', '0njets', '1nhtaus', 'met_pt', 'dilep_pt'
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', '0njets', '1nhtaus', 'met_pt', 'dilep_pt'
         ],
             "inc-SR1": common_sel + [
             'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', '1njets_only', '1nhtaus' ,'met_pt', 'dilep_pt'
@@ -919,32 +917,42 @@ class wzinclusive_processor(processor.ProcessorABC):
             'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', '1njets', '1nhtaus', 'met_pt', 'dilep_pt'
         ],
             "inc-DY0": common_sel + [
-		    'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', 'met_pt','dilep_pt', '0njets',  '~1nhtaus', '1nhtaus_loose', '~1nhtaus_tight'
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', 'met_pt','dilep_pt', '0njets',  '~1nhtaus', '1nhtaus_loose', '~1nhtaus_tight'
         ],
             "inc-DY1": common_sel + [
             'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', 'met_pt','dilep_pt', '1njets_only', '~1nhtaus', '1nhtaus_loose', '~1nhtaus_tight'
-	    ],
-            "inc-EM": common_sel + [
-		    'require-osof', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', '1nhtaus', 'delta_tau_met_phi', 'met_pt'
+        ],
+            "inc-EM0": common_sel + [
+            'require-osof', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', '1nhtaus', 'met_pt', '0njets'
+        ],
+            "inc-EM1": common_sel + [
+            'require-osof', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', '1nhtaus', 'met_pt', '1njets_only'
         ],
 
-        #     "inc-B": common_sel + [
-        #     'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'delta_tau_met_phi', '1nhtaus_loose', '~1nbjets', 'met_pt', '~1njets'
-        # ],
+            "inc-B0": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', '1nhtaus_loose', 'met_pt', '0njets', '~1nhtaus_tight', '~1nhtaus'
+        ],
 
-        #     "inc-C": common_sel + [
-        #     'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'delta_tau_met_phi', 'low_met_pt', '1nhtaus_loose', '~1nbjets', '~1njets'
-        # ],
+            "inc-C0": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus_loose', '0njets', '~1nhtaus_tight', '~1nhtaus'
+        ],
 
-        #     "inc-D": common_sel + [
-        #     'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'delta_tau_met_phi', 'low_met_pt', '1nhtaus', '~1nbjets', '~1njets'
-        # ],
+            "inc-D0": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus', '0njets', '~1nhtaus_tight', '~1nhtaus'
+        ],
+
+            "inc-B1": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', '1nhtaus_loose', 'met_pt', '1njets', '~1nhtaus_tight', '~1nhtaus'
+        ],
+
+            "inc-C1": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus_loose', '1njets', '~1nhtaus_tight', '~1nhtaus'
+        ],
+
+            "inc-D1": common_sel + [
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus', '1njets', '~1nhtaus_tight', '~1nhtaus'
+        ],
         }
-
-        # if shift_name is None:
-        #     systematics = [None] + list(weights.variations)
-        # else:
-        #     systematics = [shift_name]
             
         def _format_variable(variable, cut):
             if cut is None:
@@ -1043,58 +1051,58 @@ class wzinclusive_processor(processor.ProcessorABC):
     def process(self, event: processor.LazyDataFrame):
         dataset_name = event.metadata['dataset']
         is_data = event.metadata.get("is_data")
-        original_pt = event.Jet.pt
+        
 
         # JES/JER corrections
         rho = event.fixedGridRhoFastjetAll
         cache = event.caches[0]
-        if is_data: 
-            softjet_gen_pt = None
-        else:
-            softjet_gen_pt = find_best_match(event.CorrT1METJet,event.GenJet)
+
+        # if is_data: 
+        #     softjet_gen_pt = None
+        # else:
+        #     softjet_gen_pt = find_best_match(event.CorrT1METJet,event.GenJet)
         
         # softjets_shift_L123 = self._jmeu.corrected_jets_L123(event.CorrT1METJet, rho, cache, softjet_gen_pt)
         # softjets_shift_L1 = self._jmeu.corrected_jets_L1(event.CorrT1METJet, rho, cache, softjet_gen_pt)
         
-        jets_shift_L123 = self._jmeu.corrected_jets_L123(event.Jet, rho, cache)
-        jets_shift_L1 = self._jmeu.corrected_jets_L1(event.Jet, rho, cache)
+        # jets_shift_L123 = self._jmeu.corrected_jets_L123(event.Jet, rho, cache)
+        # jets_shift_L1 = self._jmeu.corrected_jets_L1(event.Jet, rho, cache)
 
         # jets_col_shift_L123 = ak.concatenate([jets_shift_L123, softjets_shift_L123],axis=1)
         # jets_col_shift_L1 = ak.concatenate([jets_shift_L1, softjets_shift_L1],axis=1)
         
-        # raw_met = event.RawMET
+        raw_met = event.RawMET
         met_to_correct = event.MET
-        # met_to_correct["pt"] = raw_met.pt
-        # met_to_correct["phi"] = raw_met.phi
-        # jets = jets_shift_L123
-        jets = self._jmeu.corrected_jets_jer(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
-        met = self._jmeu.corrected_met(met_to_correct, jets_shift_L123, jets_shift_L1, event.fixedGridRhoFastjetAll, event.caches[0])
+       
+        jets = self._jmeu.corrected_jets_L123_JER(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
+        jets_to_correct_met = self._jmeu.corrected_jets_L123_noJER(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
+        met = self._jmeu.corrected_met(met_to_correct, jets, event.fixedGridRhoFastjetAll, event.caches[0]) # we are adding fully smeared L123 jets
+        
+        # print("---- JET MET Debug ----")
+        # print("Raw MET pt:", ak.to_list(event.RawMET.pt[:10]))
+        # print("Original type 1 corrected MET pt from NanoAOD:", ak.to_list(event.MET.pt[:10]))
+        # print("Coffea Corrected MET pt:", ak.to_list(met.pt[:10]))
+        # print("Original jets from NanoAOD :", ak.to_list(event.Jet.pt[:5]))
+        # print("jets for Met correction without JER :", ak.to_list(jets_to_correct_met.pt[:5]))
+        # print("Jet pt with L123 and JER:", ak.to_list(jets.pt[:5]))
+    
 
-        # print("---- MET Debug ----")
-        # print("Raw MET pt:", ak.to_list(event.RawMET.pt[:5]))
-        # print("Original type 1 corrected MET pt:", ak.to_list(event.MET.pt[:5]))
-        # print("Coffea Corrected MET pt:", ak.to_list(met.pt[:5]))
-        # print("Original jets :", ak.to_list(event.Jet.pt[:5]))
-        # print("Jet pt (first jet, L123):", ak.to_list(jets_shift_L123.pt[:5]))
-        # print("Jet pt (first jet, L1):", ak.to_list(jets_shift_L1.pt[:5]))
-        
-        
-        # event = ak.with_field(event, jets, 'Jet_corrected')
-        # event = ak.with_field(event, met, 'MET_corrected')
+        event = ak.with_field(event, event.Jet, 'OrigJet')
+        event = ak.with_field(event, event.MET, 'OrigMET')
         event = ak.with_field(event, jets, 'Jet')
+        event = ak.with_field(event, jets_to_correct_met, 'JetforMET')
         event = ak.with_field(event, met, 'MET')
         
-
 
         run = event.run 
         npv = event.PV.npvs
         
-        # met = met_phi_xy_correction(
-        #     event.MET, run, npv, 
-        #     is_mc=not is_data, 
-        #     era=self._era
-        # )
-        # event = ak.with_field(event, met, 'MET')
+        met = met_phi_xy_correction(
+            event.MET, run, npv, 
+            is_mc=not is_data, 
+            era=self._era
+        )
+        event = ak.with_field(event, met, 'MET')
 
     
         if is_data:
@@ -1115,7 +1123,7 @@ class wzinclusive_processor(processor.ProcessorABC):
                 event = ak.with_field(event, jets, 'Jet')
                 
             return self.process_shift(event, None)
-		
+        
         # Adding scale factors to Muon and Electron fields
         muon = event.Muon 
         electron = event.Electron
@@ -1150,7 +1158,7 @@ class wzinclusive_processor(processor.ProcessorABC):
         electronEnDown=event.Electron
 
         electronEnUp  ['pt'] = event.Electron['pt'] + event.Electron.energyErr/np.cosh(event.Electron.eta)
-        electronEnDown['pt'] = event.Electron['pt'] - event.Electron.energyErr/np.cosh(event.Electron.eta)	
+        electronEnDown['pt'] = event.Electron['pt'] - event.Electron.energyErr/np.cosh(event.Electron.eta)  
 
 
         #Tau corrections
@@ -1169,7 +1177,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             event = ak.with_field(event, tau, 'Tau')
 
 
-	
+    
         # define all the shifts
         shifts = [
             # Jets
@@ -1192,7 +1200,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             ({"Jet": jets.JER.down                    , "MET": met.JER.down                      }, "JERDown"             ),
             ({"Jet": jets                             , "MET": met.MET_UnclusteredEnergy.up      }, "UESUp"               ),
             ({"Jet": jets                             , "MET": met.MET_UnclusteredEnergy.down    }, "UESDown"             ), 
-            # year dependent systematics
+              ##year dependent systematics
             ({"Jet": getattr(jets,f'JES_BBEC1_{self._era}').up     , "MET": getattr(met,f'JES_BBEC1_{self._era}').up      }, f"JES_BBEC1{self._era}Up"  ),
             ({"Jet": getattr(jets,f'JES_BBEC1_{self._era}').down   , "MET": getattr(met,f'JES_BBEC1_{self._era}').down    }, f"JES_BBEC1{self._era}Down"),
             ({"Jet": getattr(jets,f'JES_Absolute_{self._era}').up  , "MET": getattr(met,f'JES_Absolute_{self._era}').up   }, f"JES_Absolute{self._era}Up"  ),
@@ -1217,14 +1225,21 @@ class wzinclusive_processor(processor.ProcessorABC):
 
         ]
         
-        # print("final smeared jet_pt =", jets.pt[:5])
-        # print("JES_total_up =", jets.JES_Total.up.pt[:5])
-        # print("JES__total_down =",jets.JES_Total.down.pt[:5])
-        # print("XY corrected met_pt = ", met.pt[:5])
-        # print("MET_total_up =",met.JES_Total.up.pt[:5])
-        # print("MET_total_down =",met.JES_Total.down.pt[:5])
-        # print("JES_jer_up =", jets.JER.up.pt[:5])
-        # print("JES_jer_down =",jets.JER.down.pt[:5])
+        # print("final corrected jet_pt =", jets.pt[:5])
+        # print("jet_JES_total_up =", jets.JES_Total.up.pt[:5])
+        # print("jet_JES_total_down =",jets.JES_Total.down.pt[:5])
+        # print("final corrected MET pt= ", met.pt[:10])
+        # print("final corrected met phi = ", met.phi[:10])
+        # print("MET_jes_total_up =",met.JES_Total.up.pt[:10])
+        # print("MET_jes_total_down =",met.JES_Total.down.pt[:10])
+        # print("METphi_jes_total_up =",met.JES_Total.up.phi[:10])
+        # print("METphi_jes_total_down =",met.JES_Total.down.phi[:10])
+        # print("jet_jer_up =", jets.JER.up.pt[:5])
+        # print("jet_jer_down =",jets.JER.down.pt[:5])
+        # print("met_jer_up =", met.JER.up.pt[:10])
+        # print("met_jer_down =",met.JER.down.pt[:10])
+        # print("metphi_jer_up =", met.JER.up.phi[:10])
+        # print("metphi_jer_down =",met.JER.down.phi[:10])
 
         shifts = [
             self.process_shift(
