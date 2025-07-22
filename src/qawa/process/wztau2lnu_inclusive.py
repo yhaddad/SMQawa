@@ -938,7 +938,7 @@ class wzinclusive_processor(processor.ProcessorABC):
         ],
 
             "inc-D0": common_sel + [
-            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus', '0njets', '~1nhtaus_tight', '~1nhtaus'
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus', '0njets'
         ],
 
             "inc-B1": common_sel + [
@@ -950,7 +950,7 @@ class wzinclusive_processor(processor.ProcessorABC):
         ],
 
             "inc-D1": common_sel + [
-            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus', '1njets', '~1nhtaus_tight', '~1nhtaus'
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus', '1njets'
         ],
         }
             
