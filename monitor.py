@@ -84,7 +84,6 @@ ls -lthr
 
 echo "----- directory after running :"
 ls -lthr
-# if [ ! -f "histogram_{jobid}.pkl.gz" ]; then
 if [ ! -f "histogram_$1.pkl.gz" ]; then
   echo "No output histogram pickle file found";
   exit 1;
@@ -100,8 +99,9 @@ def main():
     parser.add_argument("-e"   , "--era"   , type=str, default="2018"   , help="")
     parser.add_argument("--runlocal", action="store_true")
     parser.add_argument("--resubmit", action="store_true", help="resubmit failed jobs")
-    parser.add_argument("--copyfile", action="store_true", help="")
     parser.add_argument("--dryrun"  , action="store_true")
+    parser.add_argument('--executor' , type=str, default="FuturesExecutor", help="Executor to use, one of IterativeExecutor (good for debugging), FuturesExecutor (multithreaded), or other coffea option")
+    parser.add_argument('--copyInput', action='store_true'     , help="xrdcp a file to the worker node before executing the coffea processor on it")
     options = parser.parse_args()
 
 
@@ -253,16 +253,18 @@ def main():
                         #     )
                         #     infile_name = infile.split('/')[-1]
                         local_rerun_lines.append(
-                            f"python brewer-remote-inclusive.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name}\n"
+                            f"$INSTALL_LOC_EXTERNAL/.env/bin/python3 brewer-remote-inclusive.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile_name} --executor={options.executor} {'--copyInput' if options.copyInput else ''}\n"
+                            # f"python brewer-remote-inclusive.py --jobNum={jid} --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name}\n"
                         )
-                        if options.copyfile:
-                            local_rerun_lines[-1].replace("\n", " --copyFile\n")
+                        if options.copyInput:
+                            local_rerun_lines[-1].replace("\n", " --copyInput\n")
                     else:
-                        if options.copyfile:
+                        if options.copyInput:
                             assert options.era != "", f'please specify the era of the dataset you are running. ex: --era=2018'
                             # script_command = f"xrdcp root://cms-xrd-global.cern.ch/$2 . \n"
                             # infile_name = infile.split('/')[-1]
-                            script_command += f"python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period} --copyFile\n"
+                            # script_command += f"python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period} --copyInput\n"
+                            script_command += f"$INSTALL_LOC_EXTERNAL/.env/bin/python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period}--executor={options.executor} {'--copyInput' if options.copyInput else ''}\n"
                             # script_command += f"rm {infile_name}\n" Should not be needed, file is downloaded to a temporary directory which gets cleaned
                             script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
@@ -279,7 +281,8 @@ def main():
                                 _stream.close()
                         else: 
                             assert options.era != "", f'please specify the era of the dataset you are running. ex: --era=2018'
-                            script_command = f"python brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile=$2\n"
+                            script_command = f"$INSTALL_LOC_EXTERNAL/.env/bin/python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile=$2 --executor={options.executor} {'--copyInput' if options.copyInput else ''}\n"
+                            # script_command = f"python brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile=$2\n"
                             script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
                                 script_file_ = resub_script_header.format(
@@ -331,6 +334,7 @@ def main():
                             # logging.info(htc)
                 
                 if options.runlocal:
+                    raise NotImplementedError("runlocal has not been modified to run inside the container yet, properly referencing the bash/zsh-shell bootstrap and environment variables pointing to the image used 'FULL_IMAGE'")
                     with open(os.path.join(jobs_dir, f"rerun-script.sh"), "w") as _stream:
                         _stream.writelines(local_rerun_lines)
 
