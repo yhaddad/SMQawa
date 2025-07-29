@@ -102,6 +102,7 @@ def main():
     parser.add_argument("--dryrun"  , action="store_true")
     parser.add_argument('--executor' , type=str, default="FuturesExecutor", help="Executor to use, one of IterativeExecutor (good for debugging), FuturesExecutor (multithreaded), or other coffea option")
     parser.add_argument('--copyInput', action='store_true'     , help="xrdcp a file to the worker node before executing the coffea processor on it")
+    parser.add_argument('--verbose'  , action='store_true'     , help="verbose output printing status of running, finished, and failed files per job")
     options = parser.parse_args()
 
 
@@ -178,15 +179,18 @@ def main():
             for idf, rfn in enumerate(input_root_files):
                 if rfn in str(condor_status):
                     # print(f"Debug found job in running status: {idf} -  {rfn}")
-                    rich.print(f"Debug found job in [green]running status: {idf} -  {rfn}[/green]")
+                    if options.verbose:
+                        rich.print(f"Debug found job in [green]running status: {idf} -  {rfn}[/green]")
                     job_running.append(rfn)
                 elif os.path.exists(jobs_dir_external + f'/histogram_{idf}.pkl.gz'):
                     # print(f"Debug found histogram: {idf} -  {rfn} - {jobs_dir_external}/histogram_{idf}.pkl.gz")
-                    rich.print(f"Debug [blue]found histogram: {idf} -  {rfn} - {jobs_dir_external}/histogram_{idf}.pkl.gz[/blue]")
+                    if options.verbose:
+                        rich.print(f"Debug [blue]found histogram: {idf} -  {rfn} - {jobs_dir_external}/histogram_{idf}.pkl.gz[/blue]")
                     job_finished.append(rfn)
                 else:
                     # print(f"Debug classifying job as failed: {idf} -  {rfn}")
-                    rich.print(f"Debug [red]classifying job as failed: {idf} -  {rfn}[/red]")
+                    if options.verbose:
+                        rich.print(f"Debug [red]classifying job as failed: {idf} -  {rfn}[/red]")
                     job_failed.append(rfn)
                     resubmit_list[idf] = rfn
             logging.info(
@@ -238,6 +242,7 @@ def main():
                             print("couldn't auto-parse dataset and runperiod from filename:)")
                             print(ve)
                     run_period = auto_runperiod
+                    dataset_name = auto_dataset
                     # dataset_name = infile.split('/')[4]
                     # run_period = ''
                     # if options.isMC:
@@ -264,7 +269,7 @@ def main():
                             # script_command = f"xrdcp root://cms-xrd-global.cern.ch/$2 . \n"
                             # infile_name = infile.split('/')[-1]
                             # script_command += f"python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period} --copyInput\n"
-                            script_command += f"$INSTALL_LOC_EXTERNAL/.env/bin/python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period}--executor={options.executor} {'--copyInput' if options.copyInput else ''}\n"
+                            script_command = f"$INSTALL_LOC_EXTERNAL/.env/bin/python3 brewer-remote-inclusive.py --jobNum=$1 --isMC={options.isMC} --era={options.era} --infile={infile_name} --dataset={dataset_name} --runperiod={run_period}--executor={options.executor} {'--copyInput' if options.copyInput else ''}\n"
                             # script_command += f"rm {infile_name}\n" Should not be needed, file is downloaded to a temporary directory which gets cleaned
                             script_command += "ls -lthr\n"
                             with open(os.path.join(jobs_dir, f"resub-script-{jid}.sh"), "w") as _stream:
