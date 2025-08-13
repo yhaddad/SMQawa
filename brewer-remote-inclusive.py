@@ -81,7 +81,7 @@ def main():
         try:
             tier_index = split_args.index("NANOAODSIM" if auto_isMC else "NANOAOD")
             auto_dataset = split_args[tier_index - 1]
-            auto_runperiod = split_args[tier_index - 2]
+            auto_runperiod = split_args[tier_index - 2].replace(f"Run{options.era}")
         except ValueError as ve:
             print("couldn't auto-parse dataset and runperiod from filename:)")
             print(ve)
