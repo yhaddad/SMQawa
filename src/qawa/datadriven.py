@@ -19,6 +19,7 @@ class DataDrivenEventReweight:
 
 if __name__ == "__main__":
     from correctionlib import schemav2 as cs
+    # ../tau_pt_weight_2018.json src/qawa/data/dd
     new_cset_corrections = [
         cs.Correction(
             name="LNTTau_to_TTau_TransferFactor",
@@ -42,13 +43,19 @@ if __name__ == "__main__":
         cs.Correction(
             name="LNTTau_HighMET_DY_to_Data_estimate",
             version=1,
-            inputs=[cs.Variable(name="tau_pt", type="real", description="Tau pT")],
+            inputs=[
+                cs.Variable(name="jet_multiplicity", type="real", description="Number of jets (cross-cleaned against leptons, ID'd, pT > 25 GeV, |eta| < 2.5)"),
+                cs.Variable(name="tau_pt", type="real", description="Reconstructed tau pT [GeV]"),
+            ],
             output=cs.Variable(name="weight", type="real", description="Multiplicative event weight for probability event would originate from DrellYan"),
-            data=cs.Binning(
-                nodetype="binning",
-                input="tau_pt",
-                edges=[20, 25, 30, 35, 40, 60, 80, 100],
-                content=[0.98, 0.97, 0.96, 0.95, 0.92, 0.89, 0.88],
+            data=cs.MultiBinning(
+                nodetype="multibinning",
+                inputs=["jet_multiplicity", "tau_pt"],
+                edges=[[0, 1, 2],
+                       [0, 20, 25, 30, 35, 40, 60, 80, 100, 110]
+                       ],
+                content=[0.0, 0.97530646, 0.96670784, 0.95848627, 0.94992374, 0.92440374, 0.88844628, 0.8765197, 0.88508274,
+                         0.0, 0.97916164, 0.98144271, 0.98085132, 0.98033892, 0.97478202, 0.9655555, 0.95486492, 0.93448176],
                 flow="clamp",
             ),
         )
