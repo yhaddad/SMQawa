@@ -26,7 +26,7 @@ from coffea.lumi_tools import LumiMask
 from qawa.roccor import rochester_correction
 from qawa.leptonsSF import LeptonScaleFactors
 from qawa.jetPU import jetPUScaleFactors
-from qawa.tauSF import tauIDScaleFactors
+from qawa.tauSF_run3 import tauIDScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
 from qawa.gen_match import find_best_match
@@ -157,8 +157,8 @@ class wzinclusive_processor(processor.ProcessorABC):
         jec_tag = ''
         jer_tag = ''
         if len(run_period)==0:
-            if self._era == '2016':
-                if self._isAPV:
+            if self._era == '2022':
+                if self._isEE:
                     jec_tag = 'Summer19UL16APV_V7_MC'
                     jer_tag = 'Summer20UL16APV_JRV3_MC'
                 else:
