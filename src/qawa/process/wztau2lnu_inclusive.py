@@ -234,7 +234,8 @@ class wzinclusive_processor(processor.ProcessorABC):
         self.ewk_process_name = ewk_process_name
         if self.ewk_process_name is not None:
             self.ewk_corr = ewk_corrector(process=ewk_process_name)
-       
+
+        self.ABCD_tau_bins = [20,25,30,35,40,60,80,100,1000]
 
         self.build_histos = lambda: {
             'dilep_mt': hist.Hist(
@@ -294,7 +295,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             'tau_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(60, 0, 600, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
+                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
                 hist.storage.Weight()
             ),
             'taus_eta': hist.Hist(
@@ -324,7 +325,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             'tau_pt_loose': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(60, 0, 600, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
+                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
                 hist.storage.Weight()
             ),
             'bjets': hist.Hist(
@@ -439,6 +440,20 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label=r"$\min\Delta\phi(p_{T}^{miss},j)$"),
+                hist.storage.Weight()
+            ),
+            'mT_WZ_2D_tau_pt_loose': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="mT_WZ", label=r"${mT}^{WZ}$ (GeV)"),
+                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            'mT_WZ_2D_tau_pt': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(60, 0, 600, name="mT_WZ", label=r"${mT}^{WZ}$ (GeV)"),
+                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
                 hist.storage.Weight()
             ),
         }
@@ -1012,6 +1027,37 @@ class wzinclusive_processor(processor.ProcessorABC):
                     "weight": ak.nan_to_num(weight,nan=1.0, posinf=1.0, neginf=1.0)
                 }
             )
+
+        def _histogram_filler2D(ch, syst, var1, var2, _weight=None):
+            sel_ = channels[ch]
+            sel_args_ = {
+                s.replace('~',''): (False if '~' in s else True) for s in sel_ if var1 not in s and var2 not in s
+            }
+            cut =  selection.require(**sel_args_)
+
+            systname = 'nominal' if syst is None else syst
+            
+            if _weight is None: 
+                if syst in weights.variations:
+                    weight = weights.weight(modifier=syst)[cut]
+                else:
+                    weight = weights.weight()[cut]
+            else:
+                weight = weights.weight()[cut] * _weight[cut]
+            
+            vv = ak.to_numpy(ak.fill_none(weight, np.nan))
+            if np.isnan(np.any(vv)):
+                print(f" - {syst} weight contains invalid values:", vv[np.isnan(vv)], vv[np.isinf(vv)])
+
+            histos[var1+"_2D_"+var2].fill(
+                **{
+                    "channel": ch, 
+                    "systematic": systname, 
+                    var1: _format_variable(event[var1], cut),
+                    var2: _format_variable(event[var2], cut), 
+                    "weight": ak.nan_to_num(weight,nan=1.0, posinf=1.0, neginf=1.0)
+                }
+            )
         if shift_name is None:
             systematics = [None] + list(weights.variations)
         else:
@@ -1047,6 +1093,9 @@ class wzinclusive_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'dilep_loose_tau_phi')
                 _histogram_filler(ch, sys, 'dilep_tau_phi')
                 _histogram_filler(ch, sys, 'dilep_loose_tau_met_dphi')
+                _histogram_filler2D(ch, sys, 'mT_WZ', 'tau_pt')
+                _histogram_filler2D(ch, sys, 'mT_WZ', 'tau_pt_loose')
+
             
             
         return {dataset: histos}
