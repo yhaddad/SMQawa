@@ -1,12 +1,12 @@
 import correctionlib
 import os
+import awkward as ak
 from pathlib import Path
 
 class DataDrivenEventReweight:
     def __init__ (
         self,
         era: str = "2018",
-        is_mc: bool = True,
     ):
         _data_path = Path(os.path.dirname(__file__)) / f"data/dd/WZ_inclusive_data_driven_{era}.json"
         assert _data_path.exists(), f"DataDrivenEventReweight could not find the expected json file: {str(_data_path)}"
@@ -15,7 +15,7 @@ class DataDrivenEventReweight:
     def estimate_dd_DY(self, jet_multiplicity, tau_pt, systematic=None):
         if systematic is not None:
             raise NotImplementedError("DD DY Estimate doesn't yet include systematic variations")
-        return self.dd_estimator.evaluate(jet_multiplicity, tau_pt)
+        return self.dd_estimator.evaluate(ak.fill_none(jet_multiplicity, 0), ak.fill_none(tau_pt, 0.0))
 
 if __name__ == "__main__":
     from correctionlib import schemav2 as cs
