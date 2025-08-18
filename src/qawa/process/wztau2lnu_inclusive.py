@@ -28,6 +28,7 @@ from qawa.tauSF import tauIDScaleFactors
 from qawa.btag import BTVCorrector, btag_id
 from qawa.jme import JMEUncertainty, update_collection
 from qawa.gen_match import find_best_match
+from qawa.datadriven import DataDrivenEventReweight
 from qawa.common import pileup_weights, ewk_corrector, met_phi_xy_correction, theory_ps_weight, theory_pdf_weight, trigger_rules
 
 
@@ -210,6 +211,7 @@ class wzinclusive_processor(processor.ProcessorABC):
         self._leSF = LeptonScaleFactors(era=self._era, isAPV=self._isAPV)
         self._jpSF = jetPUScaleFactors(era=self._era, wp=self.jetPU_wp, isAPV=self._isAPV)
         self._tauID= tauIDScaleFactors(era=self._era, vsjet_wp=self.tauIDvsjet_wp,vse_wp=self.tauIDvse_wp, vsmu_wp=self.tauIDvsmu_wp, isAPV=self._isAPV)
+        self._dd   = DataDrivenEventReweight(era=self._era)
 
         _data_path = 'qawa/data'
         _data_path = os.path.join(os.path.dirname(__file__), '../data')
@@ -902,7 +904,9 @@ class wzinclusive_processor(processor.ProcessorABC):
             # 2017 Prefiring correction weight
             if 'L1PreFiringWeight' in event.fields:
                 weights.add("prefiring_weight", event.L1PreFiringWeight.Nom, event.L1PreFiringWeight.Dn, event.L1PreFiringWeight.Up)
-
+        else:
+            # If systematic variations are needed, they must be manually inserted here to give different DD estimates; they should be picked up later for histos.
+            weights.add("datadriven_DY_nominal", ak.ones_like(event.event), self._dd.estimate_dd_DY(ngood_jets, tau_pt_loose, systematic=None))
         # selections (delta_tau_met_phi cut is removed from SR)
 
         common_sel = ['triggers', 'lumimask', 'metfilter']
