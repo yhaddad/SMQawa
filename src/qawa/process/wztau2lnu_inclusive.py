@@ -442,20 +442,20 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label=r"$\min\Delta\phi(p_{T}^{miss},j)$"),
                 hist.storage.Weight()
             ),
-            'mT_WZ_2D_tau_pt_loose': hist.Hist(
-                hist.axis.StrCategory([], name="channel"   , growth=True),
-                hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(60, 0, 600, name="mT_WZ", label=r"${mT}^{WZ}$ (GeV)"),
-                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
-                hist.storage.Weight()
-            ),
-            'mT_WZ_2D_tau_pt': hist.Hist(
-                hist.axis.StrCategory([], name="channel"   , growth=True),
-                hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(60, 0, 600, name="mT_WZ", label=r"${mT}^{WZ}$ (GeV)"),
-                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
-                hist.storage.Weight()
-            ),
+            # 'mT_WZ_2D_tau_pt_loose': hist.Hist(
+            #     hist.axis.StrCategory([], name="channel"   , growth=True),
+            #     hist.axis.StrCategory([], name="systematic", growth=True), 
+            #     hist.axis.Regular(60, 0, 600, name="mT_WZ", label=r"${mT}^{WZ}$ (GeV)"),
+            #     hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
+            #     hist.storage.Weight()
+            # ),
+            # 'mT_WZ_2D_tau_pt': hist.Hist(
+            #     hist.axis.StrCategory([], name="channel"   , growth=True),
+            #     hist.axis.StrCategory([], name="systematic", growth=True), 
+            #     hist.axis.Regular(60, 0, 600, name="mT_WZ", label=r"${mT}^{WZ}$ (GeV)"),
+            #     hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
+            #     hist.storage.Weight()
+            # ),
         }
 
     
@@ -1093,8 +1093,8 @@ class wzinclusive_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'dilep_loose_tau_phi')
                 _histogram_filler(ch, sys, 'dilep_tau_phi')
                 _histogram_filler(ch, sys, 'dilep_loose_tau_met_dphi')
-                _histogram_filler2D(ch, sys, 'mT_WZ', 'tau_pt')
-                _histogram_filler2D(ch, sys, 'mT_WZ', 'tau_pt_loose')
+                # _histogram_filler2D(ch, sys, 'mT_WZ', 'tau_pt')
+                # _histogram_filler2D(ch, sys, 'mT_WZ', 'tau_pt_loose')
 
             
             
