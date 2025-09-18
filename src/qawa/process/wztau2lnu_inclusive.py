@@ -906,7 +906,7 @@ class wzinclusive_processor(processor.ProcessorABC):
                 weights.add("prefiring_weight", event.L1PreFiringWeight.Nom, event.L1PreFiringWeight.Dn, event.L1PreFiringWeight.Up)
         else:
             # If systematic variations are needed, they must be manually inserted here to give different DD estimates; they should be picked up later for histos.
-            weights.add("datadriven_DY_nominal", ak.ones_like(event.event), self._dd.estimate_dd_DY(ngood_jets, tau_pt_loose, systematic=None))
+            weights.add("datadriven_DY", ak.ones_like(event.event), self._dd.estimate_dd_DY(ngood_jets, tau_pt_loose, systematic=None))
         # selections (delta_tau_met_phi cut is removed from SR)
 
         common_sel = ['triggers', 'lumimask', 'metfilter']
@@ -946,15 +946,15 @@ class wzinclusive_processor(processor.ProcessorABC):
         ],
 
             "inc-B1": common_sel + [
-            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', '1nhtaus_loose', 'met_pt', '1njets', '~1nhtaus_tight', '~1nhtaus'
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', '1nhtaus_loose', 'met_pt', '1njets_only', '~1nhtaus_tight', '~1nhtaus'
         ],
 
             "inc-C1": common_sel + [
-            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus_loose', '1njets', '~1nhtaus_tight', '~1nhtaus'
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus_loose', '1njets_only', '~1nhtaus_tight', '~1nhtaus'
         ],
 
             "inc-D1": common_sel + [
-            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus', '1njets'
+            'require-ossf', 'require-2lep', 'dilep_m', 'dilep_pt', 'dilep_dphi_met', 'low_met_pt', '1nhtaus', '1njets_only'
         ],
         }
             
@@ -1036,7 +1036,6 @@ class wzinclusive_processor(processor.ProcessorABC):
                 _histogram_filler(ch, sys, 'delta_R_jet_dilep')
                 _histogram_filler(ch, sys, 'dilep_dR')
                 _histogram_filler(ch, sys, 'delta_tau_met_phi')
-                _histogram_filler(ch, sys, 'tau_pt_loose')
                 _histogram_filler(ch, sys, 'dphi_met_ll')
                 _histogram_filler(ch, sys, 'dilep_dphi_tau')
                 _histogram_filler(ch, sys, 'dphi_jet_met')
