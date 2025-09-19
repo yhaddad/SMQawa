@@ -181,8 +181,10 @@ class wzinclusive_processor(processor.ProcessorABC):
             elif self._era == '2018':
                 jec_tag = 'Summer19UL18_V5_MC'
                 jer_tag = 'Summer19UL18_JRV2_MC'
+            elif self._era in ["2022", "2023", "2024", "2025"]:
+                raise NotImplementedError(f"{self._era} is not yet implemented")
             else:
-                print('error')
+                raise ValueError(f"Unexpected era={self._era}")
         else:
             if self._era == '2016':
                 if self._isAPV:
@@ -196,8 +198,10 @@ class wzinclusive_processor(processor.ProcessorABC):
                 jec_tag = f'Summer19UL17_Run{run_period}_V5_DATA'
             elif self._era == '2018':
                 jec_tag = f'Summer19UL18_Run{run_period}_V5_DATA'
+            elif self._era in ["2022", "2023", "2024", "2025"]:
+                raise NotImplementedError(f"{self._era} is not yet implemented")
             else:
-                print('error')
+                raise ValueError(f"Unexpected era={self._era}")
         
         self.btag_wp = 'L'
         self.jetPU_wp = 'M'
