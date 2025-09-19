@@ -13,15 +13,36 @@ import uproot
 from correctionlib import _core
 
 class tauIDScaleFactors:
-	def __init__(self, era:str='2018', vsjet_wp:str='VTight', vse_wp:str='VVLoose', vsmu_wp:str='VLoose', isAPV=False):
+	def __init__(self, era:str='2018', vsjet_wp:str='VTight', vse_wp:str='VVLoose', vsmu_wp:str='VLoose',
+                     isAPV=False, isEE=False, isBPix=False):
+                config = {"2016": {"tagger": "DeepTau2017v2p1"},
+                          "2017": {"tagger": "DeepTau2017v2p1"},
+                          "2018": {"tagger": "DeepTau2017v2p1"},
+                          "2022": {"tagger": "DeepTau2018v2p5"},
+                          # "2023": {"tagger": "DeepTau2018v2p5"}, # Maybe we want UParT tagger or Run 3, however!
+                          # "2024": {"tagger": "DeepTau2018v2p5"},
+                          # "2025": {"tagger": "DeepTau2018v2p5"},
+                          }
 		self._era = era
 		self.vsjet_wp = vsjet_wp
 		self.vse_wp = vse_wp
 		self.vsmu_wp = vsmu_wp
 		self.isAPV = isAPV
+                self.isEE = isEE
+                self.isBPix = isBPix
+                assert sum([self.isAPV, self.isEE, self.isBPix]) <= 1, "Multiple incompatible suberas selected as active"
+                if isAPV:
+                  self._subera = "_APV"
+                elif isEE:
+                  self._subera = "_EE"
+                elif isBPix:
+                  self._subera = "_BPix"
+                else:
+                  self._subera = ""
+                self.tagger = config[self._era]["tagger"]
 		_data_path = os.path.join(os.path.dirname(__file__), 'data')
 		# Load CorrectionSet
-		fname = f"{_data_path}/tau_ID_SF/{era+'_APV' if isAPV else era}/tau.json.gz"
+		fname = f"{_data_path}/tau_ID_SF/{self._era+self._subera}/tau.json.gz"
 		with gzip.open(fname,'rt') as file:
 			data = file.read().strip()
 			cset = correctionlib.CorrectionSet.from_string(data)
@@ -30,9 +51,9 @@ class tauIDScaleFactors:
 		
 
 		#Load Correction Objects :
-		self.corr_vsjet = cset["DeepTau2017v2p1VSjet"]
-		self.corr_vse = cset["DeepTau2017v2p1VSe"]
-		self.corr_vsmu = cset["DeepTau2017v2p1VSmu"]
+		self.corr_vsjet = cset[f"{self.tagger}VSjet"]
+		self.corr_vse = cset[f"{self.tagger}VSe"]
+		self.corr_vsmu = cset[f"{self.tagger}VSmu"]
 		self.corr_enscale = cset["tau_energy_scale"]
 
 		
@@ -44,28 +65,27 @@ class tauIDScaleFactors:
 		tau_pt  = np.array(taus.pt)
 		tau_dm  = np.array(taus.decayMode)
 		tau_genmatch = np.array(taus.genPartFlav)
-		tagger = "DeepTau2017v2p1"
 		
-		# DeepTau2017v2p1VSjet
+		# {self.tagger}VSjet
 		sf_vsjet = self.corr_vsjet.evaluate(tau_pt,tau_dm,tau_genmatch, self.vsjet_wp, self.vse_wp, syst,"pt")
 		sf_vsjet = ak.fill_none(sf_vsjet, 1.)
 		sf_vsjet = ak.unflatten(sf_vsjet, ntaus)
 		sf_vsjet = ak.prod(sf_vsjet, axis=-1)
 
-		# DeepTau2017v2p1VSe
+		# {self.tagger}VSe
 		sf_vse = self.corr_vse.evaluate(tau_eta,tau_genmatch,self.vse_wp,syst)
 		sf_vse = ak.fill_none(sf_vse, 1.)
 		sf_vse = ak.unflatten(sf_vse, ntaus)
 		sf_vse = ak.prod(sf_vse, axis=-1)
 
-		# DeepTau2017v2p1VSmu
+		# {self.tagger}VSmu
 		sf_vsmu = self.corr_vsmu.evaluate(tau_eta,tau_genmatch,self.vsmu_wp,syst)
 		sf_vsmu = ak.fill_none(sf_vsmu, 1.)
 		sf_vsmu = ak.unflatten(sf_vsmu, ntaus)
 		sf_vsmu = ak.prod(sf_vsmu, axis=-1)
 
 		# tau energy scale
-		sf_enscale = self.corr_enscale.evaluate(tau_pt,tau_eta,tau_dm,tau_genmatch,tagger,syst)
+		sf_enscale = self.corr_enscale.evaluate(tau_pt,tau_eta,tau_dm,tau_genmatch,self.tagger,syst)
 		sf_enscale = ak.fill_none(sf_enscale, 1.)
 		sf_enscale = ak.unflatten(sf_enscale, ntaus)
 		sf_enscale = ak.prod(sf_enscale, axis=-1)
@@ -103,7 +123,6 @@ class tauIDScaleFactors:
 		tau_mass = tau.mass
 		tau_dm  = tau.decayMode
 		tau_genmatch = tau.genPartFlav
-		tagger = "DeepTau2017v2p1"
 
 		enscale_nom_with_none = self.apply_function_flattened_masked(
 		    self.corr_enscale.evaluate,
@@ -111,7 +130,7 @@ class tauIDScaleFactors:
 		    tau_eta,
 		    tau_dm,
 		    tau_genmatch,
-		    tagger,
+		    self.tagger,
 		    "nom",
 		    valid_where = valid_tau_enscale
 		)
@@ -121,7 +140,7 @@ class tauIDScaleFactors:
 		    tau_eta,
 		    tau_dm,
 		    tau_genmatch,
-		    tagger,
+		    self.tagger,
 		    "up",
 		    valid_where = valid_tau_enscale
 		)
@@ -131,7 +150,7 @@ class tauIDScaleFactors:
 		    tau_eta,
 		    tau_dm,
 		    tau_genmatch,
-		    tagger,
+		    self.tagger,
 		    "down",
 		    valid_where = valid_tau_enscale
 		)
