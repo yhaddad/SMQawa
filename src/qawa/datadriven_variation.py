@@ -1,0 +1,203 @@
+import correctionlib
+import os
+import awkward as ak
+from pathlib import Path
+
+
+class DataDrivenEventReweight:
+    def __init__ (
+        self,
+        era: str = "2018",
+    ):
+        _data_path = Path(os.path.dirname(__file__)) / f"data/dd/{era}/WZ_inclusive_data_driven_{era}_new.json"
+        assert _data_path.exists(), f"DataDrivenEventReweight could not find the expected json file: {str(_data_path)}"
+        self.dd_estimator = correctionlib.CorrectionSet.from_file(str(_data_path)).compound["LNTTau_TTau_DD_Estimate"]
+        
+    def estimate_dd_DY(self, jet_multiplicity, tau_pt, systematic: str = None):
+        if systematic is None:
+            return self.dd_estimator.evaluate(jet_multiplicity, tau_pt, "nominal")
+        else:
+            return self.dd_estimator.evaluate(jet_multiplicity, tau_pt, systematic)
+        # return self.dd_estimator.evaluate(ak.fill_none(jet_multiplicity, 0), ak.fill_none(tau_pt, 0.0), systematic)
+
+if __name__ == "__main__":
+    from correctionlib import schemav2 as cs
+
+    new_cset_corrections = [
+        # --- First Correction ---
+        cs.Correction(
+            name="LNTTau_to_TTau_TransferFactor",
+            version=1,
+            inputs=[
+                cs.Variable(name="jet_multiplicity", type="real", description="Number of jets (cross-cleaned against leptons, ID'd, pT > 25 GeV, |eta| < 2.5)"),
+                cs.Variable(name="tau_pt", type="real", description="Reconstructed tau pT [GeV]"),
+                cs.Variable(name="systematic", type="string"),
+            ],
+            output=cs.Variable(name="weight", type="real", description="Multiplicative weight for transfer factor estimating fake taus from Tight Tau to Loose Not Tight Tau rate"),
+            data=cs.Category(
+                nodetype="category",
+                input="systematic",
+                content=[
+                    {
+                        "key": "nominal",
+                        "value": cs.MultiBinning(
+                            nodetype="multibinning",
+                            inputs=["jet_multiplicity", "tau_pt"],
+                            edges=[
+                                [0, 1, 2],
+                                [0.0, 20.0, 25.0, 30.0, 35.0, 40.0, 60.0, 80.0, 100.0, 110.0],
+                            ],
+                            content=[0.0, 0.05079561, 0.09419116, 0.11183215, 0.1351457, 0.17628764, 0.19667385, 0.19257761, 0.18835731,
+                                     0.0, 0.01081895, 0.00904362, 0.00930078, 0.00792693, 0.01008214, 0.01083654, 0.01113167, 0.02650382],
+                            flow="clamp",
+                        ),
+                    },
+                    {
+                        "key": "DDDYUp",
+                        "value": cs.MultiBinning(
+                            nodetype="multibinning",
+                            inputs=["jet_multiplicity", "tau_pt"],
+                            edges=[
+                                [0, 1, 2],
+                                [0.0, 20.0, 25.0, 30.0, 35.0, 40.0, 60.0, 80.0, 100.0, 110.0],
+                            ],
+                            content=[
+                                0.0, 0.05255985, 0.09782405, 0.11723914, 0.14328439, 0.18557384, 0.21841953, 0.23083581, 0.23105244,
+                                0.0, 0.01147977, 0.00972368, 0.01015191, 0.00891219, 0.01097208, 0.01276036, 0.01458977, 0.03304592,
+                            ],
+                            flow="clamp",
+                        ),
+                    },
+                    {
+                        "key": "DDDYDown",
+                        "value": cs.MultiBinning(
+                            nodetype="multibinning",
+                            inputs=["jet_multiplicity", "tau_pt"],
+                            edges=[
+                                [0, 1, 2],
+                                [0.0, 20.0, 25.0, 30.0, 35.0, 40.0, 60.0, 80.0, 100.0, 110.0],
+                            ],
+                            content=[
+                                0.0, 0.04903137, 0.09055827, 0.10642516, 0.12700701, 0.16700144, 0.17492817, 0.15431941, 0.14566218,
+                                0.0, 0.01015813, 0.00836356, 0.00844965, 0.00694167, 0.0091922, 0.00891272, 0.00767357, 0.01996172,
+                            ],
+                            flow="clamp",
+                        ),
+                    },
+                ],
+            ),
+        ),
+
+        # --- Second Correction ---
+        cs.Correction(
+            name="LNTTau_HighMET_DY_to_Data_estimate",
+            version=1,
+            inputs=[
+                cs.Variable(name="jet_multiplicity", type="real"),
+                cs.Variable(name="tau_pt", type="real"),
+                cs.Variable(name="systematic", type="string"),
+            ],
+            output=cs.Variable(name="weight", type="real"),
+            data=cs.Category(
+                nodetype="category",
+                input="systematic",
+                content=[
+                    {
+                        "key": "nominal",
+                        "value": cs.MultiBinning(
+                            nodetype="multibinning",
+                            inputs=["jet_multiplicity", "tau_pt"],
+                            edges=[
+                                [0, 1, 2],
+                                [0.0, 20.0, 25.0, 30.0, 35.0, 40.0, 60.0, 80.0, 100.0, 110.0],
+                            ],
+                            content=[
+                                0.0, 0.97531364, 0.96670784, 0.9585013, 0.94991049, 0.92440385, 0.88846139, 0.87653405, 0.88508274,
+                                0.0, 0.97916137, 0.98144067, 0.98084848, 0.98033434, 0.97477991, 0.9655559, 0.95486799, 0.93447709,
+                            ],
+                            flow="clamp",
+                        ),
+                    },
+                    {
+                        "key": "DDDYUp",
+                        "value": cs.MultiBinning(
+                            nodetype="multibinning",
+                            inputs=["jet_multiplicity", "tau_pt"],
+                            edges=[
+                                [0, 1, 2],
+                                [0.0, 20.0, 25.0, 30.0, 35.0, 40.0, 60.0, 80.0, 100.0, 110.0],
+                            ],
+                            content=[
+                                0.0, 0.97625497, 0.96832221, 0.96094004, 0.95349797, 0.92840366, 0.89860561, 0.89489544, 0.90374624,
+                                0.0, 0.98082078, 0.98329828, 0.983161, 0.98342726, 0.9774628, 0.97186341, 0.96879974, 0.95106826,
+                            ],
+                            flow="clamp",
+                        ),
+                    },
+                    {
+                        "key": "DDDYDown",
+                        "value": cs.MultiBinning(
+                            nodetype="multibinning",
+                            inputs=["jet_multiplicity", "tau_pt"],
+                            edges=[
+                                [0, 1, 2],
+                                [0.0, 20.0, 25.0, 30.0, 35.0, 40.0, 60.0, 80.0, 100.0, 110.0],
+                            ],
+                            content=[
+                                0.0, 0.97437231, 0.96509347, 0.95606256, 0.94632301, 0.92040404, 0.87831717, 0.85817266, 0.86641924,
+                                0.0, 0.97750196, 0.97958306, 0.97853596, 0.97724142, 0.97209702, 0.95924839, 0.94093624, 0.91788592,
+                            ],
+                            flow="clamp",
+                        ),
+                    },
+                ],
+            ),
+        ),
+    ]
+
+    new_cset_compound_corrections = [
+        cs.CompoundCorrection(
+            name="LNTTau_TTau_DD_Estimate",
+            description="For generating data driven estimate of DrellYan background in a tight tau, high-MET region, weighting data from a loost-not-tight tau, high-MET region",
+            inputs=[
+                cs.Variable(name="jet_multiplicity", type="real", description="Number of jets (cross-cleaned against leptons, ID'd, pT > 25 GeV, |eta| < 2.5)"),
+                cs.Variable(name="tau_pt", type="real", description="Reconstructed tau pT [GeV]"),
+                cs.Variable(name="systematic", type="string", description="Systematic variation for the datadriven DY background estimation"),
+            ],
+            output=cs.Variable(name="weight", type="real", description="Estimated number of events coming from tau fakes of a DrellYan background"),
+            inputs_update=[],
+            input_op="*",
+            output_op="*",
+            stack=["LNTTau_to_TTau_TransferFactor", "LNTTau_HighMET_DY_to_Data_estimate"],
+        )
+    ]
+    new_cset = correctionlib.schemav2.CorrectionSet(
+        schema_version=2,
+        corrections=new_cset_corrections,
+        compound_corrections=new_cset_compound_corrections,
+    )
+    with open(f"WZ_inclusive_data_driven_2018_new.json", "w") as fout:
+        fout.write(new_cset.model_dump_json(exclude_unset=True))
+
+    test =  DataDrivenEventReweight()
+    import numpy as np
+    test_njets = np.array([0, 1, 0, 1, 0, 1])
+    test_tau_pt = np.array([ 25, 25, 80, 80, 110, 110])
+    for syst in ["nominal", "DDDYUp", "DDDYDown", None] :
+        try:
+            test_weights = test.estimate_dd_DY(test_njets, test_tau_pt, syst)
+            print("test_njets:", test_njets)
+            print("test_tau_pt:", test_tau_pt)
+            print("weights:", test_weights)
+        except Exception as e:
+            print(syst, e)
+
+    # # Wrap them into a CorrectionSet
+    # cset = cs.CorrectionSet(schema_version=2, corrections=new_cset_corrections)
+
+    # # # Example evaluations
+    # print(new_cset["LNTTau_TTau_DD_Estimate"].evaluate(1, 35.0, "nominal"))
+    # # print(cset["LNTTau_to_TTau_TransferFactor"].evaluate(1, 35.0, "up"))
+    # # print(cset["LNTTau_to_TTau_TransferFactor"].evaluate(1, 35.0, "down"))
+
+    # 
