@@ -868,7 +868,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             weights.add('genweight', event.genWeight)
             # self._btag.append_btag_sf(jets, weights)
             self._jpSF.append_jetPU_sf(pu_good_jets, weights)
-            self._purw.append_pileup_weight(weights, event.Pileup.nPU)
+            self._purw.append_pileup_weight(weights, event.Pileup.event.Pileup.nTrueInt) # fix: https://github.com/9GaoHong/SMQawa_update/commit/d6cdebda4856593162c03365eb9d9a91ceb1a185
             self._tauID.append_tauID_sf(had_taus, weights)
             self._add_trigger_sf(weights, lead_lep, subl_lep)
             
