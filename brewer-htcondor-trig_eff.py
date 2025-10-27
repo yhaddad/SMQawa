@@ -16,28 +16,56 @@ script_TEMPLATE = """#!/bin/bash
 export X509_USER_PROXY={proxy}
 export XRD_REQUESTTIMEOUT=6400
 export XRD_REDIRECTLIMIT=64
+export INSTALL_LOC_EXTERNAL={install_loc_external}
+export COFFEA_IMAGE={coffea_image}
+export FULL_IMAGE={full_image}
 
 voms-proxy-info -all
 voms-proxy-info -all -file {proxy}
 
-python -m venv --without-pip --system-site-packages jobenv
-source jobenv/bin/activate
-python -m pip install scipy --upgrade --no-cache-dir
-python -m pip install --no-deps --ignore-installed --no-cache-dir Qawa-{qawa_version}-py2.py3-none-any.whl
+echo "----- COFFEA_IMAGE :"
+echo COFFEA_IMAGE $COFFEA_IMAGE
+echo FULL_IMAGE $FULL_IMAGE
+
+echo "----- Sourcing virtual environment :"
+echo source $INSTALL_LOC_EXTERNAL/.env/bin/activate
+source $INSTALL_LOC_EXTERNAL/.env/bin/activate
+echo "which python3"
+which python3
+echo '$SHELL'
+echo $SHELL
+echo '$PYTHONPATH'
+echo $PYTHONPATH
+echo '$PYTHON3PATH'
+echo $PYTHON3PATH
+echo '$PYTHONHOME'
+echo $PYTHONHOME
+echo '$PATH'
+echo $PATH
+echo awkward, uproot, coffea, qawa versions:
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show awkward
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show uproot
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show coffea
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -m pip show qawa
+echo import and print __file__ for coffea
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -c "import coffea; print(coffea.__version__); print(coffea.__file__)"
+echo import and print __file__ for qawa
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 -c "import qawa; print(qawa.__file__)"
+
 
 echo "----- JOB STARTS @" `date "+%Y-%m-%d %H:%M:%S"`
 echo "----- X509_USER_PROXY    : $X509_USER_PROXY"
 echo "----- XRD_REDIRECTLIMIT  : $XRD_REDIRECTLIMIT"
 echo "----- XRD_REQUESTTIMEOUT : $XRD_REQUESTTIMEOUT"
 ls -lthr
-echo "----- download the file locally"
 
 echo "----- processing the files : "
-python brewer_remote_trig.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2
+$INSTALL_LOC_EXTERNAL/.env/bin/python3 brewer_remote_trig.py --jobNum=$1 --isMC={ismc} --era={era} --infile=$2 --executor={executor} --copyInput
 
 echo "----- directory after running :"
 ls -lthr
-if [ ! -f "histogram_$1.pkl.gz" ]; then
+if [ ! -f "histogram_$1.pkl" ]; then
+  echo "No output histogram pickle file found";
   exit 1;
 fi
 echo " ------ THE END (everyone dies !) ----- "
@@ -50,22 +78,22 @@ request_disk          = 10000000
 
 executable            = {jobdir}/script.sh
 arguments             = $(ProcId) $(jobfn)
+# use_x509userproxy     = True
 transfer_input_files  = {transfer_file}
-# transfer_output_files = histogram_$(ProcId).pkl.gz 
+# transfer_output_files = histogram_$(ProcId).pkl
 should_transfer_files = YES
 WhenToTransferOutput  = ON_EXIT_OR_EVICT
 initialdir            = {jobdir}
-#output_destination    = root://eosuser.cern.ch//eos/user/i/iisrar
 
 output                = $(ClusterId).$(ProcId).out
 error                 = $(ClusterId).$(ProcId).err
 log                   = $(ClusterId).$(ProcId).log
 
 on_exit_remove        = (ExitBySignal == False) && (ExitCode == 0)
-max_retries           = 2
+max_retries           = 3
 requirements          = Machine =!= LastRemoteHost
 # MY.XRDCP_CREATE_DIR   = True
-+SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask:latest"
++SingularityImage     = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/{coffea_image}"
 +JobFlavour           = "{queue}"
 
 queue jobfn from {jobdir}/inputfiles.dat
@@ -73,15 +101,17 @@ queue jobfn from {jobdir}/inputfiles.dat
 
 def main():
     parser = argparse.ArgumentParser(description='Famous Submitter')
-    parser.add_argument("-i"   , "--input" , type=str, default="data.txt" , help="input datasets", required=True)
-    parser.add_argument("-t"   , "--tag"   , type=str, default="atakour"  , help="production tag", required=True)
-    parser.add_argument("-isMC", "--isMC"  , type=int, default=1          , help="")
-    parser.add_argument("-q"   , "--queue" , type=str, default="longlunch", help="")
-    parser.add_argument("-e"   , "--era"   , type=str, default="2022"     , help="")
-    parser.add_argument("-f"   , "--force" , action="store_true"          , help="recreate files and jobs")
-    parser.add_argument("-s"   , "--submit", action="store_true"          , help="submit only")
-    parser.add_argument("-dry" , "--dryrun", action="store_true"          , help="running without submission")
-    parser.add_argument("--redo-proxy"     , action="store_true"          , help="redo the voms proxy")
+    parser.add_argument("-i"   , "--input" , type=str, default="data.txt"       , help="input datasets", required=True)
+    parser.add_argument("-t"   , "--tag"   , type=str, default="atakour"        , help="production tag", required=True)
+    parser.add_argument("-isMC", "--isMC"  , type=int, default=1                , help="")
+    parser.add_argument("-q"   , "--queue" , type=str, default="longlunch"      , help="")
+    parser.add_argument("-e"   , "--era"   , type=str, default="2018"           , help="")
+    parser.add_argument("-f"   , "--force" , action="store_true"                , help="recreate files and jobs")
+    parser.add_argument("-s"   , "--submit", action="store_true"                , help="submit only")
+    parser.add_argument("-dry" , "--dryrun", action="store_true"                , help="running without submission")
+    parser.add_argument("--redo-proxy"     , action="store_true"                , help="redo the voms proxy")
+    parser.add_argument("-ex", "--executor", type=str, default="FuturesExecutor", help="coffea executor to use",
+                        choices=["FuturesExecutor","IterativeExecutor","DaskExecutor"])
     options = parser.parse_args()
 
     # Making sure that the proxy is good
@@ -89,7 +119,12 @@ def main():
     home_base  = os.environ['HOME']
     user_name  = os.environ['USER']
     proxy_copy = os.path.join(home_base,proxy_base)
-    eosbase = f"/eos/user/{user_name[0]}/{user_name}/WZtotau2lnu/" + "{tag}/{sample}/"
+    tag = options.tag
+    # eosbase = f"/eos/user/{user_name[0]}/{user_name}/WZtotau2lnu/" + "{tag}/{sample}/"
+    coffea_image = os.environ['COFFEA_IMAGE']
+    full_image = os.environ['FULL_IMAGE']
+    install_loc_external = os.environ['INSTALL_LOC_EXTERNAL']
+    brewer_loc_external = os.path.join(os.environ['INSTALL_LOC_EXTERNAL'], "SMQawa", "brewer_remote_trig.py")
 
     regenerate_proxy = False
     if not os.path.isfile(proxy_copy):
@@ -117,12 +152,24 @@ def main():
 
 
     with open(options.input, 'r') as stream:
+        captured_env = os.environ.copy()
+        if "bash" in captured_env['SHELL']:
+            to_source = os.path.join(captured_env['INSTALL_LOC'], ".bashrc")
+        elif "zsh" in captured_env['SHELL']:
+            to_source = os.path.join(captured_env['INSTALL_LOC'], ".zshrc")
+        else:
+            raise NotImplementedError("neither bash or zsh detected in the shell env variable, something has gone wrong; contents=", captured_env['SHELL'])
         for sample in stream.read().split('\n'):
             if '#' in sample: continue
-            if len(sample.split('/')) <= 1: continue
-            sample_name = sample.split("/")[1] if options.isMC else '_'.join(sample.split("/")[1:3])
+            split_sample = sample.split("/")
+            if len(split_sample) <= 1: continue
+            auto_isMC = 1 * (split_sample[-1] == "NANOAODSIM")
+            # sample_name = sample.split("/")[1] if options.isMC else '_'.join(sample.split("/")[1:3])
+            sample_name = sample.split("/")[1] if auto_isMC else '_'.join(sample.split("/")[1:3])
             sample_name = sample_name.replace("*", "")
             jobs_dir = '_'.join(['jobs', options.tag, options.era, sample_name])
+            jobs_dir_external = os.path.join(os.environ['INSTALL_LOC_EXTERNAL'], os.path.relpath(os.path.normpath(jobs_dir), os.environ['INSTALL_LOC']))
+            print("jobs_dir:", jobs_dir, "\njobs_dir_external:", jobs_dir_external)
             logging.info("-- sample_name : " + sample)
 
             if os.path.isdir(jobs_dir):
@@ -137,7 +184,7 @@ def main():
                 os.mkdir(jobs_dir)
 
             if not options.submit:
-                sample_file = []
+                sample_files = []
                 if '*' in sample:
                     sample_with_ext = subprocess.check_output(
                         ['dasgoclient', '--query', f"dataset={sample}"]
@@ -163,17 +210,21 @@ def main():
                         infiles.write('\n')
                     infiles.close()
             time.sleep(2)
-            eosoutdir =  eosbase.format(tag=options.tag,sample=sample_name)
-            # crete a directory
-            os.system("mkdir -p {}".format(eosoutdir))
+            # eosoutdir =  eosbase.format(tag=options.tag,sample=sample_name)
+            # # crete a directory
+            # os.system("mkdir -p {}".format(eosoutdir))
 
             with open(os.path.join(jobs_dir, "script.sh"), "w") as scriptfile:
                 script = script_TEMPLATE.format(
                     proxy=proxy_copy,
-                    ismc=options.isMC,
+                    # ismc=options.isMC,
+                    ismc=auto_isMC,
                     era=options.era,
-                    eosdir=eosoutdir, 
-                    qawa_version=qawa_version
+                    qawa_version=qawa_version,
+                    coffea_image=coffea_image,
+                    full_image=full_image,
+                    install_loc_external=install_loc_external,
+                    executor=options.executor,
                 )
                 scriptfile.write(script)
                 scriptfile.close()
@@ -181,29 +232,38 @@ def main():
             with open(os.path.join(jobs_dir, "condor.sub"), "w") as condorfile:
                 condor = condor_TEMPLATE.format(
                     transfer_file= ",".join([
-                        f"../brewer_remote_trig.py",
-                        f"../dist/Qawa-{qawa_version}-py2.py3-none-any.whl",
+                        brewer_loc_external,
                     ]),
-                    jobdir=jobs_dir,
-                    queue=options.queue
+                    jobdir=str(jobs_dir_external), #use the external path so call_host condor_submit can find it
+                    queue=options.queue,
+                    coffea_image=coffea_image,
                 )
                 condorfile.write(condor)
                 condorfile.close()
             if options.dryrun:
                 continue
 
-            htc = subprocess.Popen(
-                "condor_submit " + os.path.join(jobs_dir, "condor.sub"),
-                shell  = True,
-                stdin  = subprocess.PIPE,
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE,
-                close_fds=True
-            )
-            
-            htc.communicate()
-            exit_status = htc.returncode
-            logging.info("condor submission status : {}".format(exit_status))
+            try:
+                cmd = f"cd {captured_env['INSTALL_LOC']} && source {to_source} && condor_submit {os.path.join(jobs_dir_external, 'condor.sub')}"
+                logging.info(f"condor command : {cmd}")
+                htc = subprocess.Popen(
+                    cmd,
+                    shell      = True,
+                    executable = captured_env['SHELL'],
+                    env        = captured_env,
+                    stdin      = subprocess.PIPE,
+                    stdout     = subprocess.PIPE,
+                    stderr     = subprocess.PIPE,
+                    close_fds  =True
+                )
+
+                htc_out, htc_err = htc.communicate()
+                exit_status = htc.returncode
+                logging.info(f"condor submission status : {exit_status}")
+                logging.info(f"condor communicate stdout : {htc_out}")
+                logging.info(f"condor communicate stderr : {htc_err}")
+            except Exception as e:
+                print(f"HTCondor submission error: {e}")
 
 if __name__ == "__main__":
     main()

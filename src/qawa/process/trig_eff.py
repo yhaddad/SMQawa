@@ -22,39 +22,53 @@ class trig_processor(processor.ProcessorABC):
         self.isMC = isMC
         self.era = era
         #self.hlts_lep = hlts_lep
-        self.hlts_met = ['PFMET100_PFMHT100_IDTight_PFHT60',
-                         'PFMET110_PFMHT110_IDTight',
+        self.hlts_met = ['PFMET110_PFMHT110_IDTight',
                          'PFMET120_PFMHT120_IDTight',
                          'PFMET120_PFMHT120_IDTight_PFHT60',
                          'PFMET130_PFMHT130_IDTight',
                          'PFMET140_PFMHT140_IDTight',
-                         'PFMET200_HBHECleaned',
-                         'PFMET200_HBHE_BeamHaloCleaned',
-                         'PFMET250_HBHECleaned',
-                         'PFMET300_HBHECleaned',
-                         'PFMETNoMu100_PFMHTNoMu100_IDTight_PFHT60',
+                         'PFMET200_BeamHaloCleaned',
+                         'PFMETTypeOne200_BeamHaloCleaned',
                          'PFMETNoMu110_PFMHTNoMu110_IDTight',
                          'PFMETNoMu120_PFMHTNoMu120_IDTight',
                          'PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60',
                          'PFMETNoMu130_PFMHTNoMu130_IDTight',
                          'PFMETNoMu140_PFMHTNoMu140_IDTight',
-                         'PFMETTypeOne100_PFMHT100_IDTight_PFHT60',
-                         'PFMETTypeOne110_PFMHT110_IDTight',
-                         'PFMETTypeOne120_PFMHT120_IDTight',
-                         'PFMETTypeOne120_PFMHT120_IDTight_PFHT60',
-                         'PFMETTypeOne130_PFMHT130_IDTight',
-                         'PFMETTypeOne140_PFMHT140_IDTight',
-                         'PFMETTypeOne200_HBHE_BeamHaloCleaned']
+                         'PFMETTypeOne140_PFMHT140_IDTight']
+
+        #'PFMET100_PFMHT100_IDTight_PFHT60'
+        # PFMET200_HBHECleaned PFMET200_HBHE_BeamHaloCleaned PFMET250_HBHECleaned PFMET300_HBHECleaned PFMETNoMu100_PFMHTNoMu100_IDTight_PFHT60 PFMETTypeOne100_PFMHT100_IDTight_PFHT60
+        # PFMETTypeOne110_PFMHT110_IDTight PFMETTypeOne120_PFMHT120_IDTight PFMETTypeOne120_PFMHT120_IDTight_PFHT60 PFMETTypeOne130_PFMHT130_IDTight PFMETTypeOne200_HBHE_BeamHaloCleaned
         
+
+
         #dataset_axis = hist.Cat("dataset", "") #coffea.hist
         dataset_axis = hist.axis.StrCategory([], name="dataset", label="dataset", growth=True) #hist.Hist
-        bins = [20, 25, 30, 35, 40, 50, 60, 70]
+        bins = [20.0, 25.0, 30.0, 35.0, 40.0, 50.0, 60.0, 70.0]
+        print(bins)
         #lead_axis = hist.Bin("lead", "pT lead [GeV]", bins) #coffea.hist
         #trail_axis = hist.Bin("trail", "pT trail [GeV]", bins) #coffea.hist
         lead_axis = hist.axis.Variable(bins, name="lead", label="pT lead [GeV]") #hist.Hist
         trail_axis = hist.axis.Variable(bins, name="trail", label="pT trail [GeV]") #hist.Hist
         
         self._accumulator = processor.dict_accumulator({
+
+            'h_MM_EE_no_trig': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_MM_BB_no_trig': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_MM_BE_no_trig': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_MM_EB_no_trig': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_EE_EE_no_trig': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_EE_BB_no_trig': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+
+            'h_num_MM': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_num_ME': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_num_EM': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_num_EE': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_den_MM': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_den_ME': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_den_EM': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+            'h_den_EE': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
+
             'h_num_MM_EE': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
             'h_num_ME_EE': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
             'h_num_EM_EE': hist.Hist(dataset_axis, lead_axis, trail_axis, storage=hist.storage.Weight()),
@@ -110,24 +124,38 @@ class trig_processor(processor.ProcessorABC):
 
     
     def process(self, events):
-        # print("MMM")
-        # print(f"Accumulator type: {type(self._accumulator)}")
-        # print(f"Accumulator keys: {self._accumulator.keys()}")
         #output = self.accumulator.identity()
         output = self.accumulator.copy()
-        #output = copy.deepcopy(self.accumulator)
-        # print("G")
         dataset = events.metadata["dataset"]
-        # print("Hey...")
         # HLT
         hlt_avail = events.HLT.layout.keys()
         #hlt_avail = events.HLT.fields
         events_MET = self.HLT_MET(events, hlt_avail)
         events_LEP = self.HLT_LEP(events_MET, hlt_avail)
-        # print("H")
-        # pt arrays
         dic_pt_MET = self.get_pTs_from_events(events_MET)
         dic_pt_LEP = self.get_pTs_from_events(events_LEP)
+        dic_pt_data = self.get_pTs_from_events(events)
+        # print("lead_MM_EE:", dic_pt_LEP['pt_lead_MM_EE'])
+        # print("trail_MM_EE:", dic_pt_LEP['pt_trail_MM_EE'])
+        # print("Num events:", len(dic_pt_LEP['pt_lead_MM_EE']))
+        # print(dic_pt_LEP)
+        # print(dic_pt_MET)
+
+        output['h_MM_EE_no_trig'].fill(dataset=dataset, lead=dic_pt_data['pt_lead_MM_EE'], trail=dic_pt_data['pt_trail_MM_EE'])
+        output['h_MM_BB_no_trig'].fill(dataset=dataset, lead=dic_pt_data['pt_lead_MM_BB'], trail=dic_pt_data['pt_trail_MM_BB'])
+        output['h_MM_BE_no_trig'].fill(dataset=dataset, lead=dic_pt_data['pt_lead_MM_BE'], trail=dic_pt_data['pt_trail_MM_BE'])
+        output['h_MM_EB_no_trig'].fill(dataset=dataset, lead=dic_pt_data['pt_lead_MM_EB'], trail=dic_pt_data['pt_trail_MM_EB'])
+        output['h_EE_EE_no_trig'].fill(dataset=dataset, lead=dic_pt_data['pt_lead_EE_EE'], trail=dic_pt_data['pt_trail_EE_EE'])
+        output['h_EE_BB_no_trig'].fill(dataset=dataset, lead=dic_pt_data['pt_lead_EE_BB'], trail=dic_pt_data['pt_trail_EE_BB'])
+
+        output['h_num_MM'].fill(dataset=dataset, lead=dic_pt_LEP['pt_lead_MM'], trail=dic_pt_LEP['pt_trail_MM'])
+        output['h_num_ME'].fill(dataset=dataset, lead=dic_pt_LEP['pt_lead_ME'], trail=dic_pt_LEP['pt_trail_ME'])
+        output['h_num_EM'].fill(dataset=dataset, lead=dic_pt_LEP['pt_lead_EM'], trail=dic_pt_LEP['pt_trail_EM'])
+        output['h_num_EE'].fill(dataset=dataset, lead=dic_pt_LEP['pt_lead_EE'], trail=dic_pt_LEP['pt_trail_EE'])
+        output['h_den_MM'].fill(dataset=dataset, lead=dic_pt_MET['pt_lead_MM'], trail=dic_pt_MET['pt_trail_MM'])
+        output['h_den_ME'].fill(dataset=dataset, lead=dic_pt_MET['pt_lead_ME'], trail=dic_pt_MET['pt_trail_ME'])
+        output['h_den_EM'].fill(dataset=dataset, lead=dic_pt_MET['pt_lead_EM'], trail=dic_pt_MET['pt_trail_EM'])
+        output['h_den_EE'].fill(dataset=dataset, lead=dic_pt_MET['pt_lead_EE'], trail=dic_pt_MET['pt_trail_EE'])
 
         output['h_num_MM_EE'].fill(dataset=dataset, lead=dic_pt_LEP['pt_lead_MM_EE'], trail=dic_pt_LEP['pt_trail_MM_EE'])
         output['h_num_ME_EE'].fill(dataset=dataset, lead=dic_pt_LEP['pt_lead_ME_EE'], trail=dic_pt_LEP['pt_trail_ME_EE'])
@@ -169,6 +197,12 @@ class trig_processor(processor.ProcessorABC):
         output['h_den_EM_BB'].fill(dataset=dataset, lead=dic_pt_MET['pt_lead_EM_BB'], trail=dic_pt_MET['pt_trail_EM_BB'])
         output['h_den_EE_BB'].fill(dataset=dataset, lead=dic_pt_MET['pt_lead_EE_BB'], trail=dic_pt_MET['pt_trail_EE_BB'])
 
+
+        # h = output['h_num_MM_EE']
+        # print("Lead bin edges:", h.axes['lead'].edges)
+        # print("Trail bin edges:", h.axes['trail'].edges)
+        # print("Sum of weights:", h.sum(flow=True).value)
+
         
         return output
 
@@ -195,7 +229,7 @@ class trig_processor(processor.ProcessorABC):
     def get_good_muons(self, muons):
         muons = muons[abs(muons.eta) < 2.4]
         # muons.pt >= (25 if idx==0 else 20)
-        muons = muons[muons.pt > 20]
+        muons = muons[muons.pt > 20.0]
         muons = muons[muons.tightId] 
         muons = muons[muons.pfRelIso04_all <= 0.15]
         muons = muons[abs(muons.dxy) < 0.045]  
@@ -204,9 +238,10 @@ class trig_processor(processor.ProcessorABC):
         return muons
 
     def get_good_electrons(self, electrons):
-        electrons = electrons[(abs(electrons.eta) < 1.4442) | ((abs(electrons.eta) > 1.5660) & (abs(electrons.eta)  < 2.5))]
+        electron_superclusterEta = electrons.eta + electrons.deltaEtaSC
+        electrons = electrons[(np.abs(electron_superclusterEta) < 1.4442) | ((np.abs(electron_superclusterEta) > 1.566) & (np.abs(electron_superclusterEta)  < 2.5))]
         # skip 25 GeV
-        electrons = electrons[electrons.pt > 20]
+        electrons = electrons[electrons.pt > 20.0]
         electrons = electrons[electrons.mvaIso_WP90] 
         #print("electron")
         return electrons
@@ -227,23 +262,34 @@ class trig_processor(processor.ProcessorABC):
         good_Ls = good_Ls[:,:2]
         #print("inside get pt")
 
+        # print("Good muons:", ak.num(good_Ms))
+        # print("Good electrons:", ak.num(good_Es))
+        # print("After ≥2 leptons:", ak.sum(mask_ll))
+        # print("Good_Ls length:", ak.num(good_Ls))
+
+
+        # use the -ve sign to get osof
+
+
         # pdgID
-        id_prod = abs(good_Ls.pdgId[:,0] * good_Ls.pdgId[:,1])
+        id_prod = (good_Ls.pdgId[:,0] * good_Ls.pdgId[:,1])
 
         # ElEl
-        mask_ElEl = id_prod==121
+        mask_ElEl = id_prod==-121  #OSOF
         good_ElEl = good_Ls[mask_ElEl]
 
         mask_0Br = good_ElEl.eta[:,0] < 1.5
         mask_1Br = good_ElEl.eta[:,1] < 1.5
-        mask_0Ec = good_ElEl.eta[:,0] > 1.5
-        mask_1Ec = good_ElEl.eta[:,1] > 1.5
+        mask_0Ec = good_ElEl.eta[:,0] >= 1.5
+        mask_1Ec = good_ElEl.eta[:,1] >= 1.5
 
         mask_BrBr = mask_0Br & mask_1Br
         mask_BrEc = mask_0Br & mask_1Ec
         mask_EcBr = mask_0Ec & mask_1Br
         mask_EcEc = mask_0Ec & mask_1Ec
 
+        dic_pt['pt_lead_EE'] = good_ElEl.pt[:,0]
+        dic_pt['pt_trail_EE'] = good_ElEl.pt[:,1]
         dic_pt['pt_lead_EE_BB'] = good_ElEl[mask_BrBr].pt[:,0]
         dic_pt['pt_trail_EE_BB'] = good_ElEl[mask_BrBr].pt[:,1]
         dic_pt['pt_lead_EE_BE'] = good_ElEl[mask_BrEc].pt[:,0]
@@ -254,19 +300,21 @@ class trig_processor(processor.ProcessorABC):
         dic_pt['pt_trail_EE_EE'] = good_ElEl[mask_EcEc].pt[:,1]
 
         # MuMu
-        mask_MuMu = id_prod==169
+        mask_MuMu = id_prod==-169 #OSOF
         good_MuMu = good_Ls[mask_MuMu]
 
         mask_0Br = good_MuMu.eta[:,0] < 1.5
         mask_1Br = good_MuMu.eta[:,1] < 1.5
-        mask_0Ec = good_MuMu.eta[:,0] > 1.5
-        mask_1Ec = good_MuMu.eta[:,1] > 1.5
+        mask_0Ec = good_MuMu.eta[:,0] >= 1.5
+        mask_1Ec = good_MuMu.eta[:,1] >= 1.5
 
         mask_BrBr = mask_0Br & mask_1Br
         mask_BrEc = mask_0Br & mask_1Ec
         mask_EcBr = mask_0Ec & mask_1Br
         mask_EcEc = mask_0Ec & mask_1Ec
 
+        dic_pt['pt_lead_MM'] = good_MuMu.pt[:,0]
+        dic_pt['pt_trail_MM'] = good_MuMu.pt[:,1]
         dic_pt['pt_lead_MM_BB'] = good_MuMu[mask_BrBr].pt[:,0]
         dic_pt['pt_trail_MM_BB'] = good_MuMu[mask_BrBr].pt[:,1]
         dic_pt['pt_lead_MM_BE'] = good_MuMu[mask_BrEc].pt[:,0]
@@ -276,8 +324,10 @@ class trig_processor(processor.ProcessorABC):
         dic_pt['pt_lead_MM_EE'] = good_MuMu[mask_EcEc].pt[:,0]
         dic_pt['pt_trail_MM_EE'] = good_MuMu[mask_EcEc].pt[:,1]
 
+
+
         # Mix
-        mask_mix = id_prod==143
+        mask_mix = id_prod==-143 #OSOF
         good_mix = good_Ls[mask_mix]
 
         # ElMu
@@ -286,14 +336,16 @@ class trig_processor(processor.ProcessorABC):
 
         mask_0Br = good_ElMu.eta[:,0] < 1.5
         mask_1Br = good_ElMu.eta[:,1] < 1.5
-        mask_0Ec = good_ElMu.eta[:,0] > 1.5
-        mask_1Ec = good_ElMu.eta[:,1] > 1.5
+        mask_0Ec = good_ElMu.eta[:,0] >= 1.5
+        mask_1Ec = good_ElMu.eta[:,1] >= 1.5
 
         mask_BrBr = mask_0Br & mask_1Br
         mask_BrEc = mask_0Br & mask_1Ec
         mask_EcBr = mask_0Ec & mask_1Br
         mask_EcEc = mask_0Ec & mask_1Ec
 
+        dic_pt['pt_lead_EM'] = good_ElMu.pt[:,0]
+        dic_pt['pt_trail_EM'] = good_ElMu.pt[:,1]
         dic_pt['pt_lead_EM_BB'] = good_ElMu[mask_BrBr].pt[:,0]
         dic_pt['pt_trail_EM_BB'] = good_ElMu[mask_BrBr].pt[:,1]
         dic_pt['pt_lead_EM_BE'] = good_ElMu[mask_BrEc].pt[:,0]
@@ -309,14 +361,16 @@ class trig_processor(processor.ProcessorABC):
 
         mask_0Br = good_MuEl.eta[:,0] < 1.5
         mask_1Br = good_MuEl.eta[:,1] < 1.5
-        mask_0Ec = good_MuEl.eta[:,0] > 1.5
-        mask_1Ec = good_MuEl.eta[:,1] > 1.5
+        mask_0Ec = good_MuEl.eta[:,0] >= 1.5
+        mask_1Ec = good_MuEl.eta[:,1] >= 1.5
 
         mask_BrBr = mask_0Br & mask_1Br
         mask_BrEc = mask_0Br & mask_1Ec
         mask_EcBr = mask_0Ec & mask_1Br
         mask_EcEc = mask_0Ec & mask_1Ec
 
+        dic_pt['pt_lead_ME'] = good_MuEl.pt[:,0]
+        dic_pt['pt_trail_ME'] = good_MuEl.pt[:,1]
         dic_pt['pt_lead_ME_BB'] = good_MuEl[mask_BrBr].pt[:,0]
         dic_pt['pt_trail_ME_BB'] = good_MuEl[mask_BrBr].pt[:,1]
         dic_pt['pt_lead_ME_BE'] = good_MuEl[mask_BrEc].pt[:,0]
