@@ -242,6 +242,17 @@ def theory_ps_weight(weights, ps_weight):
     weights.add('UEPS_FSR', nominal, up_fsr, dw_fsr)
     
 
+def transverse_energy(fourmomentum):
+    if hasattr(fourmomentum, "et"):
+        # scikit-hep/vector
+        return fourmomentum.et
+    elif hasattr(fourmomentum, "E"):
+        # coffea.vector
+        return fourmomentum.E * fourmomentum.pt / fourmomentum.p
+    else:
+        # buggy coffea.vector
+        return fourmomentum.t * fourmomentum.pt / fourmomentum.p
+
 
 class pileup_weights:
     def __init__(self, do_syst:bool=True, era:str='2018'):
@@ -446,8 +457,8 @@ class ewk_corrector:
         that = ak.nan_to_num(that, 1.0)
         
         corr_0 = 1 + self.exterp[0](np.sqrt(shat.to_numpy()), that.to_numpy())
-        corr_1 = 1 + self.exterp[0](np.sqrt(shat.to_numpy()), that.to_numpy())
-        corr_2 = 1 + self.exterp[0](np.sqrt(shat.to_numpy()), that.to_numpy())
+        corr_1 = 1 + self.exterp[1](np.sqrt(shat.to_numpy()), that.to_numpy())
+        corr_2 = 1 + self.exterp[2](np.sqrt(shat.to_numpy()), that.to_numpy())
         
         # make sure the corrections are only on the on-shell
         corr_mask = (
@@ -482,7 +493,7 @@ class ewk_corrector:
             nnlo_ibin = np.round(delta_phi_vv.to_numpy() * 10.).astype(np.int32)
             knnlo =  np.where(
                 init_q_mask & vect_v_mask, 
-                1.0 + self.corrNNLO[nnlo_ibin], 
+                self.corrNNLO[nnlo_ibin], 
                 1.0
             )
             
