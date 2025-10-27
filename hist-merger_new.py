@@ -57,7 +57,7 @@ def merger():
         for s, h in tqdm(combined_hist.items(), desc="Finalizing", ncols=75)
     }
 
-    output_file = f"merged-histogram-{options.tag}-{options.era}-Inc_WZ_latest_DD.pkl.gz"
+    output_file = f"merged-histogram-{options.tag}-{options.era}-Inc_WZ_latest_DD_generic_had_mT_latest.pkl.gz"
     with gzip.open(output_file, "wb") as f:
         pickle.dump(combined_dict, f)
 
