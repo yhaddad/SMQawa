@@ -56,6 +56,7 @@ def validate_input_file(nanofile):
 
 def main():
     parser = argparse.ArgumentParser("")
+    parser.add_argument('--analysis',  type=str, default='inc-WZ', help="Processor name to apply to datasets, and parent folder for config files")
     parser.add_argument('--jobNum' ,   type=int, default=1     , help="")
     parser.add_argument('--era'    ,   type=str, default="2018", help="")
     parser.add_argument('--isMC'   ,   type=int, default=1     , help="")
@@ -191,6 +192,7 @@ def main():
             print(
                 f"""---------------------------
                 -- options   = {options}
+                -- analysis  = {options.analysis}
                 -- is MC     = {options.isMC}
                 -- jobNum    = {options.jobNum}
                 -- era       = {options.era}
@@ -201,6 +203,15 @@ def main():
                 -- copyInput = {options.copyInput}
                 ---------------------------"""
             )
+            if options.analysis in ["inc-WZ"]:
+                from qawa.process.wztau2lnu_inclusive import wzinclusive_processor
+                proc_configured = wzinclusive_processor(
+                    era=options.era,
+                    ewk_process_name=ewk_flag,
+                    run_period=options.runperiod if is_data else ''
+                )
+            else:
+                raise NotImplementedError(f"{options.analysis} does not have hooks for loading a processor, please update the code to point appropriately to it, along with any necessary init configuration options.")
 
             print(" --- wztau2lnu_inclusive processor ... ")
             vbs_runner = processor.Runner(
@@ -212,11 +223,7 @@ def main():
             )
             vbs_out = vbs_runner(samples,
                                  "Events",
-                                 processor_instance=wzinclusive_processor(
-                                     era=options.era,
-                                     ewk_process_name=ewk_flag,
-                                     run_period=options.runperiod if is_data else ''
-                                 ),
+                                 processor_instance=proc_configured,
                                  )
             bh_output = {}
             for key, content in vbs_out.items():
