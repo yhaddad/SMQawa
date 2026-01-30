@@ -50,7 +50,7 @@ def build_leptons(muons, electrons):
         (muons.pt            >  10. ) &
         (np.abs(muons.eta)   <  2.4 ) &
         (muons.pfRelIso04_all<= 0.25) &
-        muons.softId   
+        muons.looseId   
     ]
     # select tight/loose electron
     # https://cms-talk.web.cern.ch/t/clarification-on-ee-eb-gap-veto/133256
@@ -242,6 +242,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             self.ewk_corr = ewk_corrector(process=ewk_process_name)
 
         self.ABCD_tau_bins = [20,25,30,35,40,60,80,100,1000]
+        #to change this in tau_pt use this in tau histogram hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)")
 
         self.build_histos = lambda: {
             'dilep_mt_llnunu': hist.Hist(
@@ -256,6 +257,12 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.Regular(60, 0, 600, name="dilep_pt", label=r"$p_{T}^{\ell\ell}$ (GeV)"),
                 hist.storage.Weight()
             ), 
+            'dilep_deta': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True),
+                hist.axis.Regular(20, 0, 8, name="dilep_deta", label=r"$Delta\eta_{\ell\ell}$"),
+                hist.storage.Weight()
+            ),
             'HTl': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
@@ -334,6 +341,24 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 0, np.pi, name="taus_phi", label=r"$\phi(\tau)$"),
                 hist.storage.Weight()
             ),
+            'tau_pt_loose': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            'taus_eta_loose': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="taus_eta_loose", label=r"$\eta(\tau loose)$"),
+                hist.storage.Weight()
+            ),
+            'taus_phi_loose': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 0, np.pi, name="taus_phi_loose", label=r"$\phi(\tau loose)$"),
+                hist.storage.Weight()
+            ),
             'met_phi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
@@ -344,18 +369,6 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(50, 0, np.pi, name="delta_tau_met_phi", label=r"$\Delta \phi(\tau, p_{T}^{miss})$"),
-                hist.storage.Weight()
-            ),
-            'tau_pt_loose': hist.Hist(
-                hist.axis.StrCategory([], name="channel"   , growth=True),
-                hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
-                hist.storage.Weight()
-            ),
-            'bjets': hist.Hist(
-                hist.axis.StrCategory([], name="channel"   , growth=True),
-                hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(5, 0, 5, name="bjets", label=r"$N_{b-jet}$ ($p_{T}>30$ GeV)"),
                 hist.storage.Weight()
             ),
             'deep_tau_jet': hist.Hist(
@@ -427,7 +440,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             'delta_R': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="delta_R", label=r"$\Delta R$"),
+                hist.axis.Regular(50, 0, np.pi, name="delta_R", label=r"$\Delta R (ll, \tau)$"),
                 hist.storage.Weight()
             ),
             'lead_jet_pt': hist.Hist(
@@ -442,6 +455,12 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 0, np.pi, name="lead_jet_phi", label=r"$\phi($p_T^{j_1})$"),
                 hist.storage.Weight()
             ),
+            'lead_jet_eta': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="lead_jet_eta", label=r"$\eta(j_1)$"),
+                hist.storage.Weight()
+            ), 
             'delta_R_jet_dilep': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
@@ -460,26 +479,78 @@ class wzinclusive_processor(processor.ProcessorABC):
                 hist.axis.Regular(50, 0, np.pi, name="dilep_dR", label=r"$\Delta R(\ell\ell)$"),
                 hist.storage.Weight()
             ),
-            "min_dphi_met_j": hist.Hist( 
+            'min_dphi_met_j': hist.Hist( 
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
                 hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label=r"$\min\Delta\phi(p_{T}^{miss},j)$"),
                 hist.storage.Weight()
             ),
-            # 'mT_WZ_2D_tau_pt_loose': hist.Hist(
-            #     hist.axis.StrCategory([], name="channel"   , growth=True),
-            #     hist.axis.StrCategory([], name="systematic", growth=True), 
-            #     hist.axis.Regular(60, 0, 600, name="mT_WZ", label=r"${mT}^{WZ}$ (GeV)"),
-            #     hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
-            #     hist.storage.Weight()
-            # ),
-            # 'mT_WZ_2D_tau_pt': hist.Hist(
-            #     hist.axis.StrCategory([], name="channel"   , growth=True),
-            #     hist.axis.StrCategory([], name="systematic", growth=True), 
-            #     hist.axis.Regular(60, 0, 600, name="mT_WZ", label=r"${mT}^{WZ}$ (GeV)"),
-            #     hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
-            #     hist.storage.Weight()
-            # ),
+            'leading_lep_pt': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="leading_lep_pt", label="$p_T^{l_1}$ (GeV)"),
+                hist.storage.Weight()
+            ), 
+            'trailing_lep_pt': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, 30, 530, name="trailing_lep_pt", label=r"$p_T^{l_2}$ (GeV)"),
+                hist.storage.Weight()
+            ),
+            'leading_lep_eta': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="leading_lep_eta", label=r"$\eta(l_1)$"),
+                hist.storage.Weight()
+            ), 
+            'trailing_lep_eta': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -5, 5, name="trailing_lep_eta", label=r"$\eta(l_2)$"),
+                hist.storage.Weight()
+            ),
+            'leading_lep_phi': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -np.pi, np.pi, name="leading_lep_phi", label=r"$\phi^(l_1)$"),
+                hist.storage.Weight()
+            ), 
+            'trailing_lep_phi': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(50, -np.pi, np.pi, name="trailing_lep_phi", label=r"$\phi^(l_2)$"),
+                hist.storage.Weight()
+            ),
+            'njets': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(5, 0, 5, name="njets", label=r"$N_{jet}$ ($p_{T}>30$ GeV)"),
+                hist.storage.Weight()
+            ), 
+            'nbjets': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(5, 0, 5, name="nbjets", label=r"$N_{b-jet}$ ($p_{T}>30$ GeV)"),
+                hist.storage.Weight()
+            ),
+            'ntaus_vtight': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(5, 0, 5, name="ntaus_vtight", label=r"$N_{taus}$ (vtight)"),
+                hist.storage.Weight()
+            ), 
+            'ntaus_tight': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(5, 0, 5, name="ntaus_tight", label=r"$N_{taus}$ (tight)"),
+                hist.storage.Weight()
+            ),
+            'ntaus_loose': hist.Hist(
+                hist.axis.StrCategory([], name="channel"   , growth=True),
+                hist.axis.StrCategory([], name="systematic", growth=True), 
+                hist.axis.Regular(5, 0, 5, name="ntaus_loose", label=r"$N_{taus}$ (loose)"),
+                hist.storage.Weight()
+            ),  
         }
 
     
@@ -590,17 +661,25 @@ class wzinclusive_processor(processor.ProcessorABC):
         had_taus = build_htaus(event.Tau, tight_lep)
         had_taus_loose = build_htaus_loose(event.Tau, tight_lep)
         had_taus_tight = build_htaus_tight(event.Tau, tight_lep)
+
         ntight_lep = ak.num(tight_lep)
         nloose_lep = ak.num(loose_lep)
         nhtaus_lep = ak.num(had_taus)
-        lead_tau = ak.firsts(had_taus)
-
-        tau_pt = lead_tau.pt
         nhtaus_lep_loose = ak.num(had_taus_loose)
         nhtaus_lep_tight = ak.num(had_taus_tight)
+
+        lead_tau = ak.firsts(had_taus)
         lead_tau_loose = ak.firsts(had_taus_loose)
+        tau_pt = lead_tau.pt
         taus_phi = lead_tau.phi
         taus_eta = lead_tau.eta
+        tau_pt = lead_tau.pt
+        tau_E = lead_tau.E
+        lead_tau_loose = ak.firsts(had_taus_loose)
+        tau_pt_loose = lead_tau_loose.pt
+        taus_phi_loose = lead_tau_loose.phi
+        taus_eta_loose = lead_tau_loose.eta
+        tau_E_loose = lead_tau_loose.E
 
         deep_tau_e = lead_tau.rawDeepTau2017v2p1VSe
         deep_tau_mu = lead_tau.rawDeepTau2017v2p1VSmu
@@ -617,7 +696,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             axis=2
         )
         overlap_taus = ak.any(
-            jets.metric_table(had_taus) <= 0.4,
+            jets.metric_table(had_taus_loose) <= 0.4, #replaced vtight tau to loose tau
             axis=2
         )
         
@@ -626,7 +705,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             ~overlap_taus &
             (jets.pt>30.0) & 
             (np.abs(jets.eta) < 4.7) & 
-            (jets.jetId >= 6)& # tight JetID 7(2016) and 6(2017/8)
+            (jets.jetId >= 6) & # tight JetID 7(2016) and 6(2017/8)
             ((jets.puId >= 6) | (jets.puId == 3) | (jets.pt >= 50)) # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL 3,7 for 16and 16APV; 6,7 for 17,18
         )
         
@@ -645,7 +724,7 @@ class wzinclusive_processor(processor.ProcessorABC):
                 )
         )
         
-        good_jets = jets[~jet_btag & jet_mask]
+        good_jets = jets[jet_mask] # removed ~jet_btag
         good_bjet = jets[jet_btag & jet_mask & (np.abs(jets.eta)<2.4)]
         
         # pu_good_jets = jets[~jet_btag & jet_mask_PUID & ~ak.is_none(jets.pt)]
@@ -675,12 +754,7 @@ class wzinclusive_processor(processor.ProcessorABC):
         lead_lep = ak.firsts(ak.where(dilep.l1.pt >  dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
         subl_lep = ak.firsts(ak.where(dilep.l1.pt <= dilep.l2.pt, dilep.l1, dilep.l2),axis=1)
         
-        lead_tau = ak.firsts(had_taus)
-        tau_pt = lead_tau.pt
-        tau_E = lead_tau.E
-        lead_tau_loose = ak.firsts(had_taus_loose)
-        tau_pt_loose = lead_tau_loose.pt
-        tau_E_loose = lead_tau_loose.E
+        
         dilep_p4 = (lead_lep + subl_lep)
         dilep_m  = dilep_p4.mass
         dilep_pt = dilep_p4.pt
@@ -840,7 +914,8 @@ class wzinclusive_processor(processor.ProcessorABC):
         selection.add('1njets_only' , ngood_jets  == 1 )
         selection.add('2njets' , ngood_jets  <= 2 )
         selection.add('3njets' , ngood_jets  >= 3 )
-        selection.add('1nbjets', ngood_bjets >= 1 )
+        selection.add('0nbjets', ngood_bjets == 0 )
+        selection.add('nbjets', ngood_bjets >= 1 )
         selection.add('1nhtaus', nhtaus_lep  == 1 )
         selection.add('1nhtaus_loose', nhtaus_lep_loose  == 1 )
         selection.add('1nhtaus_tight', nhtaus_lep_tight  == 1 )
@@ -864,20 +939,25 @@ class wzinclusive_processor(processor.ProcessorABC):
         event['ST'] = ak.fill_none(ST,-99)
         event['dilep_dphi'] = ak.fill_none(dilep_dphi,-99)
         event['njets'   ] = ak.fill_none(ngood_jets,-99)
-        event['bjets'   ] = ak.fill_none(ngood_bjets,-99)
+        event['nbjets'   ] = ak.fill_none(ngood_bjets,-99)
+        event['ntaus_vtight'   ] = ak.fill_none(nhtaus_lep,-99)
+        event['ntaus_tight'   ] = ak.fill_none(nhtaus_lep_tight,-99)
+        event['ntaus_loose'   ] = ak.fill_none(nhtaus_lep_loose,-99)
         event['dphi_met_ll'] = ak.fill_none(dilep_dphi_met,-99)
         event['dilep_dphi_tau'] = ak.fill_none(dilep_dphi_tau,-99)
         event['dijet_mass'] = ak.fill_none(dijet_mass,-99)
         event['dijet_deta'] = ak.fill_none(dijet_deta,-99)
         event['min_dphi_met_j'] = ak.fill_none(min_dphi_met_j,-99)
         event['tau_pt'] = ak.fill_none(tau_pt,-99)
-        event['tau_pt_loose'] = ak.fill_none(tau_pt_loose,-99)
         event['taus_phi'] = ak.fill_none(taus_phi,-99)
         event['taus_eta'] = ak.fill_none(taus_eta,-99)
         event['delta_R'] = ak.fill_none(delta_R,-99)
         event['dilep_dR'] = ak.fill_none(dilep_dR,-99)
+        event['dilep_deta'] = ak.fill_none(dilep_deta,-99)
         event['delta_tau_met_phi'] = ak.fill_none(delta_tau_met_phi,-99)
         event['tau_pt_loose'] = ak.fill_none(tau_pt_loose,-99)
+        event['taus_phi_loose'] = ak.fill_none(taus_phi_loose,-99)
+        event['taus_eta_loose'] = ak.fill_none(taus_eta_loose,-99)
         event['leading_lep_pt'  ] = ak.fill_none(lead_lep.pt,-99)
         event['leading_lep_eta' ] = ak.fill_none(lead_lep.eta,-99)
         event['leading_lep_phi' ] = ak.fill_none(lead_lep.phi,-99)
@@ -887,12 +967,6 @@ class wzinclusive_processor(processor.ProcessorABC):
         event['lead_jet_pt'  ] = ak.fill_none(lead_jet.pt,-99)
         event['lead_jet_eta' ] = ak.fill_none(lead_jet.eta,-99)
         event['lead_jet_phi' ] = ak.fill_none(lead_jet.phi,-99)
-        event['trail_jet_pt' ] = ak.fill_none(subl_jet.pt,-99)
-        event['trail_jet_eta'] = ak.fill_none(subl_jet.eta,-99)
-        event['trail_jet_phi'] = ak.fill_none(subl_jet.phi,-99)
-        event['third_jet_pt' ] = ak.fill_none(third_jet.pt,-99)
-        event['third_jet_eta'] = ak.fill_none(third_jet.eta,-99)
-        event['third_jet_phi'] = ak.fill_none(third_jet.phi,-99)
         event['delta_R_jet_tau'] = ak.fill_none(delta_R_jet_tau,-99)
         event['delta_R_jet_dilep'] = ak.fill_none(delta_R_jet_dilep,-99)
         event['dphi_jet_met'] = ak.fill_none(dphi_jet_met,-99)
@@ -973,6 +1047,12 @@ class wzinclusive_processor(processor.ProcessorABC):
             "inc-SR1": common_sel + [
             'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', '1njets_only', '1nhtaus' ,'met_pt', 'dilep_pt'
         ],
+        #     "inc-SR1l": common_sel + [
+        #     'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', '1njets_only', '1nhtaus' ,'met_pt', 'dilep_pt', '0nbjets'
+        # ],
+        #     "inc-SR1b": common_sel + [
+        #     'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', '1njets_only', '1nhtaus' ,'met_pt', 'dilep_pt', '~0nbjets'
+        # ],
             "inc-SR01": common_sel + [
             'require-ossf', 'require-2lep', 'dilep_m', 'dilep_dphi_met', '1njets', '1nhtaus', 'met_pt', 'dilep_pt'
         ],
@@ -1110,42 +1190,47 @@ class wzinclusive_processor(processor.ProcessorABC):
             
         for ch in channels:
             for sys in systematics:
+                _histogram_filler(ch, sys, 'leading_lep_pt')
+                _histogram_filler(ch, sys, 'leading_lep_phi')
+                _histogram_filler(ch, sys, 'leading_lep_eta')
+                _histogram_filler(ch, sys, 'trailing_lep_pt')
+                _histogram_filler(ch, sys, 'trailing_lep_phi')
+                _histogram_filler(ch, sys, 'trailing_lep_eta')
                 _histogram_filler(ch, sys, 'met_pt')
                 _histogram_filler(ch, sys, 'met_phi')
+                _histogram_filler(ch, sys, 'tau_pt')
+                _histogram_filler(ch, sys, 'taus_phi')
+                _histogram_filler(ch, sys, 'taus_eta')
+                _histogram_filler(ch, sys, 'tau_pt_loose')
+                _histogram_filler(ch, sys, 'taus_phi_loose')
+                _histogram_filler(ch, sys, 'taus_eta_loose')
+                _histogram_filler(ch, sys, 'lead_jet_pt')
+                _histogram_filler(ch, sys, 'lead_jet_phi')
+                _histogram_filler(ch, sys, 'lead_jet_eta')
+                _histogram_filler(ch, sys, 'njets')
+                _histogram_filler(ch, sys, 'nbjets')
+                _histogram_filler(ch, sys, 'ntaus_loose')
+                _histogram_filler(ch, sys, 'ntaus_tight')
+                _histogram_filler(ch, sys, 'ntaus_vtight')
+                _histogram_filler(ch, sys, 'dilep_pt')
+                _histogram_filler(ch, sys, 'dilep_dphi')
+                _histogram_filler(ch, sys, 'dilep_deta')
+                _histogram_filler(ch, sys, 'dilep_m')
+                _histogram_filler(ch, sys, 'dilep_dR')
+                _histogram_filler(ch, sys, 'delta_R')
+                _histogram_filler(ch, sys, 'delta_R_jet_tau')
+                _histogram_filler(ch, sys, 'delta_R_jet_dilep')
+                _histogram_filler(ch, sys, 'dphi_met_ll')
+                _histogram_filler(ch, sys, 'dilep_dphi_tau')
+                _histogram_filler(ch, sys, 'dphi_jet_met')
+                _histogram_filler(ch, sys, 'delta_tau_met_phi')
                 _histogram_filler(ch, sys, 'mT_W')
                 _histogram_filler(ch, sys, 'mT_WZ')
                 _histogram_filler(ch, sys, 'inv_m_WZ')
                 _histogram_filler(ch, sys, 'dilep_tau_loose_met_hadron_mt')
                 _histogram_filler(ch, sys, 'dilep_mt_llnunu')
-                _histogram_filler(ch, sys, 'dilep_pt')
                 _histogram_filler(ch, sys, 'HTl')
                 _histogram_filler(ch, sys, 'ST')
-                _histogram_filler(ch, sys, 'dilep_m')
-                _histogram_filler(ch, sys, 'tau_pt')
-                _histogram_filler(ch, sys, 'tau_pt_loose')
-                _histogram_filler(ch, sys, 'taus_phi')
-                _histogram_filler(ch, sys, 'taus_eta')
-                _histogram_filler(ch, sys, 'delta_R')
-                _histogram_filler(ch, sys, 'delta_R_jet_tau')
-                _histogram_filler(ch, sys, 'delta_R_jet_dilep')
-                _histogram_filler(ch, sys, 'dilep_dR')
-                _histogram_filler(ch, sys, 'delta_tau_met_phi')
-                _histogram_filler(ch, sys, 'dphi_met_ll')
-                _histogram_filler(ch, sys, 'dilep_dphi_tau')
-                _histogram_filler(ch, sys, 'dphi_jet_met')
-                _histogram_filler(ch, sys, 'dilep_dphi')
-                _histogram_filler(ch, sys, 'lead_jet_pt')
-                _histogram_filler(ch, sys, 'lead_jet_phi')
-                _histogram_filler(ch, sys, 'dilep_tau_pt')
-                _histogram_filler(ch, sys, 'dilep_loose_tau_pt')
-                _histogram_filler(ch, sys, 'dilep_loose_tau_phi')
-                _histogram_filler(ch, sys, 'dilep_tau_phi')
-                _histogram_filler(ch, sys, 'dilep_loose_tau_met_dphi')
-                # _histogram_filler2D(ch, sys, 'mT_WZ', 'tau_pt')
-                # _histogram_filler2D(ch, sys, 'mT_WZ', 'tau_pt_loose')
-
-            
-            
         return {dataset: histos}
         
     def process(self, event: processor.LazyDataFrame):
@@ -1164,6 +1249,9 @@ class wzinclusive_processor(processor.ProcessorABC):
         jets = self._jmeu.corrected_jets_L123_JER(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
         jets_to_correct_met = self._jmeu.corrected_jets_L123_noJER(event.Jet, event.fixedGridRhoFastjetAll, event.caches[0])
         met = self._jmeu.corrected_met(met_to_correct, jets, event.fixedGridRhoFastjetAll, event.caches[0]) # we are adding fully smeared L123 jets
+
+        #test with some chaneges 
+        # met = self._jmeu.corrected_met(met_to_correct, jets_to_correct_met, event.fixedGridRhoFastjetAll, event.caches[0])
         
         # print("---- JET MET Debug ----")
         # print("Raw MET pt:", ak.to_list(event.RawMET.pt[:10]))
@@ -1194,6 +1282,17 @@ class wzinclusive_processor(processor.ProcessorABC):
     
         if is_data:
             
+            # Apply rochester_correction
+            muon = event.Muon 
+            muonEnUp=event.Muon
+            muonEnDown=event.Muon
+            muon_pt,muon_pt_roccorUp,muon_pt_roccorDown=rochester_correction(is_data).apply_rochester_correction (muon)
+
+            muon['pt'] = muon_pt
+            muonEnUp['pt'] = muon_pt_roccorUp
+            muonEnDown['pt'] = muon_pt_roccorDown
+            event = ak.with_field(event, muon, 'Muon')
+
             # HEM15/16 issue
             if self._era == "2018":
                 _runid = (event.run >= 319077)
@@ -1244,24 +1343,24 @@ class wzinclusive_processor(processor.ProcessorABC):
         electronEnUp=event.Electron
         electronEnDown=event.Electron
 
-        electronEnUp  ['pt'] = event.Electron['pt'] + event.Electron.energyErr/np.cosh(event.Electron.eta)
+        electronEnUp['pt'] = event.Electron['pt'] + event.Electron.energyErr/np.cosh(event.Electron.eta)
         electronEnDown['pt'] = event.Electron['pt'] - event.Electron.energyErr/np.cosh(event.Electron.eta)  
 
 
         #Tau corrections
-        if not is_data :
-            tau = event.Tau[(event.Tau.decayMode != 5) & (event.Tau.decayMode != 6)]
-            tauEnUp = event.Tau[(event.Tau.decayMode != 5) & (event.Tau.decayMode != 6)]
-            tauEnDown = event.Tau[(event.Tau.decayMode != 5) & (event.Tau.decayMode != 6)]
-            tau_pt,tau_pt_EnUp,tau_pt_EnDown,tau_mass,tau_mass_EnUp,tau_mass_EnDown=self._tauID.tau_energy_scale_correction(tau)
+        # if not is_data :
+        tau = event.Tau[(event.Tau.decayMode != 5) & (event.Tau.decayMode != 6)]
+        tauEnUp = event.Tau[(event.Tau.decayMode != 5) & (event.Tau.decayMode != 6)]
+        tauEnDown = event.Tau[(event.Tau.decayMode != 5) & (event.Tau.decayMode != 6)]
+        tau_pt,tau_pt_EnUp,tau_pt_EnDown,tau_mass,tau_mass_EnUp,tau_mass_EnDown=self._tauID.tau_energy_scale_correction(tau)
 
-            tau['pt'] = tau_pt
-            tau['mass'] = tau_mass
-            tauEnUp['pt'] = tau_pt_EnUp
-            tauEnUp['mass'] = tau_mass_EnUp
-            tauEnDown['pt'] = tau_pt_EnDown
-            tauEnDown['mass'] = tau_mass_EnDown
-            event = ak.with_field(event, tau, 'Tau')
+        tau['pt'] = tau_pt
+        tau['mass'] = tau_mass
+        tauEnUp['pt'] = tau_pt_EnUp
+        tauEnUp['mass'] = tau_mass_EnUp
+        tauEnDown['pt'] = tau_pt_EnDown
+        tauEnDown['mass'] = tau_mass_EnDown
+        event = ak.with_field(event, tau, 'Tau')
 
 
     
