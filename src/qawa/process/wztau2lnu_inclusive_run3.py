@@ -56,8 +56,8 @@ def build_leptons(muons, electrons):
     # select tight/loose electron
     tight_electrons_mask = (
         (electrons.pt           > 20.) &
-        ((np.abs(electrons.eta) < 1.4442) | ((np.abs(electrons.eta) > 1.5660) & (np.abs(electrons.eta)  < 2.5)))  &
-        electrons.mvaIso_WP90     # in v9 it was mvaFall17V2Iso_WP90
+        ((np.abs(electron_superclusterEta) < 1.4442) | ((np.abs(electron_superclusterEta) > 1.5660) & (np.abs(electron_superclusterEta)  < 2.5)))  &
+        electrons.mvaFall17V2Iso_WP90
     )
     tight_electrons = electrons[tight_electrons_mask]
     loose_electrons = electrons[
@@ -82,7 +82,7 @@ def build_htaus(tau, lepton):
         (np.abs(tau.dz)< 0.2 ) &
         (tau.decayMode != 5   ) & 
         (tau.decayMode != 6   ) &
-        (tau.idDeepTau2018v2p5VSe >= 2) &   #inv9 it was idDeepTau2017v2p1VSe, idDeepTau2017v2p1VSmu, idDeepTau2017v2p1VSjet scale factors are available for idDeeptau2018
+        (tau.idDeepTau2018v2p5VSe >= 2) &   #in v9 it was idDeepTau2017v2p1VSe, idDeepTau2017v2p1VSmu, idDeepTau2017v2p1VSjet scale factors are available for idDeeptau2018
         (tau.idDeepTau2018v2p5VSmu >= 1) &  
         (tau.idDeepTau2018v2p5VSjet >= 7)   
     )
@@ -142,7 +142,7 @@ def build_htaus_loose(tau, lepton):
 
 class wzinclusive_processor(processor.ProcessorABC):
     # EWK corrections process has to be define before hand, it has to change when we move to dask
-    def __init__(self, era: str ='2022', ewk_process_name=None, run_period: str = ''): 
+    def __init__(self, era: str ='2024', ewk_process_name=None, run_period: str = ''): 
         self._era = era
         if 'EE' in self._era:
             self._isEE = True
@@ -525,9 +525,9 @@ class wzinclusive_processor(processor.ProcessorABC):
             ~overlap_leptons & 
             ~overlap_taus &
             (jets.pt>30.0) & 
-            (np.abs(jets.eta) < 4.7) & 
-            (jets.jetId >= 6)& # tight JetID 7(2016) and 6(2017/8)
-            ((jets.puId >= 6) | (jets.puId == 3) | (jets.pt >= 50)) # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL 3,7 for 16and 16APV; 6,7 for 17,18
+            (np.abs(jets.eta) < 4.7) #& 
+            # (jets.jetId >= 6)& # tight JetID 7(2016) and 6(2017/8)
+            # ((jets.puId >= 6) | (jets.puId == 3) | (jets.pt >= 50)) # medium puID https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL 3,7 for 16and 16APV; 6,7 for 17,18
         )
         
         jet_mask_PUID = (
@@ -535,7 +535,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             ~overlap_taus &
             (jets.pt>30.0) & 
             (np.abs(jets.eta) < 4.7) & 
-            (jets.jetId >= 6) # tight JetID 7(2016) and 6(2017/18)
+            # (jets.jetId >= 6) # tight JetID 7(2016) and 6(2017/18)
         )
 
         jet_btag = (
@@ -585,11 +585,11 @@ class wzinclusive_processor(processor.ProcessorABC):
         # high level observables
         p4_met = ak.zip(
             {
-                "pt": event.MET.pt,
-                "eta": ak.zeros_like(event.MET.pt),
-                "phi": event.MET.phi,
-                "mass": ak.zeros_like(event.MET.pt),
-                "charge": ak.zeros_like(event.MET.pt),
+                "pt": event.PFMET.pt,
+                "eta": ak.zeros_like(event.PFMET.pt),
+                "phi": event.PFMET.phi,
+                "mass": ak.zeros_like(event.PFMET.pt),
+                "charge": ak.zeros_like(event.PFMET.pt),
             },
             with_name="PtEtaPhiMCandidate",
             behavior=candidate.behavior,
