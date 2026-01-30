@@ -163,7 +163,7 @@ def main():
                     }
                 }
             }
-            print(f"brewer-trig.py running with the following samples definition:\n{samples}")
+            # print(f"brewer-trig.py running with the following samples definition:\n{samples}")
             sumw_runner = processor.Runner(
                 executor=executor,
                 schema=BaseSchema,
@@ -182,21 +182,21 @@ def main():
             else:
                 options.runperiod = ''
 
-            print(
-                f"""---------------------------
-                -- options   = {options}
-                -- is MC     = {options.isMC}
-                -- jobNum    = {options.jobNum}
-                -- era       = {options.era}
-                -- in file   = {aliases[ixrd] + options.infile}
-                -- dataset   = {options.dataset}
-                -- period    = {options.runperiod}
-                -- executor  = {options.executor}
-                -- copyInput = {options.copyInput}
-                ---------------------------"""
-            )
+            # print(
+            #     f"""---------------------------
+            #     -- options   = {options}
+            #     -- is MC     = {options.isMC}
+            #     -- jobNum    = {options.jobNum}
+            #     -- era       = {options.era}
+            #     -- in file   = {aliases[ixrd] + options.infile}
+            #     -- dataset   = {options.dataset}
+            #     -- period    = {options.runperiod}
+            #     -- executor  = {options.executor}
+            #     -- copyInput = {options.copyInput}
+            #     ---------------------------"""
+            # )
 
-            print(" --- trig_eff processor ... ")
+            # print(" --- trig_eff processor ... ")
             vbs_runner = processor.Runner(
                 executor=executor,
                 schema=NanoAODSchema,
@@ -209,11 +209,11 @@ def main():
                                  processor_instance=trig_processor(isMC=options.isMC, era=options.era),
                                  )
 
-            h = vbs_out['h_num_MM_EE']
-            print(h)
-            print("Lead bin edges:", h.axes['lead'].edges)
-            print("Trail bin edges:", h.axes['trail'].edges)
-            print("Sum of weights:", h.sum(flow=True).value)
+            # h = vbs_out['h_num_MM_EE']
+            # print(h)
+            # print("Lead bin edges:", h.axes['lead'].edges)
+            # print("Trail bin edges:", h.axes['trail'].edges)
+            # print("Sum of weights:", h.sum(flow=True).value)
             # bh_output = {}
             # for key, content in vbs_out.items():
             #     bh_output[key] = {
@@ -227,7 +227,7 @@ def main():
             with open(pkl_filename, "wb") as f:
                 pickle.dump(vbs_out, f)
             failed=False
-            print(f"Saved result to {pkl_filename}")
+            # print(f"Saved result to {pkl_filename}")
             
 
         except Exception as err:

@@ -85,6 +85,7 @@ should_transfer_files = YES
 WhenToTransferOutput  = ON_EXIT_OR_EVICT
 initialdir            = {jobdir}
 
+
 output                = $(ClusterId).$(ProcId).out
 error                 = $(ClusterId).$(ProcId).err
 log                   = $(ClusterId).$(ProcId).log
