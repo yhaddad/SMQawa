@@ -1,7 +1,6 @@
 from coffea import processor
 from coffea import nanoevents
 from coffea.nanoevents import NanoAODSchema, BaseSchema
-from qawa.process.wztau2lnu_inclusive import wzinclusive_processor
 from qawa.process.coffea_sumw import coffea_sumw
 import argparse
 import pickle
@@ -56,6 +55,7 @@ def validate_input_file(nanofile):
 
 def main():
     parser = argparse.ArgumentParser("")
+    parser.add_argument('--analysis',  type=str, default='inc-WZ', help="Processor name to apply to datasets, and parent folder for config files")
     parser.add_argument('--jobNum' ,   type=int, default=1     , help="")
     parser.add_argument('--era'    ,   type=str, default="2018", help="")
     parser.add_argument('--isMC'   ,   type=int, default=1     , help="")
@@ -191,6 +191,7 @@ def main():
             print(
                 f"""---------------------------
                 -- options   = {options}
+                -- analysis  = {options.analysis}
                 -- is MC     = {options.isMC}
                 -- jobNum    = {options.jobNum}
                 -- era       = {options.era}
@@ -201,6 +202,27 @@ def main():
                 -- copyInput = {options.copyInput}
                 ---------------------------"""
             )
+            if options.analysis in ["inc-WZ"]:
+                from qawa.process.wztau2lnu_inclusive import wzinclusive_processor
+                proc_configured = wzinclusive_processor(
+                    era=options.era,
+                    ewk_process_name=ewk_flag,
+                    run_period=options.runperiod if is_data else ''
+                )
+            elif options.analysis in ["inc-WZ-Fxsec"]:
+                from qawa.process.Fxsec import wzinclusive_processor # Fiducial XSec test processor for inc-WZ
+                proc_configured = wzinclusive_processor(
+                    era=options.era,
+                    ewk_process_name=ewk_flag,
+                    run_period=options.runperiod if is_data else ''
+                )
+            elif options.analysis in ["trig-eff"]:
+                from qawa.process.trig_eff import trig_processor
+                proc_configured = trig_processor(
+                    isMC=options.isMC,
+                    era=options.era)
+            else:
+                raise NotImplementedError(f"{options.analysis} does not have hooks for loading a processor, please update the code to point appropriately to it, along with any necessary init configuration options.")
 
             print(" --- wztau2lnu_inclusive processor ... ")
             vbs_runner = processor.Runner(
@@ -212,11 +234,7 @@ def main():
             )
             vbs_out = vbs_runner(samples,
                                  "Events",
-                                 processor_instance=wzinclusive_processor(
-                                     era=options.era,
-                                     ewk_process_name=ewk_flag,
-                                     run_period=options.runperiod if is_data else ''
-                                 ),
+                                 processor_instance=proc_configured,
                                  )
             bh_output = {}
             for key, content in vbs_out.items():

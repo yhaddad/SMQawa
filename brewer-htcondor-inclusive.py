@@ -101,6 +101,7 @@ queue jobfn from {jobdir}/inputfiles.dat
 
 def main():
     parser = argparse.ArgumentParser(description='Famous Submitter')
+    parser.add_argument("-a"   , "--analysis", type=str, default="inc-WZ"       , help="Analysis to run", required=True)
     parser.add_argument("-i"   , "--input" , type=str, default="data.txt"       , help="input datasets", required=True)
     parser.add_argument("-t"   , "--tag"   , type=str, default="atakour"        , help="production tag", required=True)
     parser.add_argument("-isMC", "--isMC"  , type=int, default=1                , help="")
