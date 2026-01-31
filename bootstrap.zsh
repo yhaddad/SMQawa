@@ -117,7 +117,8 @@ install_env() {
   \$INSTALL_LOC.env/bin/python -m pip install --upgrade 'boost_histogram >= 1.5.1'
   if [ ! -d "DCTools" ]; then
     echo "DCTools should be cloned into the directory adjacent to SMQawa to enable combine card building and postfit plotting"
-    echo "e.g. git clone -b main git@github.com:yhaddad/DCTools.git"
+    echo "e.g. git clone -b main git@github.com:yhaddad/DCTools.git for main branch"
+    echo "For current development branch, git clone -b fix-lumi-uncertainties git@github.com:NJManganelli/DCTools.git"
   fi
   echo "done."
 }
@@ -201,7 +202,8 @@ install_env() {
   \$INSTALL_LOC.env/bin/python -m pip install --upgrade 'boost_histogram >= 1.5.1'
   if [ ! -d "DCTools" ]; then
     echo "DCTools should be cloned into the directory adjacent to SMQawa to enable combine card building and postfit plotting"
-    echo "e.g. git clone -b main git@github.com:yhaddad/DCTools.git"
+    echo "e.g. git clone -b main git@github.com:yhaddad/DCTools.git for main branch"
+    echo "For current development branch, git clone -b fix-lumi-uncertainties git@github.com:NJManganelli/DCTools.git"
   fi
   echo "done."
 }
