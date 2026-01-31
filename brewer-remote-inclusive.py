@@ -1,7 +1,6 @@
 from coffea import processor
 from coffea import nanoevents
 from coffea.nanoevents import NanoAODSchema, BaseSchema
-from qawa.process.wztau2lnu_inclusive import wzinclusive_processor
 from qawa.process.coffea_sumw import coffea_sumw
 import argparse
 import pickle
@@ -210,6 +209,18 @@ def main():
                     ewk_process_name=ewk_flag,
                     run_period=options.runperiod if is_data else ''
                 )
+            elif options.analysis in ["inc-WZ-Fxsec"]:
+                from qawa.process.Fxsec import wzinclusive_processor # Fiducial XSec test processor for inc-WZ
+                proc_configured = wzinclusive_processor(
+                    era=options.era,
+                    ewk_process_name=ewk_flag,
+                    run_period=options.runperiod if is_data else ''
+                )
+            elif options.analysis in ["trig-eff"]:
+                from qawa.process.trig_eff import trig_processor
+                proc_configured = trig_processor(
+                    isMC=options.isMC,
+                    era=options.era)
             else:
                 raise NotImplementedError(f"{options.analysis} does not have hooks for loading a processor, please update the code to point appropriately to it, along with any necessary init configuration options.")
 
