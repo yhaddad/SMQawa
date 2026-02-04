@@ -325,8 +325,9 @@ class wzinclusive_processor(processor.ProcessorABC):
             ),
             'tau_pt': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
-                hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
+                hist.axis.StrCategory([], name="systematic", growth=True),
+                hist.axis.Regular(60, 0, 600, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"), 
+                # hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt", label=r"$p_{T}^{tau}$ (GeV)"),
                 hist.storage.Weight()
             ),
             'taus_eta': hist.Hist(
@@ -338,13 +339,14 @@ class wzinclusive_processor(processor.ProcessorABC):
             'taus_phi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="taus_phi", label=r"$\phi(\tau)$"),
+                hist.axis.Regular(50, -3.2, 3,2, name="taus_phi", label=r"$\phi(\tau)$"),
                 hist.storage.Weight()
             ),
             'tau_pt_loose': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
-                hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
+                hist.axis.StrCategory([], name="systematic", growth=True),
+                hist.axis.Regular(60, 0, 600, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"), 
+                # hist.axis.Variable(self.ABCD_tau_bins, name="tau_pt_loose", label=r"$p_{T}^{tau_loose}$ (GeV)"),
                 hist.storage.Weight()
             ),
             'taus_eta_loose': hist.Hist(
@@ -356,19 +358,19 @@ class wzinclusive_processor(processor.ProcessorABC):
             'taus_phi_loose': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="taus_phi_loose", label=r"$\phi(\tau loose)$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="taus_phi_loose", label=r"$\phi(\tau loose)$"),
                 hist.storage.Weight()
             ),
             'met_phi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="met_phi", label=r"$\phi(p_{T}^{miss})$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="met_phi", label=r"$\phi(p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'delta_tau_met_phi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="delta_tau_met_phi", label=r"$\Delta \phi(\tau, p_{T}^{miss})$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="delta_tau_met_phi", label=r"$\Delta \phi(\tau, p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'deep_tau_jet': hist.Hist(
@@ -392,43 +394,43 @@ class wzinclusive_processor(processor.ProcessorABC):
             'dphi_met_ll': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dphi_met_ll", label=r"$\Delta \phi(\ell\ell,p_{T}^{miss})$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="dphi_met_ll", label=r"$\Delta \phi(\ell\ell,p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'dphi_jet_met': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dphi_jet_met", label=r"$\Delta \phi(j,p_{T}^{miss})$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="dphi_jet_met", label=r"$\Delta \phi(j,p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'dilep_dphi_tau': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dilep_dphi_tau", label=r"$\Delta \phi(\ell\ell,\tau)$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="dilep_dphi_tau", label=r"$\Delta \phi(\ell\ell,\tau)$"),
                 hist.storage.Weight()
             ),
             'dilep_loose_tau_met_dphi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dilep_loose_tau_met_dphi", label=r"$\Delta \phi(\ell\ell\tau, p_{T}^{miss})$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="dilep_loose_tau_met_dphi", label=r"$\Delta \phi(\ell\ell\tau, p_{T}^{miss})$"),
                 hist.storage.Weight()
             ),
             'dilep_loose_tau_phi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dilep_loose_tau_phi", label=r"$\phi(\ell\ell\tau)$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="dilep_loose_tau_phi", label=r"$\phi(\ell\ell\tau)$"),
                 hist.storage.Weight()
             ),
             'dilep_tau_phi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dilep_tau_phi", label=r"$\phi(\ell\ell\tau)$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="dilep_tau_phi", label=r"$\phi(\ell\ell\tau)$"),
                 hist.storage.Weight()
             ),
             'dilep_dphi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="dilep_dphi", label=r"$\Delta \phi(\ell\ell)$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="dilep_dphi", label=r"$\Delta \phi(\ell\ell)$"),
                 hist.storage.Weight()
             ),
             'baseweight': hist.Hist(
@@ -440,7 +442,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             'delta_R': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="delta_R", label=r"$\Delta R (ll, \tau)$"),
+                hist.axis.Regular(50, 0, 5, name="delta_R", label=r"$\Delta R (ll, \tau)$"),
                 hist.storage.Weight()
             ),
             'lead_jet_pt': hist.Hist(
@@ -452,7 +454,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             'lead_jet_phi': hist.Hist(
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="lead_jet_phi", label=r"$\phi($p_T^{j_1})$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="lead_jet_phi", label=r"$\phi($p_T^{j_1})$"),
                 hist.storage.Weight()
             ),
             'lead_jet_eta': hist.Hist(
@@ -482,7 +484,7 @@ class wzinclusive_processor(processor.ProcessorABC):
             'min_dphi_met_j': hist.Hist( 
                 hist.axis.StrCategory([], name="channel"   , growth=True),
                 hist.axis.StrCategory([], name="systematic", growth=True), 
-                hist.axis.Regular(50, 0, np.pi, name="min_dphi_met_j", label=r"$\min\Delta\phi(p_{T}^{miss},j)$"),
+                hist.axis.Regular(50, -3.2, 3.2, name="min_dphi_met_j", label=r"$\min\Delta\phi(p_{T}^{miss},j)$"),
                 hist.storage.Weight()
             ),
             'leading_lep_pt': hist.Hist(
